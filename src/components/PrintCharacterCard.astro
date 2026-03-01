@@ -1,0 +1,23 @@
+---
+/**
+ * 印刷用 キャラクターカード — 秘密情報含む全文、1枚/ページ
+ * ふりがな保持（子ども向け印刷物）
+ */
+import { renderMarkdown } from '../lib/markdown';
+
+interface Props {
+  name: string;
+  scenarioTitle: string;
+  fullContent: string;
+}
+
+const { name, scenarioTitle, fullContent } = Astro.props;
+const html = renderMarkdown(fullContent, true);
+---
+<section class="print-card">
+  <div class="print-card-header flex items-center justify-between">
+    <span>キャラクターカード: {name}</span>
+    <span class="text-sm font-normal text-gray-600">{scenarioTitle}</span>
+  </div>
+  <div class="prose prose-sm max-w-none" set:html={html} />
+</section>

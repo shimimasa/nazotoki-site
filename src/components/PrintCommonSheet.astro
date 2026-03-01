@@ -1,0 +1,34 @@
+---
+/**
+ * 印刷用 共通情報シート — ストーリー導入・ルール・タイムライン
+ * ふりがな保持（子ども向け印刷物）
+ */
+import { renderMarkdown } from '../lib/markdown';
+
+interface Props {
+  common: string;
+  title: string;
+  seriesName: string;
+  volume: number;
+  players: string;
+  time: string;
+  subject: string;
+  difficulty: string;
+}
+
+const { common, title, seriesName, volume, players, time, subject, difficulty } = Astro.props;
+const commonHtml = renderMarkdown(common, true);
+---
+<section class="print-card mb-6">
+  <div class="print-card-header flex items-center justify-between">
+    <span>{seriesName} Vol.{volume}「{title}」</span>
+    <span class="text-sm font-normal text-gray-600">共通情報シート</span>
+  </div>
+  <div class="flex flex-wrap gap-3 text-sm text-gray-600 mb-4">
+    <span>👥 {players.split('（')[0]}</span>
+    <span>⏱ {time}</span>
+    <span>📚 {subject}</span>
+    <span>{difficulty}</span>
+  </div>
+  <div class="prose max-w-none text-sm" set:html={commonHtml} />
+</section>

@@ -7,7 +7,7 @@ export default defineConfig({
   integrations: [
     tailwindcss(),
     sitemap({
-      filter: (page) => !page.includes('/gm/') && !page.match(/\/play\/[^/]+\/[^/]+/),
+      filter: (page) => !page.includes('/gm/') && !page.includes('/print/') && !page.match(/\/play\/[^/]+\/[^/]+/),
     }),
   ],
   i18n: {

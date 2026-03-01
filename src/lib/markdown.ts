@@ -44,7 +44,8 @@ export function stripFurigana(text: string): string {
   );
 }
 
-export function renderMarkdown(md: string): string {
+export function renderMarkdown(md: string, keepFurigana = false): string {
   if (!md) return '';
-  return marked.parse(stripFurigana(md)) as string;
+  const text = keepFurigana ? md : stripFurigana(md);
+  return marked.parse(text) as string;
 }

@@ -1,0 +1,68 @@
+---
+/**
+ * GM用 振り返り記録ページ — localStorage保存
+ */
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ReflectionForm from '../../../components/ReflectionForm.astro';
+import { loadAllScenarios, type ScenarioData } from '../../../lib/data';
+import { getSeriesConfig } from '../../../lib/series';
+
+export function getStaticPaths() {
+  const scenarios = loadAllScenarios();
+  return scenarios.map(s => ({
+    params: { slug: s.slug },
+    props: { scenario: s },
+  }));
+}
+
+const { scenario } = Astro.props as { scenario: ScenarioData };
+const config = getSeriesConfig(scenario.series);
+---
+<BaseLayout
+  title={`振り返り: ${scenario.title}`}
+  description={`${scenario.title} のプレイ振り返りを記録`}
+  noIndex={true}
+>
+  {/* パンくず */}
+  <nav class="text-sm text-gray-500 mb-6 print:hidden">
+    <a href={import.meta.env.BASE_URL} class="hover:text-gray-700">トップ</a>
+    <span class="mx-1">/</span>
+    <a href={`${import.meta.env.BASE_URL}series/${scenario.series}/`} class={`hover:${config.text}`}>{scenario.seriesName}</a>
+    <span class="mx-1">/</span>
+    <a href={`${import.meta.env.BASE_URL}gm/${scenario.slug}/`} class="hover:text-gray-700">GM用</a>
+    <span class="mx-1">/</span>
+    <span>振り返り</span>
+  </nav>
+
+  {/* ヘッダー */}
+  <div class={`rounded-xl ${config.bgLight} border-2 ${config.border} p-6 mb-8`}>
+    <span class={`text-xs font-bold ${config.text}`}>
+      {config.emoji} {scenario.seriesName} Vol.{scenario.volume}
+    </span>
+    <h1 class="text-2xl sm:text-3xl font-black mt-2">プレイ振り返り</h1>
+    <p class="text-gray-600 mt-1">{scenario.title}</p>
+  </div>
+
+  <p class="text-sm text-gray-500 mb-6">
+    プレイ後5分で記録できます。入力は自動保存されます（ブラウザのlocalStorageに保存、サーバーには送信されません）。
+  </p>
+
+  <ReflectionForm
+    slug={scenario.slug}
+    title={scenario.title}
+    seriesName={scenario.seriesName}
+    volume={scenario.volume}
+  />
+
+  {/* ナビゲーション */}
+  <div class="flex flex-wrap gap-3 justify-center mt-8 print:hidden">
+    <a href={`${import.meta.env.BASE_URL}gm/${scenario.slug}/`}
+       class="inline-block bg-gray-200 text-gray-800 px-5 py-2.5 rounded-lg font-bold hover:bg-gray-300 transition-colors no-underline text-sm">
+      &larr; GMページに戻る
+    </a>
+    <a href={`${import.meta.env.BASE_URL}gm/${scenario.slug}/reflect-sheet/`}
+       class="inline-block bg-gray-200 text-gray-800 px-5 py-2.5 rounded-lg font-bold hover:bg-gray-300 transition-colors no-underline text-sm">
+      印刷用シートへ
+    </a>
+  </div>
+</BaseLayout>

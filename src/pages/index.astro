@@ -46,7 +46,26 @@ const orderedSeries = [...seriesGroups.entries()].sort((a, b) => {
     })}
   </div>
 
-  <section class="mt-16 bg-white rounded-xl border border-gray-200 p-6 sm:p-8">
+  {/* はじめてガイド */}
+  <section class="mt-12 grid gap-4 sm:grid-cols-3">
+    <div class="bg-amber-50 border-2 border-amber-200 rounded-xl p-5 text-center">
+      <div class="text-3xl mb-2">1</div>
+      <h3 class="font-black text-amber-900">シナリオを選ぶ</h3>
+      <p class="text-sm text-gray-600 mt-2">上から教科を選び、難易度を見てシナリオを決定</p>
+    </div>
+    <div class="bg-amber-50 border-2 border-amber-200 rounded-xl p-5 text-center">
+      <div class="text-3xl mb-2">2</div>
+      <h3 class="font-black text-amber-900">GM（進行役）が準備</h3>
+      <p class="text-sm text-gray-600 mt-2">GMページで真相を確認。カードを印刷 or URLを共有</p>
+    </div>
+    <div class="bg-amber-50 border-2 border-amber-200 rounded-xl p-5 text-center">
+      <div class="text-3xl mb-2">3</div>
+      <h3 class="font-black text-amber-900">30〜45分で完結</h3>
+      <p class="text-sm text-gray-600 mt-2">調査 → 議論 → 推理発表。教科の知識で謎を解く！</p>
+    </div>
+  </section>
+
+  <section class="mt-8 bg-white rounded-xl border border-gray-200 p-6 sm:p-8">
     <h2 class="text-2xl font-black mb-4">ナゾトキ探偵団とは？</h2>
     <div class="prose max-w-none text-gray-700">
       <p>
@@ -56,14 +75,6 @@ const orderedSeries = [...seriesGroups.entries()].sort((a, b) => {
       <p>
         すべてのシナリオは<strong>完全無料</strong>。ご家庭での親子プレイから、学校の授業まで幅広くお使いいただけます。
       </p>
-      <h3>遊び方</h3>
-      <ol>
-        <li><strong>シナリオを選ぶ</strong> — 教科やレベルからお好みのシナリオを選択</li>
-        <li><strong>GM（進行役）がGMページを読む</strong> — 保護者や教師が事前に真相を確認</li>
-        <li><strong>プレイヤーページを投影/配布</strong> — プロジェクターやタブレットで共有</li>
-        <li><strong>キャラクターシートを配る</strong> — 各自のスマホ/タブレットで個別に閲覧</li>
-        <li><strong>推理して犯人を当てる！</strong> — 30〜45分で1シナリオ完結</li>
-      </ol>
     </div>
   </section>
 </BaseLayout>

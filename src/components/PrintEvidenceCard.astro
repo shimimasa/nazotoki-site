@@ -1,0 +1,28 @@
+---
+/**
+ * 印刷用 証拠カード — アコーディオンなし、常時展開
+ * ふりがな保持（子ども向け印刷物）
+ */
+import { renderMarkdown } from '../lib/markdown';
+
+interface Props {
+  number: number;
+  title: string;
+  content: string;
+  isCard5?: boolean;
+}
+
+const { number, title, content, isCard5 = false } = Astro.props;
+const html = renderMarkdown(content, true);
+const cleanTitle = title.replace(/^証拠[しょうこ]*カード\d+[：:]?\s*/, '');
+---
+<div class={`print-card ${isCard5 ? 'border-red-600' : ''}`}>
+  <div class="flex items-center gap-2 mb-3">
+    <span class={`inline-flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-bold ${isCard5 ? 'bg-red-600' : 'bg-amber-600'}`}>
+      {number}
+    </span>
+    <span class="font-bold text-base">{cleanTitle}</span>
+    {isCard5 && <span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">GMの指示で配布</span>}
+  </div>
+  <div class="prose prose-sm max-w-none" set:html={html} />
+</div>

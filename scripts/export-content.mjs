@@ -241,6 +241,67 @@ function parseCharacter(id, md) {
   };
 }
 
+// ── GMガイド Web変換 ──────────────────────────
+/**
+ * BOOTH用GMガイドからWeb表示に不適切な印刷セクションを除去・置換する。
+ * - 「印刷チェックリスト」「印刷するもの」セクションを「このサイトでの準備」に置換
+ * - ファイル参照 (`common.md`, `evidence.md` 等) を自然な表現に置換
+ */
+function transformGmGuideForWeb(md, slug) {
+  if (!md) return '';
+
+  // Pattern 1: "## 印刷チェックリスト" — ##レベルのセクション全体を置換
+  // ヘッダー行 + 空行 + チェックリスト項目群 (次の --- or ## まで)
+  md = md.replace(
+    /^##\s*印刷[いんさつ]*チェックリスト[^\n]*\n(?:(?!\n##\s|\n---)[^\n]*\n)*/m,
+    buildWebPrepSection()
+  );
+
+  // Pattern 2: "### 印刷するもの" / "### 印刷物" — ###レベルのセクション
+  md = md.replace(
+    /^###\s*印刷[いんさつ]*(?:するもの|物[いんさつぶつ]*)[^\n]*\n(?:(?!\n###\s|\n##\s|\n---|\n\d+\.\s\*\*)[^\n]*\n)*/m,
+    buildWebPrepSection()
+  );
+
+  // Pattern 3: "1. **印刷するもの:**" — 番号付きリスト内の印刷セクション
+  md = md.replace(
+    /^\d+\.\s*\*\*印刷[いんさつ]*するもの[：:]?\*\*[^\n]*\n(?:\s+- [^\n]+\n)*/m,
+    buildWebPrepSection()
+  );
+
+  // ファイル参照のクリーンアップ
+  md = cleanFileReferences(md);
+  md = md.replace(/GMガイド → GM用に1部\n?/g, '');
+
+  return md;
+}
+
+/**
+ * 全テキストフィールド共通: .md ファイル参照をWeb表現に置換
+ */
+function cleanFileReferences(md) {
+  if (!md) return '';
+  md = md.replace(/`?common\.md`?/g, '共通情報');
+  md = md.replace(/`?evidence\.md`?/g, '証拠カード');
+  md = md.replace(/`?solution\.md`?/g, '解決編');
+  md = md.replace(/`?character-\*\.md`?/g, 'キャラクターシート');
+  md = md.replace(/`?character-[a-z]+\.md`?/g, 'キャラクターシート');
+  md = md.replace(/`?gm-guide\.md`?/g, 'GMガイド');
+  md = md.replace(/`?overview\.md`?/g, 'シナリオ概要');
+  md = md.replace(/`?player-[a-z]+\.md`?/g, 'プレイヤーシート');
+  return md;
+}
+
+function buildWebPrepSection() {
+  return `**このサイトでの準備:**
+- プレイヤーページを参加者に共有（URLまたはQRコード）
+- 印刷して配布する場合は、このページ下部の「GMツール」から「カード一式を印刷」へ
+- ペンとメモ用紙（各プレイヤー分）
+- タイマー（スマホ可）
+- 投票用の紙（人数分）
+`;
+}
+
 // ── slug パーサ ───────────────────────────────
 function parseSlug(slug) {
   for (const key of Object.keys(SERIES_MAP)) {
@@ -379,12 +440,12 @@ async function processScenario(slug) {
     synopsis,
     truth,
     learningGoals,
-    common: commonRaw,
+    common: cleanFileReferences(commonRaw),
     evidenceCards,
     evidence5: card5,
     characters,
-    solution: solutionRaw,
-    gmGuide: gmGuideRaw,
+    solution: cleanFileReferences(solutionRaw),
+    gmGuide: transformGmGuideForWeb(gmGuideRaw, slug),
   };
 
   // Content Collection 用 .md

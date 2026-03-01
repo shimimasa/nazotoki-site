@@ -100,17 +100,77 @@ details.evidence-card[open] summary::after {
   transform: rotate(180deg);
 }
 
-/* ── 印刷用 ────────────────────────── */
+/* ── 印刷カードページ（画面表示用） ── */
+.print-card {
+  border: 2px solid #333;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.print-card-header {
+  font-size: 1.25rem;
+  font-weight: 900;
+  border-bottom: 2px solid #333;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.print-cut-line {
+  border-top: 2px dashed #999;
+  margin: 1.5rem 0;
+  position: relative;
+}
+.print-cut-line::before {
+  content: '✂ 切り取り線';
+  position: absolute;
+  top: -0.7em;
+  left: 1rem;
+  background: white;
+  padding: 0 0.5rem;
+  font-size: 0.75rem;
+  color: #999;
+}
+
+/* ── 振り返りシート（画面表示用） ──── */
+.reflect-field {
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  min-height: 2.5rem;
+  padding: 0.25rem 0.5rem;
+}
+.reflect-field-tall {
+  min-height: 4rem;
+}
+.reflect-dotted-lines {
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 1.75rem,
+    #d1d5db 1.75rem,
+    #d1d5db calc(1.75rem + 1px)
+  );
+}
+
+/* ── 印刷用（全ページ共通） ────────── */
 @media print {
+  @page { size: A4; margin: 12mm 15mm; }
+
   body { font-size: 11pt; }
   .print\:hidden { display: none !important; }
   main { max-width: 100%; padding: 0; }
-  section { break-inside: avoid; page-break-inside: avoid; }
   a { color: inherit; text-decoration: none; }
+
+  /* 証拠カードアコーディオン: 開いた状態で表示 */
   .evidence-card { break-inside: avoid; }
   details.evidence-card[open] summary::after { display: none; }
-  details.evidence-card { border: 1px solid #999; }
-  /* 印刷時は全カードを開いた状態にする */
-  details.evidence-card { display: block; }
+  details.evidence-card { border: 1px solid #999; display: block; }
   details.evidence-card > *:not(summary) { display: block; }
+
+  /* 印刷カードページ: ページ分割 */
+  .print-card { border-color: #000; break-inside: avoid; }
+  .print-card-page { break-after: page; }
+  .print-evidence-pair { break-after: page; }
+
+  /* 振り返りシート */
+  .reflect-field, .reflect-field-tall { border-color: #999; }
 }

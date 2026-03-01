@@ -65,6 +65,7 @@ const learningHtml = renderMarkdown(scenario.learningGoals);
       <li><a href="#gm-guide" class="hover:text-gray-900">GMガイド（進行手順）</a></li>
       <li><a href="#solution" class="hover:text-gray-900">解決編（読み上げ台本）</a></li>
       {scenario.learningGoals && <li><a href="#learning" class="hover:text-gray-900">学習ポイント</a></li>}
+      <li><a href="#gm-tools" class="hover:text-gray-900">GMツール（印刷・振り返り）</a></li>
     </ol>
   </nav>
 
@@ -97,6 +98,38 @@ const learningHtml = renderMarkdown(scenario.learningGoals);
     </section>
   )}
 
+  {/* GMツールセクション */}
+  <section id="gm-tools" class="bg-white rounded-xl border-2 border-gray-300 p-6 sm:p-8 mb-8 print:hidden">
+    <h2 class="text-2xl font-black mb-2">GMツール</h2>
+    <p class="text-sm text-gray-500 mb-5">実施前の準備と実施後の振り返りに使えるツールです。</p>
+    <div class="grid gap-4 sm:grid-cols-2">
+      {/* 実施前 */}
+      <div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
+        <h3 class="font-bold text-amber-900 mb-2">実施前</h3>
+        <a href={`${import.meta.env.BASE_URL}print/${scenario.slug}/`}
+           class="flex items-center gap-2 bg-amber-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-amber-700 transition-colors no-underline text-sm mb-2">
+          <span class="text-lg">🖨</span> カード一式を印刷
+        </a>
+        <p class="text-xs text-amber-800">共通情報・キャラクターカード・証拠カードをA4で一括印刷できます。</p>
+      </div>
+      {/* 実施後 */}
+      <div class="rounded-lg border border-green-200 bg-green-50 p-4">
+        <h3 class="font-bold text-green-900 mb-2">実施後</h3>
+        <a href={`${import.meta.env.BASE_URL}gm/${scenario.slug}/reflect/`}
+           class="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-green-700 transition-colors no-underline text-sm mb-2">
+          <span class="text-lg">📝</span> 振り返りを記録
+        </a>
+        <div class="flex items-center gap-2 mt-2">
+          <a href={`${import.meta.env.BASE_URL}gm/${scenario.slug}/reflect-sheet/`}
+             class="text-xs text-green-800 hover:text-green-900 font-bold underline">
+            印刷用の振り返りシートはこちら
+          </a>
+        </div>
+        <p class="text-xs text-green-800 mt-1">5分で記録。ブラウザに自動保存されます。</p>
+      </div>
+    </div>
+  </section>
+
   {/* 操作ボタン */}
   <div class="flex flex-wrap gap-3 justify-center mt-8 print:hidden">
     <a href={`${import.meta.env.BASE_URL}play/${scenario.slug}/`}
@@ -105,7 +138,7 @@ const learningHtml = renderMarkdown(scenario.learningGoals);
     </a>
     <button onclick="window.print()"
             class="bg-gray-800 text-white px-5 py-2.5 rounded-lg font-bold hover:bg-gray-700 transition-colors text-sm">
-      印刷する
+      このページを印刷する
     </button>
   </div>
 </BaseLayout>

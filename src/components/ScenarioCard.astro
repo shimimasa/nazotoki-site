@@ -15,18 +15,23 @@ interface Props {
 const { slug, title, series, volume, difficulty, synopsis, players, time } = Astro.props;
 const config = getSeriesConfig(series);
 ---
-<a href={`${import.meta.env.BASE_URL}play/${slug}/`}
-   class={`block rounded-lg border-2 ${config.border} ${config.bgLight} p-4 hover:shadow-md transition-shadow no-underline`}>
-  <div class="flex items-start justify-between gap-2">
-    <div>
-      <span class={`text-xs font-bold ${config.text} uppercase`}>Vol.{volume}</span>
-      <h3 class="text-lg font-bold text-gray-900 mt-1 leading-snug">{title}</h3>
+<div class={`rounded-lg border-2 ${config.border} ${config.bgLight} p-4 hover:shadow-md transition-shadow`}>
+  <a href={`${import.meta.env.BASE_URL}play/${slug}/`} class="block no-underline">
+    <div class="flex items-start justify-between gap-2">
+      <div>
+        <span class={`text-xs font-bold ${config.text} uppercase`}>Vol.{volume}</span>
+        <h3 class="text-lg font-bold text-gray-900 mt-1 leading-snug">{title}</h3>
+      </div>
+      <span class="text-sm text-gray-500 whitespace-nowrap">{difficulty}</span>
     </div>
-    <span class="text-sm text-gray-500 whitespace-nowrap">{difficulty}</span>
+    <p class="text-sm text-gray-600 mt-2 line-clamp-2">{synopsis}</p>
+    <div class="flex gap-3 mt-3 text-xs text-gray-500">
+      <span>{players}</span>
+      <span>{time}</span>
+    </div>
+  </a>
+  <div class="flex gap-3 mt-2 pt-2 border-t border-gray-200 text-xs">
+    <a href={`${import.meta.env.BASE_URL}play/${slug}/`} class={`font-bold ${config.text} no-underline hover:underline`}>プレイヤー用</a>
+    <a href={`${import.meta.env.BASE_URL}gm/${slug}/`} class="font-bold text-gray-500 no-underline hover:underline hover:text-gray-700">GM用</a>
   </div>
-  <p class="text-sm text-gray-600 mt-2 line-clamp-2">{synopsis}</p>
-  <div class="flex gap-3 mt-3 text-xs text-gray-500">
-    <span>{players}</span>
-    <span>{time}</span>
-  </div>
-</a>
+</div>

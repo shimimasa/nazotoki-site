@@ -1,0 +1,371 @@
+---
+/**
+ * デジタル振り返りフォーム — localStorage保存、自動保存、履歴表示
+ */
+interface Props {
+  slug: string;
+  title: string;
+  seriesName: string;
+  volume: number;
+}
+
+const { slug, title, seriesName, volume } = Astro.props;
+---
+<div id="reflection-app" data-slug={slug}>
+  {/* 過去記録一覧 */}
+  <section id="history-section" class="mb-8 hidden">
+    <h2 class="text-lg font-bold mb-3">過去の記録</h2>
+    <div id="history-list" class="space-y-2"></div>
+  </section>
+
+  {/* フォーム */}
+  <form id="reflection-form" class="space-y-6">
+    {/* 記録ID（hidden） */}
+    <input type="hidden" id="record-id" value="" />
+
+    {/* セッション情報 */}
+    <fieldset class="bg-white rounded-xl border border-gray-200 p-5">
+      <legend class="text-lg font-bold px-2">セッション情報</legend>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+        <div>
+          <label class="block text-sm font-bold mb-1" for="rf-date">実施日</label>
+          <input type="date" id="rf-date" class="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-bold mb-1" for="rf-students">生徒数</label>
+          <input type="number" id="rf-students" min="1" max="200" class="w-full border border-gray-300 rounded px-3 py-2 text-sm" placeholder="例: 30" />
+        </div>
+        <div>
+          <label class="block text-sm font-bold mb-1" for="rf-grade">学年帯</label>
+          <select id="rf-grade" class="w-full border border-gray-300 rounded px-3 py-2 text-sm">
+            <option value="">選択してください</option>
+            <option value="小1-2">小学1-2年</option>
+            <option value="小3-4">小学3-4年</option>
+            <option value="小5-6">小学5-6年</option>
+            <option value="中学">中学生</option>
+            <option value="高校">高校生</option>
+            <option value="大人">大人</option>
+            <option value="混合">混合</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-bold mb-1" for="rf-duration">実施時間（分）</label>
+          <input type="number" id="rf-duration" min="1" max="300" class="w-full border border-gray-300 rounded px-3 py-2 text-sm" placeholder="例: 45" />
+        </div>
+      </div>
+    </fieldset>
+
+    {/* 時間チェック */}
+    <fieldset class="bg-white rounded-xl border border-gray-200 p-5">
+      <legend class="text-lg font-bold px-2">時間配分</legend>
+      <div class="mt-2 space-y-3">
+        <div>
+          <span class="text-sm font-bold block mb-1">全体の時間</span>
+          <div class="flex gap-4">
+            {['ちょうどよい', '時間超過', '時間余り'].map(opt => (
+              <label class="flex items-center gap-1.5 text-sm cursor-pointer">
+                <input type="radio" name="rf-timing" value={opt} class="w-4 h-4" />
+                {opt}
+              </label>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-bold mb-1" for="rf-longest-phase">最も長かったフェーズ</label>
+          <select id="rf-longest-phase" class="w-full border border-gray-300 rounded px-3 py-2 text-sm">
+            <option value="">選択してください</option>
+            <option value="導入・ルール説明">導入・ルール説明</option>
+            <option value="調査（証拠カード読み）">調査（証拠カード読み）</option>
+            <option value="作戦会議（議論）">作戦会議（議論）</option>
+            <option value="推理発表・投票">推理発表・投票</option>
+            <option value="解決編・振り返り">解決編・振り返り</option>
+          </select>
+        </div>
+      </div>
+    </fieldset>
+
+    {/* 観察ハイライト */}
+    <fieldset class="bg-white rounded-xl border border-gray-200 p-5">
+      <legend class="text-lg font-bold px-2">観察ハイライト</legend>
+      <div class="mt-2 space-y-3">
+        <div>
+          <label class="block text-sm font-bold mb-1" for="rf-highlight">最も盛り上がった場面</label>
+          <textarea id="rf-highlight" rows="2" class="w-full border border-gray-300 rounded px-3 py-2 text-sm" placeholder="例: 証拠カード5を開いた瞬間に「ワビスケだ！」と叫んだ"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-bold mb-1" for="rf-unexpected">想定外の出来事</label>
+          <textarea id="rf-unexpected" rows="2" class="w-full border border-gray-300 rounded px-3 py-2 text-sm" placeholder="例: NPC役を生徒がやりたがった"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-bold mb-1" for="rf-quote">印象的な発言</label>
+          <textarea id="rf-quote" rows="2" class="w-full border border-gray-300 rounded px-3 py-2 text-sm" placeholder="例: 「証拠があるから犯人が分かるんじゃなくて、動機が大事なんだ」"></textarea>
+        </div>
+      </div>
+    </fieldset>
+
+    {/* 評価 */}
+    <fieldset class="bg-white rounded-xl border border-gray-200 p-5">
+      <legend class="text-lg font-bold px-2">評価（5段階）</legend>
+      <div class="mt-2 space-y-4">
+        {[
+          { id: 'rf-participation', label: '参加度（全員が関われたか）' },
+          { id: 'rf-discussion', label: '議論の質（根拠ある発言があったか）' },
+          { id: 'rf-reuse', label: 'また使いたいか' },
+        ].map(item => (
+          <div>
+            <span class="text-sm font-bold block mb-1">{item.label}</span>
+            <div class="flex gap-2">
+              {[1,2,3,4,5].map(n => (
+                <label class="flex items-center gap-1 cursor-pointer">
+                  <input type="radio" name={item.id} value={String(n)} class="w-4 h-4" />
+                  <span class="text-sm">{n}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </fieldset>
+
+    {/* 改善メモ */}
+    <fieldset class="bg-white rounded-xl border border-gray-200 p-5">
+      <legend class="text-lg font-bold px-2">改善メモ</legend>
+      <div class="mt-2 space-y-3">
+        <div>
+          <label class="block text-sm font-bold mb-1" for="rf-improvement">次回への改善案</label>
+          <textarea id="rf-improvement" rows="2" class="w-full border border-gray-300 rounded px-3 py-2 text-sm" placeholder="例: 調査時間を5分延長する"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-bold mb-1" for="rf-memo">自由メモ</label>
+          <textarea id="rf-memo" rows="3" class="w-full border border-gray-300 rounded px-3 py-2 text-sm" placeholder="気づいたことを自由に"></textarea>
+        </div>
+      </div>
+    </fieldset>
+
+    {/* 操作ボタン */}
+    <div class="flex flex-wrap gap-3">
+      <button type="button" id="btn-save" class="bg-green-600 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-green-700 transition-colors text-sm">
+        保存する
+      </button>
+      <button type="button" id="btn-new" class="bg-gray-200 text-gray-800 px-5 py-2.5 rounded-lg font-bold hover:bg-gray-300 transition-colors text-sm">
+        新しい記録を開始
+      </button>
+      <button type="button" id="btn-copy" class="bg-gray-200 text-gray-800 px-5 py-2.5 rounded-lg font-bold hover:bg-gray-300 transition-colors text-sm">
+        テキストコピー
+      </button>
+    </div>
+
+    {/* ステータス表示 */}
+    <div id="save-status" class="text-sm text-green-600 hidden">自動保存しました</div>
+  </form>
+</div>
+
+<script define:vars={{ slug, title, seriesName, volume }}>
+  const STORAGE_KEY = `reflect-${slug}`;
+
+  // --- データ読み書き ---
+  function loadRecords() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    } catch { return []; }
+  }
+
+  function saveRecords(records) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  }
+
+  // --- フォームデータ収集 ---
+  function collectFormData() {
+    const getVal = (id) => document.getElementById(id)?.value || '';
+    const getRadio = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value || '';
+    return {
+      date: getVal('rf-date'),
+      students: getVal('rf-students'),
+      grade: getVal('rf-grade'),
+      duration: getVal('rf-duration'),
+      timing: getRadio('rf-timing'),
+      longestPhase: getVal('rf-longest-phase'),
+      highlight: getVal('rf-highlight'),
+      unexpected: getVal('rf-unexpected'),
+      quote: getVal('rf-quote'),
+      participation: getRadio('rf-participation'),
+      discussion: getRadio('rf-discussion'),
+      reuse: getRadio('rf-reuse'),
+      improvement: getVal('rf-improvement'),
+      memo: getVal('rf-memo'),
+    };
+  }
+
+  // --- フォーム復元 ---
+  function restoreFormData(data) {
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+    const setRadio = (name, val) => {
+      if (!val) return;
+      const el = document.querySelector(`input[name="${name}"][value="${val}"]`);
+      if (el) el.checked = true;
+    };
+    setVal('rf-date', data.date);
+    setVal('rf-students', data.students);
+    setVal('rf-grade', data.grade);
+    setVal('rf-duration', data.duration);
+    setRadio('rf-timing', data.timing);
+    setVal('rf-longest-phase', data.longestPhase);
+    setVal('rf-highlight', data.highlight);
+    setVal('rf-unexpected', data.unexpected);
+    setVal('rf-quote', data.quote);
+    setRadio('rf-participation', data.participation);
+    setRadio('rf-discussion', data.discussion);
+    setRadio('rf-reuse', data.reuse);
+    setVal('rf-improvement', data.improvement);
+    setVal('rf-memo', data.memo);
+  }
+
+  // --- 保存 ---
+  function saveCurrentRecord() {
+    const records = loadRecords();
+    const data = collectFormData();
+    const recordId = document.getElementById('record-id').value;
+
+    if (recordId) {
+      const idx = records.findIndex(r => r.id === recordId);
+      if (idx >= 0) {
+        records[idx] = { ...records[idx], ...data, updatedAt: new Date().toISOString() };
+      }
+    } else {
+      const id = Date.now().toString(36);
+      data.id = id;
+      data.slug = slug;
+      data.title = title;
+      data.createdAt = new Date().toISOString();
+      data.updatedAt = data.createdAt;
+      records.push(data);
+      document.getElementById('record-id').value = id;
+    }
+    saveRecords(records);
+    showStatus();
+    renderHistory();
+  }
+
+  // --- ステータス表示 ---
+  function showStatus() {
+    const el = document.getElementById('save-status');
+    el.classList.remove('hidden');
+    el.textContent = `自動保存しました（${new Date().toLocaleTimeString('ja-JP')}）`;
+    setTimeout(() => el.classList.add('hidden'), 3000);
+  }
+
+  // --- 履歴表示 ---
+  function renderHistory() {
+    const records = loadRecords();
+    const section = document.getElementById('history-section');
+    const list = document.getElementById('history-list');
+    if (records.length === 0) {
+      section.classList.add('hidden');
+      return;
+    }
+    section.classList.remove('hidden');
+    list.innerHTML = records.map(r => `
+      <div class="flex items-center gap-3 bg-gray-50 rounded-lg px-4 py-2 text-sm">
+        <span class="font-bold">${r.date || '日付未入力'}</span>
+        <span class="text-gray-500">${r.grade || ''} ${r.students ? r.students + '人' : ''}</span>
+        <span class="text-gray-400 text-xs">${r.updatedAt ? new Date(r.updatedAt).toLocaleDateString('ja-JP') : ''}</span>
+        <div class="ml-auto flex gap-2">
+          <button data-load="${r.id}" class="text-blue-600 hover:text-blue-800 text-xs font-bold">読み込む</button>
+          <button data-delete="${r.id}" class="text-red-500 hover:text-red-700 text-xs">削除</button>
+        </div>
+      </div>
+    `).join('');
+
+    // イベントバインド
+    list.querySelectorAll('[data-load]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const r = records.find(rec => rec.id === btn.dataset.load);
+        if (r) {
+          document.getElementById('record-id').value = r.id;
+          restoreFormData(r);
+        }
+      });
+    });
+    list.querySelectorAll('[data-delete]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!confirm('この記録を削除しますか？')) return;
+        const updated = records.filter(rec => rec.id !== btn.dataset.delete);
+        saveRecords(updated);
+        if (document.getElementById('record-id').value === btn.dataset.delete) {
+          document.getElementById('record-id').value = '';
+        }
+        renderHistory();
+      });
+    });
+  }
+
+  // --- テキストコピー ---
+  function copyAsText() {
+    const d = collectFormData();
+    const lines = [
+      `【プレイ振り返り】${seriesName} Vol.${volume}「${title}」`,
+      ``,
+      `■ セッション情報`,
+      `実施日: ${d.date || '未入力'}`,
+      `生徒数: ${d.students || '未入力'}人`,
+      `学年帯: ${d.grade || '未入力'}`,
+      `実施時間: ${d.duration || '未入力'}分`,
+      ``,
+      `■ 時間配分`,
+      `全体: ${d.timing || '未入力'}`,
+      `最も長かったフェーズ: ${d.longestPhase || '未入力'}`,
+      ``,
+      `■ 観察ハイライト`,
+      `盛り上がり: ${d.highlight || ''}`,
+      `想定外: ${d.unexpected || ''}`,
+      `印象的発言: ${d.quote || ''}`,
+      ``,
+      `■ 評価（5段階）`,
+      `参加度: ${d.participation || '-'}/5`,
+      `議論の質: ${d.discussion || '-'}/5`,
+      `再利用意向: ${d.reuse || '-'}/5`,
+      ``,
+      `■ 改善メモ`,
+      `改善案: ${d.improvement || ''}`,
+      `メモ: ${d.memo || ''}`,
+    ];
+    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+      const btn = document.getElementById('btn-copy');
+      btn.textContent = 'コピーしました!';
+      setTimeout(() => { btn.textContent = 'テキストコピー'; }, 2000);
+    });
+  }
+
+  // --- 初期化 ---
+  document.addEventListener('DOMContentLoaded', () => {
+    renderHistory();
+
+    // 最新記録を自動読み込み
+    const records = loadRecords();
+    if (records.length > 0) {
+      const latest = records[records.length - 1];
+      document.getElementById('record-id').value = latest.id;
+      restoreFormData(latest);
+    }
+
+    // 自動保存: blur時
+    const form = document.getElementById('reflection-form');
+    form.addEventListener('focusout', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+        saveCurrentRecord();
+      }
+    });
+    // ラジオボタンのchange
+    form.querySelectorAll('input[type="radio"]').forEach(radio => {
+      radio.addEventListener('change', () => saveCurrentRecord());
+    });
+
+    // ボタン
+    document.getElementById('btn-save').addEventListener('click', saveCurrentRecord);
+    document.getElementById('btn-new').addEventListener('click', () => {
+      document.getElementById('record-id').value = '';
+      form.reset();
+    });
+    document.getElementById('btn-copy').addEventListener('click', copyAsText);
+  });
+</script>

@@ -1,0 +1,132 @@
+---
+/**
+ * 振り返り印刷用シート — A4 1枚の手書き記入テンプレート
+ */
+interface Props {
+  title: string;
+  seriesName: string;
+  volume: number;
+  subject: string;
+  players: string;
+  time: string;
+}
+
+const { title, seriesName, volume, subject, players, time } = Astro.props;
+---
+<div class="max-w-3xl mx-auto">
+  {/* ヘッダー */}
+  <div class="border-b-2 border-gray-800 pb-3 mb-4">
+    <div class="flex items-end justify-between">
+      <div>
+        <h1 class="text-xl font-black">プレイ振り返りシート</h1>
+        <p class="text-sm text-gray-600 mt-1">{seriesName} Vol.{volume}「{title}」</p>
+      </div>
+      <div class="text-right text-xs text-gray-500">
+        <p>{subject} / {players.split('（')[0]} / {time}</p>
+      </div>
+    </div>
+  </div>
+
+  {/* セッション情報 */}
+  <section class="mb-4">
+    <h2 class="text-sm font-bold bg-gray-800 text-white px-2 py-1 rounded-sm mb-2">セッション情報</h2>
+    <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+      <div class="flex items-center gap-2">
+        <span class="font-bold whitespace-nowrap w-16">実施日</span>
+        <div class="reflect-field flex-1">　　　年　　月　　日</div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="font-bold whitespace-nowrap w-16">生徒数</span>
+        <div class="reflect-field flex-1">　　　人</div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="font-bold whitespace-nowrap w-16">学年</span>
+        <div class="reflect-field flex-1">　　年生</div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="font-bold whitespace-nowrap w-16">実施時間</span>
+        <div class="reflect-field flex-1">　　　分</div>
+      </div>
+    </div>
+  </section>
+
+  {/* 時間チェック */}
+  <section class="mb-4">
+    <h2 class="text-sm font-bold bg-gray-800 text-white px-2 py-1 rounded-sm mb-2">時間配分</h2>
+    <div class="text-sm space-y-2">
+      <div class="flex items-center gap-4">
+        <span class="font-bold">全体の時間:</span>
+        <label class="flex items-center gap-1"><input type="checkbox" class="w-3.5 h-3.5" />ちょうどよい</label>
+        <label class="flex items-center gap-1"><input type="checkbox" class="w-3.5 h-3.5" />時間超過</label>
+        <label class="flex items-center gap-1"><input type="checkbox" class="w-3.5 h-3.5" />時間余り</label>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="font-bold whitespace-nowrap">最も長かったフェーズ:</span>
+        <div class="reflect-field flex-1"></div>
+      </div>
+    </div>
+  </section>
+
+  {/* 観察ハイライト */}
+  <section class="mb-4">
+    <h2 class="text-sm font-bold bg-gray-800 text-white px-2 py-1 rounded-sm mb-2">観察ハイライト</h2>
+    <div class="text-sm space-y-2">
+      <div>
+        <span class="font-bold">最も盛り上がった場面:</span>
+        <div class="reflect-field reflect-field-tall reflect-dotted-lines mt-1"></div>
+      </div>
+      <div>
+        <span class="font-bold">想定外の出来事 / 印象的な発言:</span>
+        <div class="reflect-field reflect-field-tall reflect-dotted-lines mt-1"></div>
+      </div>
+    </div>
+  </section>
+
+  {/* 評価 */}
+  <section class="mb-4">
+    <h2 class="text-sm font-bold bg-gray-800 text-white px-2 py-1 rounded-sm mb-2">評価（5段階で丸をつける）</h2>
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b border-gray-300">
+          <th class="text-left py-1 pr-4">項目</th>
+          <th class="px-2 py-1">1</th>
+          <th class="px-2 py-1">2</th>
+          <th class="px-2 py-1">3</th>
+          <th class="px-2 py-1">4</th>
+          <th class="px-2 py-1">5</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-gray-200">
+          <td class="py-1.5 pr-4 font-bold">参加度（全員が関われたか）</td>
+          {[1,2,3,4,5].map(n => <td class="text-center px-2 py-1.5">{n}</td>)}
+        </tr>
+        <tr class="border-b border-gray-200">
+          <td class="py-1.5 pr-4 font-bold">議論の質（根拠ある発言があったか）</td>
+          {[1,2,3,4,5].map(n => <td class="text-center px-2 py-1.5">{n}</td>)}
+        </tr>
+        <tr class="border-b border-gray-200">
+          <td class="py-1.5 pr-4 font-bold">また使いたいか</td>
+          {[1,2,3,4,5].map(n => <td class="text-center px-2 py-1.5">{n}</td>)}
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  {/* 改善メモ */}
+  <section class="mb-4">
+    <h2 class="text-sm font-bold bg-gray-800 text-white px-2 py-1 rounded-sm mb-2">改善メモ</h2>
+    <div class="text-sm space-y-2">
+      <div>
+        <span class="font-bold">次回への改善案:</span>
+        <div class="reflect-field reflect-field-tall reflect-dotted-lines mt-1"></div>
+      </div>
+      <div>
+        <span class="font-bold">自由メモ:</span>
+        <div class="reflect-field reflect-field-tall reflect-dotted-lines mt-1"></div>
+      </div>
+    </div>
+  </section>
+
+  <p class="text-xs text-gray-400 text-right mt-2">ナゾトキ探偵団 振り返りシート</p>
+</div>

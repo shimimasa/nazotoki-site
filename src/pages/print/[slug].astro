@@ -1,0 +1,154 @@
+---
+/**
+ * 印刷用カードページ — 1回の Ctrl+P で全カード一括印刷
+ * 共通情報シート + キャラクターカード + 証拠カード
+ * ふりがな保持（子ども向け印刷物）
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PrintCommonSheet from '../../components/PrintCommonSheet.astro';
+import PrintCharacterCard from '../../components/PrintCharacterCard.astro';
+import PrintEvidenceCard from '../../components/PrintEvidenceCard.astro';
+import { loadAllScenarios, type ScenarioData } from '../../lib/data';
+import { getSeriesConfig } from '../../lib/series';
+
+export function getStaticPaths() {
+  const scenarios = loadAllScenarios();
+  return scenarios.map(s => ({
+    params: { slug: s.slug },
+    props: { scenario: s },
+  }));
+}
+
+const { scenario } = Astro.props as { scenario: ScenarioData };
+const config = getSeriesConfig(scenario.series);
+const playableChars = scenario.characters.filter(c => !c.isNPC && c.fullContent);
+const evidenceCards14 = scenario.evidenceCards;
+---
+<BaseLayout
+  title={`印刷用カード: ${scenario.title}`}
+  description={`${scenario.title} の印刷用カード一式`}
+  noIndex={true}
+>
+  {/* 画面表示: 印刷説明 */}
+  <div class="print:hidden mb-8">
+    <nav class="text-sm text-gray-500 mb-6">
+      <a href={import.meta.env.BASE_URL} class="hover:text-gray-700">トップ</a>
+      <span class="mx-1">/</span>
+      <a href={`${import.meta.env.BASE_URL}series/${scenario.series}/`} class={`hover:${config.text}`}>{scenario.seriesName}</a>
+      <span class="mx-1">/</span>
+      <span>印刷用カード</span>
+    </nav>
+
+    <div class={`rounded-xl ${config.bgLight} border-2 ${config.border} p-6 mb-6`}>
+      <span class={`text-xs font-bold ${config.text}`}>
+        {config.emoji} {scenario.seriesName} Vol.{scenario.volume}
+      </span>
+      <h1 class="text-2xl sm:text-3xl font-black mt-2">印刷用カード一式</h1>
+      <p class="text-gray-600 mt-2">{scenario.title}</p>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+      <h2 class="font-bold text-lg mb-3">印刷のしかた</h2>
+      <ol class="list-decimal list-inside space-y-2 text-sm text-gray-700">
+        <li>下のチェックボックスで印刷するセクションを選んでください</li>
+        <li><strong>「印刷する」</strong>ボタンを押すか、<kbd class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">Ctrl</kbd>+<kbd class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">P</kbd> で印刷</li>
+        <li>キャラクターカードは1枚ずつ切り取って、各プレイヤーに配布してください</li>
+      </ol>
+      <p class="text-xs text-gray-500 mt-3">A4用紙推奨。カラー印刷のほうが見やすいですが、白黒でも問題ありません。</p>
+    </div>
+
+    {/* セクション選択 */}
+    <div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+      <h2 class="font-bold text-lg mb-3">印刷するセクション</h2>
+      <div class="space-y-2">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked data-section="common" class="section-toggle w-4 h-4" />
+          <span class="text-sm">共通情報シート（ストーリー・ルール）</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked data-section="characters" class="section-toggle w-4 h-4" />
+          <span class="text-sm">キャラクターカード（{playableChars.length}枚）</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked data-section="evidence" class="section-toggle w-4 h-4" />
+          <span class="text-sm">証拠カード（{evidenceCards14.length + (scenario.evidence5 ? 1 : 0)}枚）</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="flex gap-3">
+      <button onclick="window.print()"
+              class="bg-gray-800 text-white px-6 py-3 rounded-lg font-bold hover:bg-gray-700 transition-colors">
+        印刷する
+      </button>
+      <a href={`${import.meta.env.BASE_URL}gm/${scenario.slug}/`}
+         class="inline-flex items-center bg-gray-200 text-gray-800 px-5 py-3 rounded-lg font-bold hover:bg-gray-300 transition-colors no-underline text-sm">
+        &larr; GMページに戻る
+      </a>
+    </div>
+  </div>
+
+  {/* === 印刷コンテンツ === */}
+
+  {/* 1. 共通情報シート */}
+  <div id="section-common" class="print-card-page">
+    <PrintCommonSheet
+      common={scenario.common}
+      title={scenario.title}
+      seriesName={scenario.seriesName}
+      volume={scenario.volume}
+      players={scenario.players}
+      time={scenario.time}
+      subject={scenario.subject}
+      difficulty={scenario.difficulty}
+    />
+  </div>
+
+  {/* 2. キャラクターカード（各1ページ） */}
+  <div id="section-characters">
+    {playableChars.map(char => (
+      <div class="print-card-page">
+        <PrintCharacterCard
+          name={char.name}
+          scenarioTitle={scenario.title}
+          fullContent={char.fullContent}
+        />
+      </div>
+    ))}
+  </div>
+
+  {/* 3. 証拠カード（2枚/ページ） */}
+  <div id="section-evidence">
+    {evidenceCards14.map((card, i) => (
+      <div class={i % 2 === 1 ? 'print-evidence-pair' : ''}>
+        <PrintEvidenceCard number={card.number} title={card.title} content={card.content} />
+        {i % 2 === 0 && i < evidenceCards14.length - 1 && <div class="print-cut-line"></div>}
+      </div>
+    ))}
+
+    {/* カード5（単独ページ） */}
+    {scenario.evidence5 && (
+      <div class="print-card-page">
+        <PrintEvidenceCard
+          number={5}
+          title={scenario.evidence5.title}
+          content={scenario.evidence5.content}
+          isCard5={true}
+        />
+      </div>
+    )}
+  </div>
+</BaseLayout>
+
+<script>
+  // セクション表示切替
+  document.querySelectorAll<HTMLInputElement>('.section-toggle').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const section = cb.dataset.section;
+      const el = document.getElementById(`section-${section}`);
+      if (el) {
+        el.style.display = cb.checked ? '' : 'none';
+      }
+    });
+  });
+</script>
