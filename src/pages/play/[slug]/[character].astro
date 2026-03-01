@@ -1,0 +1,92 @@
+---
+/**
+ * 個別キャラクターシート — 各自のスマホ/タブレットで閲覧
+ * 秘密情報を含む
+ */
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { loadAllScenarios, type ScenarioData, type Character } from '../../../lib/data';
+import { getSeriesConfig } from '../../../lib/series';
+import { renderMarkdown } from '../../../lib/markdown';
+
+export function getStaticPaths() {
+  const scenarios = loadAllScenarios();
+  const paths: { params: { slug: string; character: string }; props: { scenario: ScenarioData; character: Character } }[] = [];
+  for (const s of scenarios) {
+    for (const c of s.characters.filter(ch => !ch.isNPC && ch.fullContent)) {
+      paths.push({
+        params: { slug: s.slug, character: c.id },
+        props: { scenario: s, character: c },
+      });
+    }
+  }
+  return paths;
+}
+
+const { scenario, character } = Astro.props as { scenario: ScenarioData; character: Character };
+const config = getSeriesConfig(scenario.series);
+const characterHtml = renderMarkdown(character.fullContent);
+---
+<BaseLayout
+  title={`${character.name} | ${scenario.title}`}
+  description={`${scenario.title} のキャラクターシート`}
+  noIndex={true}
+>
+  {/* 秘密警告 */}
+  <div class="bg-red-100 border-2 border-red-400 rounded-xl p-4 mb-6 text-center">
+    <p class="text-red-800 font-bold text-lg">🤫 これはきみだけの秘密の情報だよ！</p>
+    <p class="text-red-700 text-sm mt-1">他の人に見せないでね</p>
+  </div>
+
+  {/* パンくず */}
+  <nav class="text-sm text-gray-500 mb-6 print:hidden">
+    <a href={import.meta.env.BASE_URL} class="hover:text-gray-700">トップ</a>
+    <span class="mx-1">/</span>
+    <a href={`${import.meta.env.BASE_URL}play/${scenario.slug}/`} class="hover:text-gray-700">{scenario.title}</a>
+    <span class="mx-1">/</span>
+    <span>{character.name}</span>
+  </nav>
+
+  {/* キャラヘッダー */}
+  <div class={`rounded-xl ${config.bgLight} border-2 ${config.border} p-6 mb-6`}>
+    <span class={`text-xs font-bold ${config.text}`}>
+      {scenario.seriesName} Vol.{scenario.volume}「{scenario.title}」
+    </span>
+    <h1 class="text-3xl font-black mt-2">{character.name}</h1>
+  </div>
+
+  {/* キャラクターシート */}
+  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+    <div class="prose prose-lg max-w-none character-sheet" set:html={characterHtml} />
+  </section>
+
+  {/* 操作ボタン */}
+  <div class="flex flex-wrap gap-3 justify-center print:hidden">
+    <a href={`${import.meta.env.BASE_URL}play/${scenario.slug}/`}
+       class="inline-block bg-gray-200 text-gray-800 px-5 py-2.5 rounded-lg font-bold hover:bg-gray-300 transition-colors no-underline text-sm">
+      &larr; プレイヤーページに戻る
+    </a>
+    <button onclick="window.print()"
+            class="bg-gray-800 text-white px-5 py-2.5 rounded-lg font-bold hover:bg-gray-700 transition-colors text-sm">
+      印刷する
+    </button>
+  </div>
+</BaseLayout>
+
+<style>
+  .character-sheet :global(h1) {
+    font-size: 1.75rem;
+    font-weight: 900;
+    margin-top: 0;
+  }
+  .character-sheet :global(h3) {
+    font-size: 1.25rem;
+    font-weight: 900;
+    margin-top: 1.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  /* 秘密情報のセクションを目立たせる */
+  .character-sheet :global(h3:has(+ p strong:first-child)) {
+    color: #dc2626;
+  }
+</style>

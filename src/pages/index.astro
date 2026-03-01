@@ -1,0 +1,69 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { loadAllScenarios } from '../lib/data';
+import { SERIES_CONFIG, getSeriesConfig } from '../lib/series';
+
+const scenarios = loadAllScenarios();
+
+// シリーズ別にグループ化
+const seriesGroups = new Map<string, typeof scenarios>();
+for (const s of scenarios) {
+  if (!seriesGroups.has(s.series)) seriesGroups.set(s.series, []);
+  seriesGroups.get(s.series)!.push(s);
+}
+
+// シリーズ順でソート
+const orderedSeries = [...seriesGroups.entries()].sort((a, b) => {
+  const orderA = SERIES_CONFIG[a[0]]?.emoji ? Object.keys(SERIES_CONFIG).indexOf(a[0]) : 99;
+  const orderB = SERIES_CONFIG[b[0]]?.emoji ? Object.keys(SERIES_CONFIG).indexOf(b[0]) : 99;
+  return orderA - orderB;
+});
+---
+<BaseLayout title="ナゾトキ探偵団">
+  <div class="text-center mb-12">
+    <h1 class="text-4xl sm:text-5xl font-black tracking-tight">
+      <span class="text-amber-600">🔍</span> ナゾトキ探偵団
+    </h1>
+    <p class="mt-3 text-lg text-gray-600">AIが作り、人間が考える — 教育マダミス</p>
+    <p class="mt-2 text-sm text-gray-500">全{scenarios.length}シナリオ 無料配布中</p>
+  </div>
+
+  <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    {orderedSeries.map(([series, items]) => {
+      const config = getSeriesConfig(series);
+      return (
+        <a href={`${import.meta.env.BASE_URL}series/${series}/`}
+           class={`block rounded-xl border-2 ${config.border} ${config.bgLight} p-6 hover:shadow-lg transition-shadow no-underline group`}>
+          <div class="text-3xl mb-2">{config.emoji}</div>
+          <h2 class={`text-xl font-black ${config.text}`}>{config.name}</h2>
+          <p class="text-sm text-gray-600 mt-1">{config.subject}</p>
+          <div class="mt-3 flex items-center justify-between">
+            <span class="text-sm text-gray-500">{items.length}シナリオ</span>
+            <span class={`text-sm font-bold ${config.text} group-hover:translate-x-1 transition-transform`}>&rarr;</span>
+          </div>
+        </a>
+      );
+    })}
+  </div>
+
+  <section class="mt-16 bg-white rounded-xl border border-gray-200 p-6 sm:p-8">
+    <h2 class="text-2xl font-black mb-4">ナゾトキ探偵団とは？</h2>
+    <div class="prose max-w-none text-gray-700">
+      <p>
+        「ナゾトキ探偵団」は、<strong>教科の知識を使って謎を解く</strong>教育マダミス（マーダーミステリー）シリーズです。
+        歴史・国語・算数・理科・道徳の5教科をカバーし、遊びながら教科の理解を深められます。
+      </p>
+      <p>
+        すべてのシナリオは<strong>完全無料</strong>。ご家庭での親子プレイから、学校の授業まで幅広くお使いいただけます。
+      </p>
+      <h3>遊び方</h3>
+      <ol>
+        <li><strong>シナリオを選ぶ</strong> — 教科やレベルからお好みのシナリオを選択</li>
+        <li><strong>GM（進行役）がGMページを読む</strong> — 保護者や教師が事前に真相を確認</li>
+        <li><strong>プレイヤーページを投影/配布</strong> — プロジェクターやタブレットで共有</li>
+        <li><strong>キャラクターシートを配る</strong> — 各自のスマホ/タブレットで個別に閲覧</li>
+        <li><strong>推理して犯人を当てる！</strong> — 30〜45分で1シナリオ完結</li>
+      </ol>
+    </div>
+  </section>
+</BaseLayout>

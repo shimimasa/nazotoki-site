@@ -1,0 +1,51 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  noIndex?: boolean;
+}
+
+const { title, description = 'AIが作り、人間が考える — 教育マダミス「ナゾトキ探偵団」', noIndex = false } = Astro.props;
+const siteName = 'ナゾトキ探偵団';
+const fullTitle = title === siteName ? title : `${title} | ${siteName}`;
+---
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content={description} />
+  {noIndex && <meta name="robots" content="noindex" />}
+  <link rel="icon" type="image/svg+xml" href=="/nazotoki-site/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet" />
+  <title>{fullTitle}</title>
+</head>
+<body class="min-h-screen bg-gray-50 text-gray-900 font-sans antialiased">
+  <header class="bg-white border-b border-gray-200 print:hidden">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
+      <a href={import.meta.env.BASE_URL} class="flex items-center gap-2 text-gray-900 hover:text-amber-700 transition-colors no-underline">
+        <span class="text-2xl">🔍</span>
+        <span class="font-black text-lg tracking-tight">ナゾトキ探偵団</span>
+      </a>
+      <span class="text-xs text-gray-400 hidden sm:inline">教育マダミス 無料配布</span>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-8">
+    <slot />
+  </main>
+
+  <footer class="border-t border-gray-200 mt-16 print:hidden">
+    <div class="max-w-5xl mx-auto px-4 py-6 text-center text-sm text-gray-500">
+      <p>ナゾトキ探偵団 &mdash; 教育マダミス無料配布プロジェクト</p>
+      <p class="mt-1">
+        <a href="https://x.com/smz_nazotoki" class="hover:text-gray-700" target="_blank" rel="noopener">@smz_nazotoki</a>
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

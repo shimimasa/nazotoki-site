@@ -1,0 +1,23 @@
+---
+import { renderMarkdown } from '../lib/markdown';
+
+interface Props {
+  number: number;
+  title: string;
+  content: string;
+  isCard5?: boolean;
+}
+
+const { number, title, content, isCard5 = false } = Astro.props;
+const html = renderMarkdown(content);
+---
+<details class={`evidence-card border-2 rounded-lg overflow-hidden ${isCard5 ? 'border-red-400 bg-red-50' : 'border-amber-300 bg-amber-50'}`}>
+  <summary class={`cursor-pointer px-4 py-3 font-bold flex items-center gap-2 ${isCard5 ? 'text-red-800 bg-red-100' : 'text-amber-900 bg-amber-100'} hover:brightness-95 transition`}>
+    <span class={`inline-flex items-center justify-center w-7 h-7 rounded-full text-white text-sm font-bold ${isCard5 ? 'bg-red-600' : 'bg-amber-600'}`}>
+      {number}
+    </span>
+    <span class="text-base">{title.replace(/^証拠[しょうこ]*カード\d+[：:]?\s*/, '')}</span>
+    {isCard5 && <span class="ml-auto text-xs bg-red-200 text-red-700 px-2 py-0.5 rounded">GMの指示で開く</span>}
+  </summary>
+  <div class="px-4 py-3 prose prose-sm max-w-none" set:html={html} />
+</details>

@@ -1,0 +1,137 @@
+---
+/**
+ * GM（進行役）用ページ — ネタバレ含む
+ * 真相、GMガイド、解決編、学習ポイント
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { loadAllScenarios, type ScenarioData } from '../../lib/data';
+import { getSeriesConfig } from '../../lib/series';
+import { renderMarkdown } from '../../lib/markdown';
+
+export function getStaticPaths() {
+  const scenarios = loadAllScenarios();
+  return scenarios.map(s => ({
+    params: { slug: s.slug },
+    props: { scenario: s },
+  }));
+}
+
+const { scenario } = Astro.props as { scenario: ScenarioData };
+const config = getSeriesConfig(scenario.series);
+const truthHtml = renderMarkdown(scenario.truth);
+const gmGuideHtml = renderMarkdown(scenario.gmGuide);
+const solutionHtml = renderMarkdown(scenario.solution);
+const learningHtml = renderMarkdown(scenario.learningGoals);
+---
+<BaseLayout
+  title={`GM用: ${scenario.title}`}
+  description={`${scenario.title} のGM（進行役）向けページ`}
+  noIndex={true}
+>
+  {/* ネタバレ警告 */}
+  <div class="bg-red-600 text-white rounded-xl p-6 mb-8 text-center">
+    <p class="text-2xl font-black">⚠ ネタバレ注意</p>
+    <p class="mt-2">このページにはシナリオの真相が書かれています。</p>
+    <p class="text-sm mt-1 opacity-80">GM（進行役）のみ閲覧してください。プレイヤーは見ないでね！</p>
+  </div>
+
+  {/* パンくず */}
+  <nav class="text-sm text-gray-500 mb-6 print:hidden">
+    <a href={import.meta.env.BASE_URL} class="hover:text-gray-700">トップ</a>
+    <span class="mx-1">/</span>
+    <a href={`${import.meta.env.BASE_URL}series/${scenario.series}/`} class={`hover:${config.text}`}>{scenario.seriesName}</a>
+    <span class="mx-1">/</span>
+    <span>GM用: Vol.{scenario.volume}</span>
+  </nav>
+
+  {/* ヘッダー */}
+  <div class={`rounded-xl ${config.bgLight} border-2 ${config.border} p-6 mb-8`}>
+    <span class={`text-xs font-bold ${config.text}`}>
+      {config.emoji} {scenario.seriesName} Vol.{scenario.volume} — GM用
+    </span>
+    <h1 class="text-3xl font-black mt-2">{scenario.title}</h1>
+    <div class="flex flex-wrap gap-4 mt-3 text-sm text-gray-600">
+      <span>👥 {scenario.players.split('（')[0]}</span>
+      <span>⏱ {scenario.time}</span>
+      <span>📚 {scenario.subject}</span>
+    </div>
+  </div>
+
+  {/* 目次 */}
+  <nav class="bg-white rounded-xl border border-gray-200 p-4 mb-8 print:hidden">
+    <h2 class="font-bold text-sm text-gray-500 mb-2">このページの内容</h2>
+    <ol class="text-sm space-y-1 list-decimal list-inside text-gray-700">
+      <li><a href="#truth" class="hover:text-gray-900">事件の真相</a></li>
+      <li><a href="#gm-guide" class="hover:text-gray-900">GMガイド（進行手順）</a></li>
+      <li><a href="#solution" class="hover:text-gray-900">解決編（読み上げ台本）</a></li>
+      {scenario.learningGoals && <li><a href="#learning" class="hover:text-gray-900">学習ポイント</a></li>}
+    </ol>
+  </nav>
+
+  {/* 事件の真相 */}
+  {scenario.truth && (
+    <section id="truth" class="bg-white rounded-xl border-2 border-red-300 p-6 sm:p-8 mb-8">
+      <h2 class="text-2xl font-black text-red-700 mb-4">🔓 事件の真相</h2>
+      <div class="prose prose-lg max-w-none" set:html={truthHtml} />
+    </section>
+  )}
+
+  {/* GMガイド */}
+  <section id="gm-guide" class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black mb-4">📋 GMガイド</h2>
+    <div class="prose max-w-none gm-content" set:html={gmGuideHtml} />
+  </section>
+
+  {/* 解決編 */}
+  <section id="solution" class="bg-white rounded-xl border-2 border-amber-300 p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black text-amber-800 mb-4">🎬 解決編</h2>
+    <p class="text-sm text-gray-500 mb-4">投票後に、以下をプレイヤーに読み上げてください。</p>
+    <div class="prose prose-lg max-w-none solution-content" set:html={solutionHtml} />
+  </section>
+
+  {/* 学習ポイント */}
+  {scenario.learningGoals && (
+    <section id="learning" class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+      <h2 class="text-2xl font-black mb-4">📝 学習ポイント</h2>
+      <div class="prose max-w-none" set:html={learningHtml} />
+    </section>
+  )}
+
+  {/* 操作ボタン */}
+  <div class="flex flex-wrap gap-3 justify-center mt-8 print:hidden">
+    <a href={`${import.meta.env.BASE_URL}play/${scenario.slug}/`}
+       class="inline-block bg-gray-200 text-gray-800 px-5 py-2.5 rounded-lg font-bold hover:bg-gray-300 transition-colors no-underline text-sm">
+      &larr; プレイヤーページへ
+    </a>
+    <button onclick="window.print()"
+            class="bg-gray-800 text-white px-5 py-2.5 rounded-lg font-bold hover:bg-gray-700 transition-colors text-sm">
+      印刷する
+    </button>
+  </div>
+</BaseLayout>
+
+<style>
+  .gm-content :global(h2) {
+    font-size: 1.5rem;
+    font-weight: 900;
+    margin-top: 2rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  .gm-content :global(h3) {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-top: 1.5rem;
+  }
+  .solution-content :global(h1) {
+    font-size: 2rem;
+    font-weight: 900;
+    text-align: center;
+    color: #92400e;
+  }
+  .solution-content :global(h3) {
+    font-size: 1.25rem;
+    font-weight: 900;
+    margin-top: 1.5rem;
+  }
+</style>
