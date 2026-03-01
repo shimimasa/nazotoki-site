@@ -15,6 +15,7 @@ const ROOT = path.resolve(__dirname, '..');
 const SOURCE = path.resolve(ROOT, '..', 'apps', 'madamisu');
 const CONTENT_OUT = path.resolve(ROOT, 'src', 'content', 'scenarios');
 const DATA_OUT = path.resolve(ROOT, 'src', 'data');
+const IMAGES_DIR = path.resolve(ROOT, 'public', 'images');
 
 // ── シリーズ定義 ──────────────────────────────
 const SERIES_MAP = {
@@ -302,6 +303,65 @@ function buildWebPrepSection() {
 `;
 }
 
+// ── 画像パス検出 ──────────────────────────────
+/**
+ * public/images/{imageSlug}/ から生成済み画像を検出し、
+ * thumbnailUrl と各 character の imageUrl を返す。
+ * imageSlug は assets/images/ のフォルダ名 (例: "moral-01") に対応。
+ */
+async function detectImages(scenarioSlug) {
+  const result = { thumbnailUrl: null, characterImages: {} };
+
+  // scenarioSlug (例: "moral-01-broken-vase") から画像フォルダ名を推定
+  // assets/images/ は "moral-01" 形式で保存されている
+  const possibleImageSlugs = getImageSlugCandidates(scenarioSlug);
+
+  for (const imageSlug of possibleImageSlugs) {
+    const imgDir = path.join(IMAGES_DIR, imageSlug);
+    try {
+      await fs.access(imgDir);
+    } catch {
+      continue;
+    }
+
+    // サムネイル
+    const thumbPath = path.join(imgDir, 'thumb.webp');
+    try {
+      await fs.access(thumbPath);
+      result.thumbnailUrl = `/images/${imageSlug}/thumb.webp`;
+    } catch { /* no thumb */ }
+
+    // キャラ画像
+    try {
+      const files = await fs.readdir(imgDir);
+      for (const f of files) {
+        const m = f.match(/^char-(.+)\.webp$/);
+        if (m) {
+          result.characterImages[m[1]] = `/images/${imageSlug}/${f}`;
+        }
+      }
+    } catch { /* no dir */ }
+
+    break; // 最初に見つかったフォルダを使用
+  }
+
+  return result;
+}
+
+/**
+ * シナリオslug → 画像フォルダ名の候補リスト
+ * "moral-01-broken-vase" → ["moral-01-broken-vase", "moral-01"]
+ */
+function getImageSlugCandidates(slug) {
+  const candidates = [slug];
+  // "{series}-{vol}-{rest}" → "{series}-{vol}" も候補に
+  const match = slug.match(/^([a-z-]+-\d+)-.+$/);
+  if (match) {
+    candidates.push(match[1]);
+  }
+  return candidates;
+}
+
 // ── slug パーサ ───────────────────────────────
 function parseSlug(slug) {
   for (const key of Object.keys(SERIES_MAP)) {
@@ -424,6 +484,16 @@ async function processScenario(slug) {
     }
   }
 
+  // 画像パス検出
+  const images = await detectImages(slug);
+
+  // キャラクターに imageUrl を注入
+  for (const char of characters) {
+    if (images.characterImages[char.id]) {
+      char.imageUrl = images.characterImages[char.id];
+    }
+  }
+
   const data = {
     title,
     fullTitle,
@@ -446,6 +516,7 @@ async function processScenario(slug) {
     characters,
     solution: cleanFileReferences(solutionRaw),
     gmGuide: transformGmGuideForWeb(gmGuideRaw, slug),
+    thumbnailUrl: images.thumbnailUrl || undefined,
   };
 
   // Content Collection 用 .md

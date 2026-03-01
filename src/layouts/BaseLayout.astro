@@ -5,12 +5,14 @@ interface Props {
   title: string;
   description?: string;
   noIndex?: boolean;
+  ogImage?: string;
 }
 
-const { title, description = 'AIが作り、人間が考える — 教育マダミス「ナゾトキ探偵団」', noIndex = false } = Astro.props;
+const { title, description = 'AIが作り、人間が考える — 教育マダミス「ナゾトキ探偵団」', noIndex = false, ogImage } = Astro.props;
 const siteName = 'ナゾトキ探偵団';
 const fullTitle = title === siteName ? title : `${title} | ${siteName}`;
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site).href;
+const ogImageUrl = ogImage ? new URL(`${import.meta.env.BASE_URL}${ogImage.replace(/^\//, '')}`, Astro.site).href : undefined;
 ---
 <!doctype html>
 <html lang="ja">
@@ -26,9 +28,11 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site).href;
   <meta property="og:url" content={canonicalUrl} />
   <meta property="og:site_name" content={siteName} />
   <meta property="og:locale" content="ja_JP" />
+  {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
   <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:card" content={ogImageUrl ? "summary_large_image" : "summary"} />
   <meta name="twitter:site" content="@smz_nazotoki" />
+  {ogImageUrl && <meta name="twitter:image" content={ogImageUrl} />}
   <link rel="canonical" href={canonicalUrl} />
   <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.svg`} />
   <link rel="preconnect" href="https://fonts.googleapis.com" />

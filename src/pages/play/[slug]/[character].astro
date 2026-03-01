@@ -48,10 +48,23 @@ const characterHtml = renderMarkdown(character.fullContent);
 
   {/* キャラヘッダー */}
   <div class={`rounded-xl ${config.bgLight} border-2 ${config.border} p-6 mb-6`}>
-    <span class={`text-xs font-bold ${config.text}`}>
-      {scenario.seriesName} Vol.{scenario.volume}「{scenario.title}」
-    </span>
-    <h1 class="text-3xl font-black mt-2">{character.name}</h1>
+    <div class="flex gap-4 items-center">
+      {character.imageUrl && (
+        <img
+          src={`${import.meta.env.BASE_URL}${character.imageUrl.replace(/^\//, '')}`}
+          alt={character.name}
+          width="96"
+          height="96"
+          class="rounded-full object-cover w-24 h-24 flex-shrink-0 border-2 border-white shadow"
+        />
+      )}
+      <div>
+        <span class={`text-xs font-bold ${config.text}`}>
+          {scenario.seriesName} Vol.{scenario.volume}「{scenario.title}」
+        </span>
+        <h1 class="text-3xl font-black mt-2">{character.name}</h1>
+      </div>
+    </div>
   </div>
 
   {/* キャラクターシート */}

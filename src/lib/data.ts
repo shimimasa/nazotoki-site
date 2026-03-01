@@ -8,6 +8,7 @@ export interface Character {
   introContent: string;
   publicContent: string;
   fullContent: string;
+  imageUrl?: string;
 }
 
 export interface EvidenceCard {
@@ -38,6 +39,7 @@ export interface ScenarioData {
   characters: Character[];
   solution: string;
   gmGuide: string;
+  thumbnailUrl?: string;
 }
 
 /** 全シナリオデータを読み込む */

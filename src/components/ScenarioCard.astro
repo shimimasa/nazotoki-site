@@ -10,24 +10,39 @@ interface Props {
   synopsis: string;
   players: string;
   time: string;
+  thumbnailUrl?: string;
 }
 
-const { slug, title, series, volume, difficulty, synopsis, players, time } = Astro.props;
+const { slug, title, series, volume, difficulty, synopsis, players, time, thumbnailUrl } = Astro.props;
 const config = getSeriesConfig(series);
 ---
 <div class={`rounded-lg border-2 ${config.border} ${config.bgLight} p-4 hover:shadow-md transition-shadow`}>
   <a href={`${import.meta.env.BASE_URL}play/${slug}/`} class="block no-underline">
-    <div class="flex items-start justify-between gap-2">
-      <div>
-        <span class={`text-xs font-bold ${config.text} uppercase`}>Vol.{volume}</span>
-        <h3 class="text-lg font-bold text-gray-900 mt-1 leading-snug">{title}</h3>
+    <div class={`flex gap-3 ${thumbnailUrl ? 'items-start' : ''}`}>
+      {thumbnailUrl && (
+        <img
+          src={`${import.meta.env.BASE_URL}${thumbnailUrl.replace(/^\//, '')}`}
+          alt={title}
+          width="80"
+          height="80"
+          class="rounded-md object-cover w-20 h-20 flex-shrink-0"
+          loading="lazy"
+        />
+      )}
+      <div class="flex-1 min-w-0">
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <span class={`text-xs font-bold ${config.text} uppercase`}>Vol.{volume}</span>
+            <h3 class="text-lg font-bold text-gray-900 mt-1 leading-snug">{title}</h3>
+          </div>
+          <span class="text-sm text-gray-500 whitespace-nowrap">{difficulty}</span>
+        </div>
+        <p class="text-sm text-gray-600 mt-2 line-clamp-2">{synopsis}</p>
+        <div class="flex gap-3 mt-3 text-xs text-gray-500">
+          <span>{players}</span>
+          <span>{time}</span>
+        </div>
       </div>
-      <span class="text-sm text-gray-500 whitespace-nowrap">{difficulty}</span>
-    </div>
-    <p class="text-sm text-gray-600 mt-2 line-clamp-2">{synopsis}</p>
-    <div class="flex gap-3 mt-3 text-xs text-gray-500">
-      <span>{players}</span>
-      <span>{time}</span>
     </div>
   </a>
   <div class="flex gap-3 mt-2 pt-2 border-t border-gray-200 text-xs">

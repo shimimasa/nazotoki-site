@@ -9,14 +9,26 @@ interface Props {
   name: string;
   scenarioTitle: string;
   fullContent: string;
+  imageUrl?: string;
 }
 
-const { name, scenarioTitle, fullContent } = Astro.props;
+const { name, scenarioTitle, fullContent, imageUrl } = Astro.props;
 const html = renderMarkdown(fullContent, true);
 ---
 <section class="print-card">
   <div class="print-card-header flex items-center justify-between">
-    <span>キャラクターカード: {name}</span>
+    <div class="flex items-center gap-2">
+      {imageUrl && (
+        <img
+          src={`${import.meta.env.BASE_URL}${imageUrl.replace(/^\//, '')}`}
+          alt={name}
+          width="40"
+          height="40"
+          class="rounded-full object-cover w-10 h-10"
+        />
+      )}
+      <span>キャラクターカード: {name}</span>
+    </div>
     <span class="text-sm font-normal text-gray-600">{scenarioTitle}</span>
   </div>
   <div class="prose prose-sm max-w-none" set:html={html} />
