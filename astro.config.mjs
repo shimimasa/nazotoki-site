@@ -3,8 +3,7 @@ import tailwindcss from '@astrojs/tailwind';
 import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  site: 'https://shimimasa.github.io',
-  base: '/nazotoki-site/',
+  site: 'https://nazotoki.gamanavi.com',
   integrations: [
     tailwindcss(),
     sitemap({
