@@ -1,0 +1,120 @@
+---
+/**
+ * セッション進行ウィザード — 教員がステップバイステップで授業を進行
+ * Preact island で全インタラクションを処理
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SessionWizard from '../../components/session/SessionWizard';
+import { loadAllScenarios, type ScenarioData } from '../../lib/data';
+import { renderMarkdown } from '../../lib/markdown';
+import QRCode from 'qrcode';
+
+export async function getStaticPaths() {
+  const scenarios = loadAllScenarios();
+  const paths = [];
+
+  for (const s of scenarios) {
+    const playableChars = s.characters.filter(c => !c.isNPC && c.fullContent);
+
+    // QRコードをビルド時に生成
+    const charDataPromises = playableChars.map(async (c) => {
+      const url = `https://nazotoki.gamanavi.com/play/${s.slug}/${c.id}/`;
+      const qrDataUrl = await QRCode.toDataURL(url, {
+        width: 200,
+        margin: 1,
+        color: { dark: '#1f2937', light: '#ffffff' },
+      });
+      return {
+        id: c.id,
+        name: c.name.replace(/[ぁ-ゑん]{2,}/g, ''), // 簡易ふりがな除去
+        role: c.role,
+        url,
+        qrDataUrl,
+      };
+    });
+
+    const playableCharacters = await Promise.all(charDataPromises);
+
+    // 全マークダウンをビルド時にHTML化
+    const sessionData = {
+      slug: s.slug,
+      title: s.title,
+      fullTitle: s.fullTitle,
+      series: s.series,
+      seriesName: s.seriesName,
+      subject: s.subject,
+      players: s.players,
+      age: s.age,
+      time: s.time,
+      difficulty: s.difficulty,
+      synopsisHtml: renderMarkdown(s.synopsis),
+      commonHtml: renderMarkdown(s.common),
+      evidenceCards: s.evidenceCards.map(c => ({
+        number: c.number,
+        title: c.title,
+        contentHtml: renderMarkdown(c.content),
+      })),
+      evidence5: s.evidence5 ? {
+        number: s.evidence5.number,
+        title: s.evidence5.title,
+        contentHtml: renderMarkdown(s.evidence5.content),
+      } : null,
+      gmGuideHtml: renderMarkdown(s.gmGuide),
+      solutionHtml: renderMarkdown(s.solution),
+      learningGoalsHtml: renderMarkdown(s.learningGoals),
+      truthHtml: renderMarkdown(s.truth),
+      playableCharacters,
+      thumbnailUrl: s.thumbnailUrl,
+    };
+
+    paths.push({
+      params: { slug: s.slug },
+      props: { scenario: s, sessionData },
+    });
+  }
+
+  return paths;
+}
+
+const { scenario, sessionData } = Astro.props;
+const siteUrl = Astro.site?.toString() || 'https://nazotoki.gamanavi.com/';
+---
+<BaseLayout
+  title={`セッション: ${scenario.title}`}
+  description={`${scenario.title} のセッション進行モード`}
+  noIndex={true}
+>
+  <SessionWizard
+    client:load
+    data={sessionData}
+    siteUrl={siteUrl}
+  />
+</BaseLayout>
+
+<style is:global>
+  /* GMガイド内のスタイル */
+  .gm-guide-content h2 {
+    font-size: 1.5rem;
+    font-weight: 900;
+    margin-top: 2rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  .gm-guide-content h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-top: 1.5rem;
+  }
+  /* 解決編のスタイル */
+  .solution-content h1 {
+    font-size: 2rem;
+    font-weight: 900;
+    text-align: center;
+    color: #92400e;
+  }
+  .solution-content h3 {
+    font-size: 1.25rem;
+    font-weight: 900;
+    margin-top: 1.5rem;
+  }
+</style>

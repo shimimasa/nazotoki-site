@@ -1,0 +1,86 @@
+import { useEffect, useCallback } from 'preact/hooks';
+
+interface TimerProps {
+  seconds: number;
+  running: boolean;
+  onTick: () => void;
+  onToggle: () => void;
+  onReset: (seconds: number) => void;
+  defaultSeconds: number;
+}
+
+export default function Timer({
+  seconds,
+  running,
+  onTick,
+  onToggle,
+  onReset,
+  defaultSeconds,
+}: TimerProps) {
+  useEffect(() => {
+    if (!running || seconds <= 0) return;
+    const id = setInterval(onTick, 1000);
+    return () => clearInterval(id);
+  }, [running, seconds, onTick]);
+
+  const mm = Math.floor(Math.abs(seconds) / 60)
+    .toString()
+    .padStart(2, '0');
+  const ss = Math.abs(seconds % 60)
+    .toString()
+    .padStart(2, '0');
+  const isOvertime = seconds < 0;
+
+  const handleExtend = useCallback(() => {
+    onReset(seconds + 60);
+  }, [seconds, onReset]);
+
+  const handleReset = useCallback(() => {
+    onReset(defaultSeconds);
+  }, [defaultSeconds, onReset]);
+
+  if (defaultSeconds === 0) return null;
+
+  return (
+    <div class="flex items-center gap-3 select-none">
+      <button
+        onClick={onToggle}
+        class="w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-xl transition-colors"
+        aria-label={running ? '一時停止' : '再開'}
+      >
+        {running ? '⏸' : '▶️'}
+      </button>
+
+      <div
+        class={`font-mono font-black tabular-nums text-center ${
+          isOvertime
+            ? 'text-red-600 animate-pulse'
+            : seconds <= 60
+              ? 'text-amber-600'
+              : 'text-gray-900'
+        }`}
+        style="font-size: clamp(2rem, 6vw, 4rem)"
+      >
+        {isOvertime && '-'}
+        {mm}:{ss}
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <button
+          onClick={handleExtend}
+          class="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+          title="+1分延長"
+        >
+          +1分
+        </button>
+        <button
+          onClick={handleReset}
+          class="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+          title="リセット"
+        >
+          ↺
+        </button>
+      </div>
+    </div>
+  );
+}

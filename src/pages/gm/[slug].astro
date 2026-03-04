@@ -111,6 +111,22 @@ const learningHtml = renderMarkdown(scenario.learningGoals);
     </section>
   )}
 
+  {/* セッションモード */}
+  <section class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-300 p-6 sm:p-8 mb-8 print:hidden">
+    <div class="flex items-center gap-4">
+      <div class="flex-1">
+        <h2 class="text-xl font-black text-amber-900">🎮 セッションモード</h2>
+        <p class="text-sm text-amber-800 mt-1">
+          タイマー付きのステップバイステップ進行。プロジェクター・タブレット対応。
+        </p>
+      </div>
+      <a href={`${import.meta.env.BASE_URL}session/${scenario.slug}/`}
+         class="inline-flex items-center gap-2 bg-amber-500 text-white px-5 py-3 rounded-xl font-bold hover:bg-amber-600 transition-colors no-underline text-sm whitespace-nowrap shadow-md">
+        ▶ セッション開始
+      </a>
+    </div>
+  </section>
+
   {/* GMツールセクション */}
   <section id="gm-tools" class="bg-white rounded-xl border-2 border-gray-300 p-6 sm:p-8 mb-8 print:hidden">
     <h2 class="text-2xl font-black mb-2">GMツール</h2>
