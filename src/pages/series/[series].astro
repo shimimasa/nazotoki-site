@@ -20,6 +20,33 @@ const { series } = Astro.params;
 const { scenarios } = Astro.props;
 const config = getSeriesConfig(series!);
 const curriculum: Record<string, any> = curriculumData;
+
+// 学年ごとにグループ化（ソート用データ準備）
+function gradeToNumber(grade: string): number {
+  if (!grade) return 99;
+  const m = grade.match(/小(\d)/);
+  if (m) return parseInt(m[1]);
+  const m2 = grade.match(/中(\d)/);
+  if (m2) return parseInt(m2[1]) + 6;
+  if (grade.includes('中')) return 7;
+  return 99;
+}
+
+const scenariosWithGrade = scenarios.map(s => {
+  const cur = curriculum[s.slug];
+  return { ...s, grade: cur?.grade, unit: cur?.unit, gradeNum: gradeToNumber(cur?.grade) };
+});
+
+// 学年順ソート版
+const byGrade = [...scenariosWithGrade].sort((a, b) => a.gradeNum - b.gradeNum || a.volume - b.volume);
+
+// 学年でグループ化
+const gradeGroups = new Map<string, typeof byGrade>();
+for (const s of byGrade) {
+  const label = s.grade || '未分類';
+  if (!gradeGroups.has(label)) gradeGroups.set(label, []);
+  gradeGroups.get(label)!.push(s);
+}
 ---
 <BaseLayout title={config.name}>
   <nav class="text-sm text-gray-500 mb-6">
@@ -38,24 +65,89 @@ const curriculum: Record<string, any> = curriculumData;
     </div>
   </div>
 
-  <div class="grid gap-4 sm:grid-cols-2">
-    {scenarios.map(s => {
-      const cur = curriculum[s.slug];
-      return (
-        <ScenarioCard
-          slug={s.slug}
-          title={s.title}
-          series={s.series}
-          volume={s.volume}
-          difficulty={s.difficulty}
-          synopsis={s.synopsis.split('\n')[0]}
-          players={s.players.split('（')[0]}
-          time={s.time}
-          thumbnailUrl={s.thumbnailUrl}
-          grade={cur?.grade}
-          unit={cur?.unit}
-        />
-      );
-    })}
+  {/* ソート切り替え */}
+  <div class="flex gap-2 mb-6 print:hidden">
+    <button id="sort-volume" data-active="true" class={`px-4 py-2 rounded-lg text-sm font-bold border-2 transition-all ${config.border} ${config.bgLight} ${config.text}`}>
+      Vol.順
+    </button>
+    <button id="sort-grade" data-active="false" class={`px-4 py-2 rounded-lg text-sm font-bold border-2 transition-all ${config.border} ${config.bgLight} ${config.text}`}>
+      学年順
+    </button>
+  </div>
+
+  {/* Vol.順（デフォルト表示） */}
+  <div id="list-volume" class="grid gap-4 sm:grid-cols-2">
+    {scenariosWithGrade.map(s => (
+      <ScenarioCard
+        slug={s.slug}
+        title={s.title}
+        series={s.series}
+        volume={s.volume}
+        difficulty={s.difficulty}
+        synopsis={s.synopsis.split('\n')[0]}
+        players={s.players.split('（')[0]}
+        time={s.time}
+        thumbnailUrl={s.thumbnailUrl}
+        grade={s.grade}
+        unit={s.unit}
+      />
+    ))}
+  </div>
+
+  {/* 学年順（初期非表示） */}
+  <div id="list-grade" class="hidden space-y-8">
+    {[...gradeGroups.entries()].map(([grade, items]) => (
+      <div>
+        <h3 class={`text-lg font-black ${config.text} mb-3 flex items-center gap-2`}>
+          <span class={`inline-flex items-center justify-center px-3 py-1 rounded-full text-sm text-white ${config.color}`}>{grade}</span>
+          <span class="text-gray-400 text-sm font-normal">{items.length}シナリオ</span>
+        </h3>
+        <div class="grid gap-4 sm:grid-cols-2">
+          {items.map(s => (
+            <ScenarioCard
+              slug={s.slug}
+              title={s.title}
+              series={s.series}
+              volume={s.volume}
+              difficulty={s.difficulty}
+              synopsis={s.synopsis.split('\n')[0]}
+              players={s.players.split('（')[0]}
+              time={s.time}
+              thumbnailUrl={s.thumbnailUrl}
+              grade={s.grade}
+              unit={s.unit}
+            />
+          ))}
+        </div>
+      </div>
+    ))}
   </div>
 </BaseLayout>
+
+<script>
+  const btnVol = document.getElementById('sort-volume')!;
+  const btnGrade = document.getElementById('sort-grade')!;
+  const listVol = document.getElementById('list-volume')!;
+  const listGrade = document.getElementById('list-grade')!;
+
+  function toggle(showVol: boolean) {
+    listVol.classList.toggle('hidden', !showVol);
+    listGrade.classList.toggle('hidden', showVol);
+    btnVol.setAttribute('data-active', showVol ? 'true' : 'false');
+    btnGrade.setAttribute('data-active', showVol ? 'false' : 'true');
+  }
+
+  btnVol.addEventListener('click', () => toggle(true));
+  btnGrade.addEventListener('click', () => toggle(false));
+</script>
+
+<style>
+  [data-active="true"] {
+    opacity: 1;
+  }
+  [data-active="false"] {
+    opacity: 0.5;
+    background: white !important;
+    border-color: #e5e7eb !important;
+  }
+</style>

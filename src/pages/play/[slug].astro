@@ -23,11 +23,13 @@ const { scenario } = Astro.props as { scenario: ScenarioData };
 const config = getSeriesConfig(scenario.series);
 const commonHtml = renderMarkdown(scenario.common);
 const playableChars = scenario.characters.filter(c => !c.isNPC);
+const npcs = scenario.characters.filter(c => c.isNPC);
 const curriculum: Record<string, any> = curriculumData;
 const cur = curriculum[scenario.slug];
 const seoDesc = cur
   ? `${cur.grade} ${cur.subject}「${cur.unit}」対応。${scenario.synopsis.split('\n')[0]}`
   : scenario.synopsis.split('\n')[0];
+const synopsisFirst = scenario.synopsis.split('\n')[0];
 ---
 <BaseLayout title={scenario.title} description={seoDesc} ogImage={scenario.thumbnailUrl}>
   {/* パンくず */}
@@ -40,47 +42,130 @@ const seoDesc = cur
   </nav>
 
   {/* ヘッダー */}
-  <div class={`rounded-xl ${config.bgLight} border-2 ${config.border} p-6 mb-8`}>
-    <div class={`flex gap-5 ${scenario.thumbnailUrl ? 'items-start' : ''}`}>
-      {scenario.thumbnailUrl && (
-        <img
-          src={`${import.meta.env.BASE_URL}${scenario.thumbnailUrl.replace(/^\//, '')}`}
-          alt={scenario.title}
-          width="120"
-          height="120"
-          class="rounded-lg object-cover w-24 h-24 sm:w-30 sm:h-30 flex-shrink-0"
-        />
-      )}
-      <div>
-        <span class={`text-xs font-bold ${config.text} uppercase`}>
-          {config.emoji} {scenario.seriesName} Vol.{scenario.volume}
-        </span>
-        <h1 class="text-3xl sm:text-4xl font-black mt-2 leading-tight">{scenario.title}</h1>
-        <div class="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
-          <span>👥 {scenario.players.split('（')[0]}</span>
-          <span>⏱ {scenario.time}</span>
-          <span>📚 {scenario.subject}</span>
-          <span>{scenario.difficulty}</span>
-        </div>
-        {cur && (
-          <div class="mt-3 text-sm">
-            <span class="bg-amber-100 text-amber-800 font-bold rounded px-2 py-1">{cur.grade}</span>
-            <span class="ml-2 text-gray-600">{cur.unit}</span>
-          </div>
+  <header class={`rounded-2xl ${config.bgLight} border-2 ${config.border} overflow-hidden mb-8`}>
+    <div class="p-6 sm:p-8">
+      <div class={`flex gap-5 ${scenario.thumbnailUrl ? 'items-start' : ''}`}>
+        {scenario.thumbnailUrl && (
+          <img
+            src={`${import.meta.env.BASE_URL}${scenario.thumbnailUrl.replace(/^\//, '')}`}
+            alt={scenario.title}
+            width="120"
+            height="120"
+            class="rounded-xl object-cover w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 shadow-sm"
+          />
         )}
+        <div class="min-w-0">
+          <span class={`text-xs font-bold ${config.text} uppercase tracking-wide`}>
+            {config.emoji} {scenario.seriesName} Vol.{scenario.volume}
+          </span>
+          <h1 class="text-3xl sm:text-4xl font-black mt-2 leading-tight">{scenario.title}</h1>
+          <p class="text-gray-600 mt-3 text-base leading-relaxed">{synopsisFirst}</p>
+        </div>
       </div>
     </div>
+    {/* メタ情報バー */}
+    <div class={`border-t ${config.border} bg-white/60 px-6 sm:px-8 py-3 flex flex-wrap gap-x-6 gap-y-2 text-sm`}>
+      <span class="flex items-center gap-1.5 text-gray-700"><span class="text-base">👥</span> {scenario.players.split('（')[0]}</span>
+      <span class="flex items-center gap-1.5 text-gray-700"><span class="text-base">⏱</span> {scenario.time}</span>
+      <span class="flex items-center gap-1.5 text-gray-700"><span class="text-base">📚</span> {scenario.subject}</span>
+      <span class="text-gray-700">{scenario.difficulty}</span>
+      {cur && (
+        <>
+          <span class="flex items-center gap-1.5">
+            <span class="bg-amber-100 text-amber-800 font-bold rounded px-2 py-0.5 text-xs">{cur.grade}</span>
+            <span class="text-gray-600">{cur.unit}</span>
+          </span>
+        </>
+      )}
+    </div>
+  </header>
+
+  {/* メインCTA */}
+  <div class="flex flex-wrap gap-3 mb-8 print:hidden">
+    <a href={`${import.meta.env.BASE_URL}session/${scenario.slug}/`}
+       class={`inline-flex items-center gap-2 ${config.color} text-white px-6 py-3 rounded-xl font-bold hover:brightness-110 transition no-underline shadow-md flex-1 sm:flex-none justify-center`}>
+      🎮 セッションモードで始める
+    </a>
+    <a href={`${import.meta.env.BASE_URL}gm/${scenario.slug}/`}
+       class="inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-bold hover:bg-gray-200 transition no-underline flex-1 sm:flex-none justify-center">
+      📋 GM用ページ
+    </a>
   </div>
 
   {/* 共通情報 */}
-  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+  <section class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 mb-8 shadow-sm">
+    <h2 class="text-xl font-black text-gray-800 mb-4 flex items-center gap-2">
+      <span class={`w-1 h-6 rounded-full ${config.color} inline-block`}></span>
+      ストーリー
+    </h2>
     <div class="prose prose-lg max-w-none play-content" set:html={commonHtml} />
   </section>
 
-  {/* 証拠カード 1〜4 */}
+  {/* 登場人物 */}
   <section class="mb-8">
-    <h2 class="text-2xl font-black mb-4">証拠カード</h2>
-    <p class="text-sm text-gray-500 mb-4">タップして証拠を確認しよう。GMの指示に従って順番に開いてね。</p>
+    <h2 class="text-xl font-black text-gray-800 mb-4 flex items-center gap-2">
+      <span class={`w-1 h-6 rounded-full ${config.color} inline-block`}></span>
+      登場人物
+      <span class="text-sm font-normal text-gray-400 ml-1">{playableChars.length}人</span>
+    </h2>
+    <div class="grid gap-3 sm:grid-cols-2">
+      {playableChars.map(char => (
+        <a href={`${import.meta.env.BASE_URL}play/${scenario.slug}/${char.id}/`}
+           class={`group block rounded-xl border-2 ${config.border} bg-white p-4 hover:shadow-lg hover:${config.bgLight} transition-all no-underline`}>
+          <div class="flex gap-4 items-center">
+            {char.imageUrl ? (
+              <img
+                src={`${import.meta.env.BASE_URL}${char.imageUrl.replace(/^\//, '')}`}
+                alt={char.name}
+                width="64"
+                height="64"
+                class="rounded-full object-cover w-14 h-14 flex-shrink-0 ring-2 ring-gray-100"
+                loading="lazy"
+              />
+            ) : (
+              <div class={`w-14 h-14 rounded-full ${config.bgLight} flex items-center justify-center flex-shrink-0`}>
+                <span class="text-2xl">👤</span>
+              </div>
+            )}
+            <div class="min-w-0 flex-1">
+              <h3 class="font-bold text-lg text-gray-900">{char.name}</h3>
+              <p class="text-sm text-gray-500 mt-0.5 line-clamp-1">{char.role}</p>
+            </div>
+            <span class={`text-lg ${config.text} group-hover:translate-x-1 transition-transform`}>&rarr;</span>
+          </div>
+        </a>
+      ))}
+    </div>
+    <p class="text-xs text-gray-400 mt-3 text-center">
+      自分のキャラクターだけを見てね（秘密情報が含まれます）
+    </p>
+  </section>
+
+  {/* NPC情報 */}
+  {npcs.length > 0 && (
+    <section class="mb-8">
+      <div class="bg-gray-50 rounded-xl border border-gray-200 p-4">
+        <h3 class="font-bold text-gray-600 text-sm mb-2">NPC（GMが演じるキャラクター）</h3>
+        <div class="flex flex-wrap gap-3">
+          {npcs.map(char => (
+            <span class="inline-flex items-center gap-1.5 bg-white rounded-lg border border-gray-200 px-3 py-1.5 text-sm">
+              <strong class="text-gray-800">{char.name}</strong>
+              <span class="text-gray-400">—</span>
+              <span class="text-gray-500">{char.role}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  {/* 証拠カード */}
+  <section class="mb-8">
+    <h2 class="text-xl font-black text-gray-800 mb-2 flex items-center gap-2">
+      <span class={`w-1 h-6 rounded-full ${config.color} inline-block`}></span>
+      証拠カード
+    </h2>
+    <p class="text-sm text-gray-400 mb-4">タップして証拠を確認しよう。GMの指示に従って順番に開いてね。</p>
     <div class="space-y-3">
       {scenario.evidenceCards.map(card => (
         <EvidenceCard number={card.number} title={card.title} content={card.content} />
@@ -102,70 +187,24 @@ const seoDesc = cur
     </section>
   )}
 
-  {/* キャラクター一覧 */}
-  <section class="mb-8">
-    <h2 class="text-2xl font-black mb-4">登場人物</h2>
-    <div class="grid gap-3 sm:grid-cols-2">
-      {playableChars.map(char => (
-        <a href={`${import.meta.env.BASE_URL}play/${scenario.slug}/${char.id}/`}
-           class={`block rounded-lg border-2 ${config.border} ${config.bgLight} p-4 hover:shadow-md transition-shadow no-underline`}>
-          <div class="flex gap-3 items-start">
-            {char.imageUrl && (
-              <img
-                src={`${import.meta.env.BASE_URL}${char.imageUrl.replace(/^\//, '')}`}
-                alt={char.name}
-                width="64"
-                height="64"
-                class="rounded-full object-cover w-16 h-16 flex-shrink-0"
-                loading="lazy"
-              />
-            )}
-            <div class="min-w-0">
-              <h3 class="font-bold text-lg text-gray-900">{char.name}</h3>
-              <p class="text-sm text-gray-600 mt-1 line-clamp-2">{char.role}</p>
-              <span class={`inline-block mt-2 text-xs font-bold ${config.text}`}>キャラシートを見る &rarr;</span>
-            </div>
-          </div>
-        </a>
-      ))}
+  {/* フッターリンク */}
+  <div class="mt-12 pt-6 border-t border-gray-200 print:hidden">
+    <div class="flex flex-wrap gap-3 justify-center">
+      <a href={`${import.meta.env.BASE_URL}print/${scenario.slug}/`}
+         class="text-sm text-gray-500 hover:text-gray-700 no-underline flex items-center gap-1">
+        🖨 カード一式を印刷
+      </a>
+      <span class="text-gray-300">|</span>
+      <button onclick="window.print()"
+              class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+        📄 このページを印刷
+      </button>
+      <span class="text-gray-300">|</span>
+      <a href={`${import.meta.env.BASE_URL}series/${scenario.series}/`}
+         class={`text-sm ${config.text} hover:underline no-underline flex items-center gap-1`}>
+        ← {scenario.seriesName}に戻る
+      </a>
     </div>
-    <p class="text-sm text-gray-500 mt-3">
-      各キャラクターシートには秘密情報が含まれます。自分のキャラクターだけを見てね。
-    </p>
-  </section>
-
-  {/* NPC情報 */}
-  {scenario.characters.filter(c => c.isNPC).length > 0 && (
-    <section class="mb-8 bg-gray-100 rounded-lg p-4">
-      <h3 class="font-bold text-gray-700 mb-2">NPC（GMが演じるキャラクター）</h3>
-      <ul class="text-sm text-gray-600 space-y-1">
-        {scenario.characters.filter(c => c.isNPC).map(char => (
-          <li><strong>{char.name}</strong> — {char.role}</li>
-        ))}
-      </ul>
-    </section>
-  )}
-
-  {/* 操作リンク */}
-  <div class="flex flex-wrap gap-3 justify-center mt-12 print:hidden">
-    <a href={`${import.meta.env.BASE_URL}session/${scenario.slug}/`}
-       class="inline-flex items-center gap-2 bg-amber-500 text-white px-5 py-2.5 rounded-lg font-bold hover:bg-amber-600 transition-colors no-underline text-sm shadow-md">
-      🎮 セッションモードで始める
-    </a>
-    <a href={`${import.meta.env.BASE_URL}gm/${scenario.slug}/`}
-       class="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-5 py-2.5 rounded-lg font-bold hover:bg-gray-300 transition-colors no-underline text-sm">
-      GM（進行役）用ページへ
-    </a>
-  </div>
-  <div class="flex flex-wrap gap-3 justify-center mt-3 print:hidden">
-    <a href={`${import.meta.env.BASE_URL}print/${scenario.slug}/`}
-       class="text-sm text-gray-500 hover:text-gray-700 underline">
-      カード一式を印刷する
-    </a>
-    <button onclick="window.print()"
-            class="text-sm text-gray-500 hover:text-gray-700 underline">
-      このページを印刷する
-    </button>
   </div>
 </BaseLayout>
 
