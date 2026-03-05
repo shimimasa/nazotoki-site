@@ -13,7 +13,7 @@ interface Props {
 }
 
 const { number, title, content, isCard5 = false } = Astro.props;
-const html = renderMarkdown(content, true);
+const html = renderMarkdown(content);
 const cleanTitle = title.replace(/^証拠[しょうこ]*カード\d+[：:]?\s*/, '');
 ---
 <div class={`print-card ${isCard5 ? 'border-red-600' : ''}`}>

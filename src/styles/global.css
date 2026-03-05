@@ -75,6 +75,10 @@ html {
 .prose-sm { font-size: 0.875rem; }
 .prose-lg { font-size: 1.125rem; }
 
+/* ── ふりがな（ruby） ────────────────── */
+ruby { ruby-position: over; }
+rt { font-size: 0.6em; color: #666; }
+
 /* ── line-clamp ────────────────────── */
 .line-clamp-2 {
   display: -webkit-box;

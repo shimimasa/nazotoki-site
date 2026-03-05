@@ -17,7 +17,7 @@ interface Props {
 }
 
 const { common, title, seriesName, volume, players, time, subject, difficulty } = Astro.props;
-const commonHtml = renderMarkdown(common, true);
+const commonHtml = renderMarkdown(common);
 ---
 <section class="print-card mb-6">
   <div class="print-card-header flex items-center justify-between">

@@ -13,7 +13,7 @@ interface Props {
 }
 
 const { name, scenarioTitle, fullContent, imageUrl } = Astro.props;
-const html = renderMarkdown(fullContent, true);
+const html = renderMarkdown(fullContent);
 ---
 <section class="print-card">
   <div class="print-card-header flex items-center justify-between">
