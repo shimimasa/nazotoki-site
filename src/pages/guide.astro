@@ -1,0 +1,259 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout
+  title="遊び方ガイド — 教育マダミスとは"
+  description="教育マダミス「ナゾトキ探偵団」の遊び方、準備方法、教育効果を解説。教室でも家庭でも、45分で教科の知識を使った推理ゲームが楽しめます。"
+>
+  <nav class="text-sm text-gray-500 mb-6">
+    <a href={import.meta.env.BASE_URL} class="hover:text-gray-700">トップ</a>
+    <span class="mx-1">/</span>
+    <span>遊び方ガイド</span>
+  </nav>
+
+  <h1 class="text-3xl sm:text-4xl font-black mb-8">遊び方ガイド</h1>
+
+  <!-- 教育マダミスとは -->
+  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black mb-4">教育マダミスとは？</h2>
+    <div class="prose max-w-none text-gray-700">
+      <p>
+        マダミス（マーダーミステリー）は、プレイヤーがそれぞれキャラクターを演じ、会話と証拠をもとに謎を解く推理ゲームです。
+      </p>
+      <p>
+        <strong>教育マダミス</strong>は、この推理ゲームの仕組みを使って<strong>教科の知識で謎を解く</strong>ように設計したものです。
+        殺人事件の代わりに「消えた茶室の名器」「書きかえられたグラフ」「割れた花びん」といった学校生活や歴史を題材にし、
+        算数の計算・理科の実験・歴史の知識・道徳的判断が推理の武器になります。
+      </p>
+    </div>
+  </section>
+
+  <!-- 6教科 -->
+  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black mb-4">6教科のシリーズ</h2>
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <div class="font-black text-amber-800">🕰️ タイムトラベル探偵団</div>
+        <div class="text-sm text-gray-600 mt-1">歴史（社会科）・12本</div>
+        <p class="text-sm text-gray-500 mt-2">歴史上の事件に飛び込み、人物の動機と証拠から真相を推理。教科書の人物が「生きた存在」になります。</p>
+      </div>
+      <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+        <div class="font-black text-indigo-800">📖 名作文学ミステリー</div>
+        <div class="text-sm text-gray-600 mt-1">国語・15本</div>
+        <p class="text-sm text-gray-500 mt-2">「走れメロス」「ごんぎつね」など教科書作品の登場人物が事件に巻き込まれます。作品の読解が推理の鍵に。</p>
+      </div>
+      <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+        <div class="font-black text-purple-800">🎭 マンガ教養ミステリー</div>
+        <div class="text-sm text-gray-600 mt-1">教養（教科横断）・20本</div>
+        <p class="text-sm text-gray-500 mt-2">ホームズ、エジソン、ダ・ヴィンチ。親しみやすい入口から、本物の教養知識へ。</p>
+      </div>
+      <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+        <div class="font-black text-emerald-800">🔢 数字の迷宮</div>
+        <div class="text-sm text-gray-600 mt-1">算数・20本</div>
+        <p class="text-sm text-gray-500 mt-2">速さ・割合・面積・グラフ。算数の公式が「犯人のアリバイを崩す武器」に変わります。</p>
+      </div>
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="font-black text-blue-800">🔬 サイエンス捜査班</div>
+        <div class="text-sm text-gray-600 mt-1">理科・18本</div>
+        <p class="text-sm text-gray-500 mt-2">水溶液・電磁石・天気・光。科学的な知識と実験的思考で事件を解決します。</p>
+      </div>
+      <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+        <div class="font-black text-orange-800">⚖️ 答えのない法廷</div>
+        <div class="text-sm text-gray-600 mt-1">道徳・15本</div>
+        <p class="text-sm text-gray-500 mt-2">犯人がいないシリーズ。「自分ならどうする？」正解のない問いに向き合います。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 遊び方 -->
+  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black mb-4">遊び方</h2>
+    <div class="prose max-w-none text-gray-700">
+      <h3>基本情報</h3>
+      <ul>
+        <li><strong>対象</strong>: 小学3年生〜中学1年生（親子プレイ可能）</li>
+        <li><strong>人数</strong>: 2〜4人 + GM（進行役）1人</li>
+        <li><strong>時間</strong>: 30〜45分</li>
+        <li><strong>準備</strong>: なし（ブラウザのみ）または印刷</li>
+      </ul>
+
+      <h3>ゲームの流れ</h3>
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-4">
+      <div class="bg-gray-50 rounded-lg p-4 text-center">
+        <div class="text-2xl font-black text-amber-600">1</div>
+        <div class="font-bold mt-1">導入</div>
+        <div class="text-sm text-gray-500 mt-1">事件の概要を全員で聞く。共通情報カードを読み合わせ。</div>
+        <div class="text-xs text-gray-400 mt-2">約3分</div>
+      </div>
+      <div class="bg-gray-50 rounded-lg p-4 text-center">
+        <div class="text-2xl font-black text-amber-600">2</div>
+        <div class="font-bold mt-1">調査・探索</div>
+        <div class="text-sm text-gray-500 mt-1">証拠カードを配布。自分のキャラクター情報と証拠を読み、他のプレイヤーと情報交換。</div>
+        <div class="text-xs text-gray-400 mt-2">約15分</div>
+      </div>
+      <div class="bg-gray-50 rounded-lg p-4 text-center">
+        <div class="text-2xl font-black text-amber-600">3</div>
+        <div class="font-bold mt-1">議論・推理</div>
+        <div class="text-sm text-gray-500 mt-1">集めた証拠をもとに全員で議論。「誰が怪しいか」「なぜそう思うか」を論理的に話し合う。</div>
+        <div class="text-xs text-gray-400 mt-2">約15分</div>
+      </div>
+      <div class="bg-gray-50 rounded-lg p-4 text-center">
+        <div class="text-2xl font-black text-amber-600">4</div>
+        <div class="font-bold mt-1">投票・真相</div>
+        <div class="text-sm text-gray-500 mt-1">全員が犯人（または自分の意見）を発表。GMが真相を読み上げ、振り返り。</div>
+        <div class="text-xs text-gray-400 mt-2">約10分</div>
+      </div>
+    </div>
+
+    <div class="prose max-w-none text-gray-700 mt-6">
+      <h3>2つの遊び方</h3>
+
+      <h4>A. セッション進行モード（推奨）</h4>
+      <p>タブレットやPC1台で、ゲーム全体を進行できます。</p>
+      <ol>
+        <li>シナリオを選び「セッション進行」ボタンを押す</li>
+        <li>画面の指示に沿って進行（タイマー・証拠配布・投票が全て画面上で完結）</li>
+        <li>終了後、振り返りを入力して完了</li>
+      </ol>
+      <p>印刷不要、GM経験不要。画面の指示に従うだけで45分のゲームが完結します。</p>
+
+      <h4>B. 印刷して遊ぶ</h4>
+      <p>紙のカードで遊びたい場合はこちら。</p>
+      <ol>
+        <li>GMページから「印刷用カード」を開いて一括出力</li>
+        <li>GMガイドに沿って進行</li>
+        <li>終了後、サイトの振り返りフォームで記録</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- GM（進行役）について -->
+  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black mb-4">GM（進行役）について</h2>
+    <div class="prose max-w-none text-gray-700">
+      <p>
+        GMは「ゲームマスター」の略で、ゲームの進行を担当する人です。
+        保護者・教員・年上の兄姉など、誰でもGMになれます。
+      </p>
+      <p>GMの仕事は3つだけ:</p>
+      <ol>
+        <li><strong>事件の概要を読み上げる</strong>（台本がそのまま書いてあります）</li>
+        <li><strong>証拠カードを配る</strong>（タイミングはガイドに記載）</li>
+        <li><strong>真相を読み上げる</strong>（投票後に台本どおり読むだけ）</li>
+      </ol>
+      <p>
+        全シナリオにGMガイドが付いています。初めてでも問題なく進行できます。
+        セッション進行モードを使えば、GMの負担はさらに軽くなります。
+      </p>
+    </div>
+  </section>
+
+  <!-- 教育効果 -->
+  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black mb-4">期待できる教育効果</h2>
+    <div class="grid gap-4 sm:grid-cols-2 mt-2">
+      <div class="bg-amber-50 rounded-lg p-5 border border-amber-200">
+        <h3 class="font-black text-amber-900">論理的思考力</h3>
+        <p class="text-sm text-gray-600 mt-2">
+          証拠を集め、仮説を立て、論理的に結論を出す。
+          推理ゲームの構造そのものが、論理的思考のトレーニングになっています。
+          国語の「意見文」の書き方と同じ骨格です。
+        </p>
+      </div>
+      <div class="bg-amber-50 rounded-lg p-5 border border-amber-200">
+        <h3 class="font-black text-amber-900">対話力・コミュニケーション</h3>
+        <p class="text-sm text-gray-600 mt-2">
+          自分の推理を伝え、相手の意見を聞き、議論する。
+          「主体的・対話的で深い学び」の実践そのものです。
+          1人で暗記するのではなく、4人で考えます。
+        </p>
+      </div>
+      <div class="bg-amber-50 rounded-lg p-5 border border-amber-200">
+        <h3 class="font-black text-amber-900">教科知識の定着</h3>
+        <p class="text-sm text-gray-600 mt-2">
+          「テストのために覚える公式」が「犯人を捕まえるための武器」に変わります。
+          知識を使う理由があるから、自然に定着します。
+          歴史の人物名も、その人の立場で推理すれば忘れません。
+        </p>
+      </div>
+      <div class="bg-amber-50 rounded-lg p-5 border border-amber-200">
+        <h3 class="font-black text-amber-900">道徳的判断力</h3>
+        <p class="text-sm text-gray-600 mt-2">
+          道徳シリーズには「犯人」がいません。
+          「自分ならどうする？」という正解のない問いに、
+          全員が本気で向き合います。
+          「正しいことをしましょう」と言うだけの授業とは全く違う体験です。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 利用シーン -->
+  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black mb-4">こんな場面で使えます</h2>
+    <div class="prose max-w-none text-gray-700">
+      <h3>教室で</h3>
+      <ul>
+        <li>道徳の授業（答えのない法廷シリーズ）</li>
+        <li>総合的な学習の時間</li>
+        <li>教科の単元まとめ・振り返り（理科の実験後、歴史の時代のまとめ等）</li>
+        <li>学級活動・お楽しみ会</li>
+      </ul>
+
+      <h3>家庭で</h3>
+      <ul>
+        <li>親子の週末の遊び（2人からプレイ可能）</li>
+        <li>きょうだいや友だちとの集まり</li>
+        <li>長期休みの自主学習</li>
+      </ul>
+
+      <h3>その他</h3>
+      <ul>
+        <li>学童保育・放課後教室</li>
+        <li>デイサービス・福祉施設でのレクリエーション</li>
+        <li>図書館イベント</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 教員向けダッシュボード -->
+  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black mb-4">教員向け機能</h2>
+    <div class="prose max-w-none text-gray-700">
+      <h3>セッション進行モード</h3>
+      <p>
+        各シナリオに「セッション進行」ボタンがあります。
+        タイマー管理、証拠カードの表示タイミング、投票、振り返り入力まで、
+        画面1つで授業45分を完結できます。
+      </p>
+
+      <h3>教員ダッシュボード</h3>
+      <p>
+        <a href={`${import.meta.env.BASE_URL}dashboard/`}>ダッシュボード</a>では、
+        過去のセッション履歴を一覧できます。フェーズごとの所要時間、投票結果、
+        子どもたちの振り返りテキストが記録されます。
+        授業研究や次回の改善計画に活用できます。
+      </p>
+
+      <h3>学習指導要領との対応</h3>
+      <p>
+        各シナリオには対応する学年と学習指導要領の単元名が表示されています。
+        「小6理科・水溶液の性質」「小5算数・割合」など、
+        授業で扱う単元に合わせてシナリオを選べます。
+      </p>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="text-center mt-12 mb-8">
+    <a
+      href={import.meta.env.BASE_URL}
+      class="inline-block bg-amber-500 text-white px-8 py-4 rounded-xl font-black text-lg hover:bg-amber-600 transition-colors no-underline"
+    >
+      シナリオを探す →
+    </a>
+    <p class="text-sm text-gray-500 mt-3">全100シナリオ、完全無料</p>
+  </section>
+</BaseLayout>

@@ -1,0 +1,702 @@
+{
+  "time-travel-01-golden-tearoom": {
+    "grade": "小6",
+    "subject": "社会",
+    "unit": "天下統一と近世社会の基礎",
+    "standard": "(2)ア(カ) 織田・豊臣の天下統一",
+    "keywords": "豊臣秀吉、千利休、安土桃山文化、侘び茶"
+  },
+  "time-travel-02-honnoji-night": {
+    "grade": "小6",
+    "subject": "社会",
+    "unit": "天下統一と近世社会の基礎",
+    "standard": "(2)ア(カ) 織田・豊臣の天下統一",
+    "keywords": "織田信長、明智光秀、本能寺の変"
+  },
+  "time-travel-03-dannoura-sword": {
+    "grade": "小6",
+    "subject": "社会",
+    "unit": "武家政治の始まり",
+    "standard": "(2)ア(エ) 源平の戦い",
+    "keywords": "源義経、壇ノ浦の戦い、三種の神器"
+  },
+  "time-travel-04-meiji-letter": {
+    "grade": "小6",
+    "subject": "社会",
+    "unit": "明治の国づくり",
+    "standard": "(2)ア(ク) 明治維新と文明開化",
+    "keywords": "岩倉使節団、不平等条約、治外法権、関税自主権"
+  },
+  "time-travel-05-forged-scroll": {
+    "grade": "小6",
+    "subject": "社会",
+    "unit": "大陸文化の摂取",
+    "standard": "(2)ア(イ) 大陸文化の摂取と律令国家",
+    "keywords": "聖徳太子、遣隋使、小野妹子、日出処の天子"
+  },
+  "time-travel-06-daibutsu-gold": {
+    "grade": "小6",
+    "subject": "社会",
+    "unit": "天平文化",
+    "standard": "(2)ア(ウ) 奈良の大仏と天平文化",
+    "keywords": "聖武天皇、東大寺大仏、天平文化、行基"
+  },
+  "time-travel-07-merchant-ledger": {
+    "grade": "小6/中学",
+    "subject": "社会/歴史",
+    "unit": "町人の文化と新しい学問",
+    "standard": "(2)ア(キ) 江戸の社会と文化",
+    "keywords": "享保の改革、大阪船場、商家、大福帳"
+  },
+  "time-travel-08-taisho-mansion": {
+    "grade": "小6/中学",
+    "subject": "社会/歴史",
+    "unit": "近代化と大正デモクラシー",
+    "standard": "(2)ア(ケ)→中学歴史 大正デモクラシー",
+    "keywords": "大正デモクラシー、洋館建築、書生、舶来品"
+  },
+  "time-travel-09-kamakura-sutra": {
+    "grade": "小6/中学",
+    "subject": "社会/歴史",
+    "unit": "武家政治の発展",
+    "standard": "(2)ア(エ)(オ) 鎌倉幕府と御恩・奉公",
+    "keywords": "蘭溪道隆、建長寺、御恩と奉公、元寇"
+  },
+  "time-travel-10-showa-express": {
+    "grade": "小6/中学",
+    "subject": "社会/歴史",
+    "unit": "戦後の日本と世界",
+    "standard": "(2)ア(コ) 高度経済成長",
+    "keywords": "東京オリンピック1964、東海道新幹線、高度経済成長"
+  },
+  "literature-01-run-melos": {
+    "grade": "小6-中2",
+    "subject": "国語",
+    "unit": "読むこと（文学的文章）",
+    "standard": "C読(1)イ 登場人物の心情・場面の展開",
+    "keywords": "太宰治「走れメロス」※中2教科書採録"
+  },
+  "literature-02-gon-last-gift": {
+    "grade": "小4-5",
+    "subject": "国語",
+    "unit": "読むこと（文学的文章）",
+    "standard": "C読(1)イ 登場人物の気持ちの変化",
+    "keywords": "新美南吉「ごんぎつね」※小4教科書採録"
+  },
+  "literature-03-spiders-thread": {
+    "grade": "小5-中1",
+    "subject": "国語",
+    "unit": "読むこと（文学的文章）",
+    "standard": "C読(1)ウ 主題・表現の効果",
+    "keywords": "芥川龍之介「蜘蛛の糸」※小5-6教科書採録"
+  },
+  "literature-04-restaurant-of-orders": {
+    "grade": "小4-6",
+    "subject": "国語",
+    "unit": "読むこと（文学的文章）",
+    "standard": "C読(1)イ 言葉の表と裏を読む",
+    "keywords": "宮沢賢治「注文の多い料理店」※小5教科書採録"
+  },
+  "literature-05-galaxy-night-testimony": {
+    "grade": "小6-中1",
+    "subject": "国語",
+    "unit": "読むこと（文学的文章）",
+    "standard": "C読(1)ウ 象徴・暗喩の理解",
+    "keywords": "宮沢賢治「銀河鉄道の夜」※中学教科書"
+  },
+  "literature-06-gauche-missing-score": {
+    "grade": "小5-6",
+    "subject": "国語",
+    "unit": "読むこと（文学的文章）",
+    "standard": "C読(1)イ 場面の展開と心情変化",
+    "keywords": "宮沢賢治「セロ弾きのゴーシュ」"
+  },
+  "literature-07-missing-notebook": {
+    "grade": "中1-2",
+    "subject": "国語",
+    "unit": "読むこと（文学的文章）",
+    "standard": "C読(1)エ 作品の構造と表現",
+    "keywords": "夏目漱石「坊っちゃん」"
+  },
+  "literature-08-red-candle-mermaid": {
+    "grade": "小5-6",
+    "subject": "国語",
+    "unit": "読むこと（文学的文章）",
+    "standard": "C読(1)ウ 表現の工夫と効果",
+    "keywords": "小川未明「赤いろうそくと人魚」"
+  },
+  "literature-09-kaguya-sealed-room": {
+    "grade": "小5-中1",
+    "subject": "国語",
+    "unit": "読むこと（古典）",
+    "standard": "C読(1)オ 古典に親しむ",
+    "keywords": "「竹取物語」※小5国語で古典入門"
+  },
+  "literature-10-wild-goose-case": {
+    "grade": "小6-中1",
+    "subject": "国語",
+    "unit": "読むこと（文学的文章）",
+    "standard": "C読(1)ウ 作品の主題を考える",
+    "keywords": "椋鳩十「大造じいさんとガン」※小5教科書採録"
+  },
+  "math-01-alibi-amusement": {
+    "grade": "小5-6",
+    "subject": "算数",
+    "unit": "速さ",
+    "standard": "B測定/C変化と関係(2) 速さ=道のり÷時間",
+    "keywords": "速さ・距離・時間の関係、単位換算"
+  },
+  "math-02-rewritten-passcode": {
+    "grade": "小4-5",
+    "subject": "算数",
+    "unit": "きまり発見・規則性",
+    "standard": "A数と計算 規則性の発見",
+    "keywords": "数列、規則性、場合の数"
+  },
+  "math-03-missing-jewel-box": {
+    "grade": "小5",
+    "subject": "算数",
+    "unit": "体積",
+    "standard": "B図形(1) 直方体・立方体の体積",
+    "keywords": "体積、容積、cm³とL"
+  },
+  "math-04-fake-graph": {
+    "grade": "小5-6",
+    "subject": "算数",
+    "unit": "データの活用",
+    "standard": "D データの活用(1) グラフの読み取り",
+    "keywords": "棒グラフ、折れ線グラフ、統計的な見方"
+  },
+  "math-05-percent-trap": {
+    "grade": "小5",
+    "subject": "算数",
+    "unit": "割合",
+    "standard": "C変化と関係(1) 割合",
+    "keywords": "割合、百分率（%）、歩合"
+  },
+  "math-06-proportion-aquarium": {
+    "grade": "小6",
+    "subject": "算数",
+    "unit": "比例と反比例",
+    "standard": "C変化と関係(1) 比例と反比例",
+    "keywords": "比例、反比例、比例定数"
+  },
+  "math-07-locked-room-venn": {
+    "grade": "小3-6",
+    "subject": "算数",
+    "unit": "データの整理",
+    "standard": "D データの活用 集合・分類",
+    "keywords": "ベン図、集合、分類・整理"
+  },
+  "math-08-speed-trap": {
+    "grade": "小5-6",
+    "subject": "算数",
+    "unit": "速さ",
+    "standard": "B測定/C変化と関係(2) 速さ",
+    "keywords": "分速、時速の換算、距離÷時間"
+  },
+  "math-09-grade-mystery": {
+    "grade": "小6/中1",
+    "subject": "算数/数学",
+    "unit": "データの活用",
+    "standard": "D データの活用(2) 代表値",
+    "keywords": "平均値、中央値、最頻値、ヒストグラム"
+  },
+  "math-10-angle-witness": {
+    "grade": "小4-5",
+    "subject": "算数",
+    "unit": "角の大きさ/図形の角",
+    "standard": "B図形(1) 角の大きさ",
+    "keywords": "角度、三角形の内角の和、分度器"
+  },
+  "science-01-rainbow-crystal": {
+    "grade": "小6",
+    "subject": "理科",
+    "unit": "水溶液の性質",
+    "standard": "A物質・エネルギー(1) 水溶液",
+    "keywords": "酸性・中性・アルカリ性、リトマス紙、溶解"
+  },
+  "science-02-blackout-museum": {
+    "grade": "小3",
+    "subject": "理科",
+    "unit": "光の性質",
+    "standard": "A物質・エネルギー(2) 光",
+    "keywords": "光の直進・反射・屈折、影"
+  },
+  "science-03-missing-butterfly": {
+    "grade": "小3",
+    "subject": "理科",
+    "unit": "昆虫と植物",
+    "standard": "B生命・地球(1) 昆虫の体のつくり",
+    "keywords": "完全変態、さなぎ→羽化、気温と成長速度"
+  },
+  "science-04-missing-ammonite": {
+    "grade": "小6",
+    "subject": "理科",
+    "unit": "大地のつくりと変化",
+    "standard": "B生命・地球(2) 地層と化石",
+    "keywords": "地層の重なり、侵食、化石"
+  },
+  "science-05-storm-alibi": {
+    "grade": "小5",
+    "subject": "理科",
+    "unit": "天気の変化",
+    "standard": "B生命・地球(1) 天気の変化",
+    "keywords": "気象データ、天気図、前線、偏西風"
+  },
+  "science-06-rewritten-star-chart": {
+    "grade": "小4/小6",
+    "subject": "理科",
+    "unit": "月と星/月と太陽",
+    "standard": "B生命・地球(2)(3) 星の動き",
+    "keywords": "星座の季節変化、星の日周運動、星座早見"
+  },
+  "science-07-electromagnet-mystery": {
+    "grade": "小5",
+    "subject": "理科",
+    "unit": "電流がつくる磁力",
+    "standard": "A物質・エネルギー(2) 電磁石",
+    "keywords": "電磁石、コイルの巻き数、電流の向き"
+  },
+  "science-08-shadow-illusion": {
+    "grade": "小3",
+    "subject": "理科",
+    "unit": "太陽と地面の様子",
+    "standard": "B生命・地球(2) 日なたと日かげ",
+    "keywords": "太陽の動き、影の向き、日時計、方角"
+  },
+  "science-09-lever-locked-room": {
+    "grade": "小6",
+    "subject": "理科",
+    "unit": "てこの規則性",
+    "standard": "A物質・エネルギー(2) てこ",
+    "keywords": "てこの原理、支点・力点・作用点、つり合い"
+  },
+  "science-10-sound-testimony": {
+    "grade": "小3/中1",
+    "subject": "理科",
+    "unit": "音のせいしつ/音の世界",
+    "standard": "A物質・エネルギー(3)/中1物理",
+    "keywords": "音の大小と高低、振動、音速"
+  },
+  "popculture-01-lost-wisdom-scroll": {
+    "grade": "小6/中学",
+    "subject": "社会/歴史",
+    "unit": "世界の歴史的人物",
+    "standard": "",
+    "keywords": "始皇帝、焚書坑儒、諸子百家"
+  },
+  "popculture-02-missing-voyage-log": {
+    "grade": "中学",
+    "subject": "社会/歴史",
+    "unit": "世界の動き・大航海時代",
+    "standard": "",
+    "keywords": "コロンブス、大航海時代、地図"
+  },
+  "popculture-03-holmes-deduction": {
+    "grade": "小5-中1",
+    "subject": "国語（論理）",
+    "unit": "論理的思考・読むこと",
+    "standard": "",
+    "keywords": "シャーロック・ホームズ、演繹法、確証バイアス"
+  },
+  "popculture-04-lupin-mask": {
+    "grade": "小5-中1",
+    "subject": "国語（論理）",
+    "unit": "批判的思考・言葉の分析",
+    "standard": "",
+    "keywords": "アルセーヌ・ルパン、変装術、文体分析"
+  },
+  "popculture-05-poe-whodunit": {
+    "grade": "小6-中2",
+    "subject": "国語",
+    "unit": "読むこと（推理小説）",
+    "standard": "",
+    "keywords": "エドガー・アラン・ポー、推理小説の祖"
+  },
+  "popculture-06-prep-room-secret": {
+    "grade": "小5-中1",
+    "subject": "理科/教養",
+    "unit": "科学者の伝記",
+    "standard": "",
+    "keywords": "科学者の発見と倫理"
+  },
+  "popculture-07-olympus-trial": {
+    "grade": "小5-中1",
+    "subject": "社会/国語",
+    "unit": "世界の文化・神話",
+    "standard": "",
+    "keywords": "ギリシャ神話、裁判、弁論術"
+  },
+  "popculture-08-alice-logic": {
+    "grade": "小5-中1",
+    "subject": "算数/国語",
+    "unit": "論理的思考",
+    "standard": "",
+    "keywords": "ルイス・キャロル、論理パズル"
+  },
+  "popculture-09-yokai-framing": {
+    "grade": "小5-中1",
+    "subject": "国語/社会",
+    "unit": "伝統文化・民俗",
+    "standard": "",
+    "keywords": "日本の妖怪文化、鳥山石燕"
+  },
+  "popculture-10-arabian-nights": {
+    "grade": "小5-中1",
+    "subject": "社会/国語",
+    "unit": "世界の文化・物語",
+    "standard": "",
+    "keywords": "千夜一夜物語、イスラム文化"
+  },
+  "moral-01-broken-vase": {
+    "grade": "小3-6",
+    "subject": "道徳",
+    "unit": "A(2)正直，誠実 / B(6)信頼，友情",
+    "standard": "",
+    "keywords": "正直に言う勇気、沈黙は共犯か"
+  },
+  "moral-02-spreading-rumor": {
+    "grade": "小4-中1",
+    "subject": "道徳",
+    "unit": "B(7)相互理解，寛容 / C(12)公正，公平",
+    "standard": "",
+    "keywords": "うわさの拡散、傍観者効果"
+  },
+  "moral-03-missing-letter": {
+    "grade": "小3-5",
+    "subject": "道徳",
+    "unit": "B(6)親切，思いやり / A(1)善悪の判断",
+    "standard": "",
+    "keywords": "善意の行動と意図せぬ結果"
+  },
+  "moral-04-undelivered-presents": {
+    "grade": "小3-5",
+    "subject": "道徳",
+    "unit": "B(6)親切，思いやり / A(3)節度，節制",
+    "standard": "",
+    "keywords": "想いを形にする方法"
+  },
+  "moral-05-broken-trust": {
+    "grade": "小4-6",
+    "subject": "道徳",
+    "unit": "B(8)信頼，友情 / A(2)正直，誠実",
+    "standard": "",
+    "keywords": "約束と信頼の構造"
+  },
+  "moral-06-broken-rules": {
+    "grade": "小4-中1",
+    "subject": "道徳",
+    "unit": "C(10)規則の尊重 / C(11)公正，公平",
+    "standard": "",
+    "keywords": "ルールの意味と例外"
+  },
+  "moral-07-unfair-election": {
+    "grade": "小5-中1",
+    "subject": "道徳",
+    "unit": "C(11)公正，公平 / C(12)社会参画",
+    "standard": "",
+    "keywords": "民主主義、多数決の限界"
+  },
+  "moral-08-missing-medaka": {
+    "grade": "小3-5",
+    "subject": "道徳",
+    "unit": "D(18)生命の尊さ / A(1)善悪の判断",
+    "standard": "",
+    "keywords": "生命への責任、失敗の隠蔽"
+  },
+  "moral-09-letter-in-desk": {
+    "grade": "小4-6",
+    "subject": "道徳",
+    "unit": "B(7)相互理解，寛容 / A(2)正直，誠実",
+    "standard": "",
+    "keywords": "誤解と思い込み、相手の立場"
+  },
+  "moral-10-lie-to-protect": {
+    "grade": "小5-中2",
+    "subject": "道徳",
+    "unit": "A(2)正直，誠実 / B(6)親切，思いやり",
+    "standard": "",
+    "keywords": "嘘の種類、誰を守る嘘か"
+  },
+  "moral-11-skipped-duty": {
+    "grade": "小3-5",
+    "subject": "道徳",
+    "unit": "C(10)規則の尊重 / A(3)節度，節制",
+    "standard": "",
+    "keywords": "責任と公平性、集団での役割"
+  },
+  "time-travel-11-rice-village": {
+    "grade": "小5-中1",
+    "subject": "社会/歴史",
+    "unit": "縄文のむらから古墳のくにへ",
+    "standard": "(2)ア(ア) 狩猟・採集から農耕へ",
+    "keywords": "縄文時代、弥生時代、稲作の伝来、竪穴住居、高床倉庫"
+  },
+  "time-travel-12-golden-pavilion": {
+    "grade": "小5-中1",
+    "subject": "社会/歴史",
+    "unit": "室町文化と力を合わせる民衆",
+    "standard": "(2)ア(オ) 室町文化",
+    "keywords": "足利義政、金閣、銀閣、北山文化、東山文化、雪舟"
+  },
+  "literature-11-shadow-play": {
+    "grade": "小3",
+    "subject": "国語",
+    "unit": "読むこと（文学的文章）",
+    "standard": "C読(1)イ 場面の様子と登場人物の気持ち",
+    "keywords": "あまんきみこ「ちいちゃんのかげおくり」"
+  },
+  "literature-12-one-flower": {
+    "grade": "小4",
+    "subject": "国語",
+    "unit": "読むこと（文学的文章）",
+    "standard": "C読(1)イ 登場人物の気持ちの変化",
+    "keywords": "今西祐行「一つの花」"
+  },
+  "literature-13-mochi-tree": {
+    "grade": "小3",
+    "subject": "国語",
+    "unit": "読むこと（文学的文章）",
+    "standard": "C読(1)イ 場面の様子と登場人物の気持ち",
+    "keywords": "斎藤隆介「モチモチの木」"
+  },
+  "literature-14-butterfly-boy": {
+    "grade": "中1",
+    "subject": "国語",
+    "unit": "読むこと（文学的文章）",
+    "standard": "C読(1)エ 作品の構造と表現",
+    "keywords": "ヘルマン・ヘッセ「少年の日の思い出」"
+  },
+  "literature-15-hometown-silence": {
+    "grade": "中3",
+    "subject": "国語",
+    "unit": "読むこと（文学的文章）",
+    "standard": "C読(1)エ 文章の構成や展開",
+    "keywords": "魯迅「故郷」"
+  },
+  "math-11-fraction-recipe": {
+    "grade": "小5-6",
+    "subject": "算数",
+    "unit": "分数の計算",
+    "standard": "A数と計算(4) 異分母分数の加法・減法",
+    "keywords": "分数の通分、たし算、異分母分数、約分"
+  },
+  "math-12-area-trick": {
+    "grade": "小5",
+    "subject": "算数",
+    "unit": "図形の面積",
+    "standard": "B図形(2) 三角形・平行四辺形の面積",
+    "keywords": "三角形の面積、底辺×高さ÷2、平行四辺形"
+  },
+  "math-13-decimal-report": {
+    "grade": "小4",
+    "subject": "算数",
+    "unit": "小数の計算",
+    "standard": "A数と計算(3) 小数の加法・減法・乗法",
+    "keywords": "小数点の位置、×10・÷10"
+  },
+  "math-14-unit-quantity": {
+    "grade": "小5",
+    "subject": "算数",
+    "unit": "単位量あたりの大きさ",
+    "standard": "C変化と関係(1) 単位量あたりの大きさ",
+    "keywords": "人口密度、単価、速さ"
+  },
+  "math-15-clock-stopped": {
+    "grade": "小3",
+    "subject": "算数",
+    "unit": "時刻と時間",
+    "standard": "C測定(1) 時刻と時間の計算",
+    "keywords": "時刻と時間のちがい、経過時間"
+  },
+  "math-16-change-dagashi": {
+    "grade": "小3-4",
+    "subject": "算数",
+    "unit": "かけ算・わり算の文章題",
+    "standard": "A数と計算(3)(4) かけ算の筆算・わり算",
+    "keywords": "単価×個数＝代金、おつりの計算"
+  },
+  "math-17-fake-treasure-map": {
+    "grade": "小6",
+    "subject": "算数",
+    "unit": "拡大図と縮図",
+    "standard": "B図形(3) 拡大図と縮図",
+    "keywords": "縮尺、地図上の距離と実際の距離"
+  },
+  "math-18-rough-estimate": {
+    "grade": "小4",
+    "subject": "算数",
+    "unit": "概数",
+    "standard": "A数と計算(4) 概数と四捨五入",
+    "keywords": "概数、四捨五入、切り上げ、切り捨て"
+  },
+  "math-19-mirror-symmetry": {
+    "grade": "小6",
+    "subject": "算数",
+    "unit": "対称な図形",
+    "standard": "B図形(1) 線対称・点対称",
+    "keywords": "線対称、点対称、対称の軸"
+  },
+  "math-20-currency-exchange": {
+    "grade": "小6",
+    "subject": "算数",
+    "unit": "小数と分数の混合計算",
+    "standard": "A数と計算(5) 分数と小数の混合計算",
+    "keywords": "小数×分数、通貨の両替"
+  },
+  "science-11-wilted-garden": {
+    "grade": "小5",
+    "subject": "理科",
+    "unit": "植物の発芽と成長",
+    "standard": "B生命・地球(1) 植物の発芽・成長の条件",
+    "keywords": "日光、水、肥料、温度"
+  },
+  "science-12-ice-message": {
+    "grade": "小4",
+    "subject": "理科",
+    "unit": "水の三態変化",
+    "standard": "A物質・エネルギー(2) 水の状態変化",
+    "keywords": "固体・液体・気体、氷→水→水蒸気"
+  },
+  "science-13-candle-clock": {
+    "grade": "小6",
+    "subject": "理科",
+    "unit": "燃焼の仕組み",
+    "standard": "A物質・エネルギー(1) ものの燃え方",
+    "keywords": "燃焼の3条件、ろうそくの燃え方"
+  },
+  "science-14-blackout-lab": {
+    "grade": "小6",
+    "subject": "理科",
+    "unit": "電気の利用",
+    "standard": "A物質・エネルギー(4) 電気の利用",
+    "keywords": "直列・並列回路、ショート回路"
+  },
+  "science-15-lunch-mystery": {
+    "grade": "小6",
+    "subject": "理科",
+    "unit": "人の体のつくりと働き",
+    "standard": "B生命・地球(1) 消化・吸収",
+    "keywords": "消化器官、消化酵素、栄養の吸収"
+  },
+  "science-16-river-evidence": {
+    "grade": "小5",
+    "subject": "理科",
+    "unit": "流れる水の働き",
+    "standard": "B生命・地球(2) 侵食・運搬・堆積",
+    "keywords": "侵食、運搬、堆積"
+  },
+  "science-17-dissolved-clue": {
+    "grade": "小5",
+    "subject": "理科",
+    "unit": "物の溶け方",
+    "standard": "A物質・エネルギー(1) 物の溶け方",
+    "keywords": "溶解、飽和水溶液、結晶、ろ過"
+  },
+  "science-18-biotope-crisis": {
+    "grade": "小6",
+    "subject": "理科",
+    "unit": "生物と環境",
+    "standard": "B生命・地球(3) 生物と環境",
+    "keywords": "食物連鎖、生態系、生物多様性"
+  },
+  "popculture-11-edison-sound": {
+    "grade": "小5-中1",
+    "subject": "理科/社会",
+    "unit": "発明の歴史・科学技術",
+    "standard": "",
+    "keywords": "エジソン、蓄音機、特許"
+  },
+  "popculture-12-nightingale-data": {
+    "grade": "小5-中1",
+    "subject": "算数/保健",
+    "unit": "データの活用・衛生",
+    "standard": "",
+    "keywords": "ナイチンゲール、統計グラフ、衛生"
+  },
+  "popculture-13-davinci-workshop": {
+    "grade": "小5-中1",
+    "subject": "図工/理科",
+    "unit": "ルネサンス・芸術と科学",
+    "standard": "",
+    "keywords": "ダ・ヴィンチ、ルネサンス、発明"
+  },
+  "popculture-14-beethoven-testament": {
+    "grade": "小5-中1",
+    "subject": "音楽/道徳",
+    "unit": "音楽史・障がいと創造",
+    "standard": "",
+    "keywords": "ベートーヴェン、遺書、障がいの克服"
+  },
+  "popculture-15-island-alibi": {
+    "grade": "小5-中1",
+    "subject": "理科/国語",
+    "unit": "冒険文学・自然観察",
+    "standard": "",
+    "keywords": "冒険文学、サバイバル、潮汐"
+  },
+  "popculture-16-tom-sawyer-cave": {
+    "grade": "小5-中1",
+    "subject": "国語/社会",
+    "unit": "アメリカ文学・冒険と友情",
+    "standard": "",
+    "keywords": "マーク・トウェイン、帰納法"
+  },
+  "popculture-17-tokisoba-coin": {
+    "grade": "小5-中1",
+    "subject": "国語/社会",
+    "unit": "日本の伝統芸能・落語",
+    "standard": "",
+    "keywords": "落語「時そば」、話芸"
+  },
+  "popculture-18-kabuki-frame": {
+    "grade": "小5-中1",
+    "subject": "国語/社会",
+    "unit": "日本の伝統芸能・歌舞伎",
+    "standard": "",
+    "keywords": "歌舞伎、隈取、伝統芸能"
+  },
+  "popculture-19-curie-notebook": {
+    "grade": "小5-中1",
+    "subject": "理科/社会",
+    "unit": "女性科学者・放射線の発見",
+    "standard": "",
+    "keywords": "キュリー夫人、放射線、ノーベル賞"
+  },
+  "popculture-20-galileo-trial": {
+    "grade": "小5-中1",
+    "subject": "理科/社会",
+    "unit": "科学革命・地動説",
+    "standard": "",
+    "keywords": "ガリレオ、地動説、異端審問"
+  },
+  "moral-12-cherry-tree": {
+    "grade": "小4-6",
+    "subject": "道徳",
+    "unit": "D(19)自然愛護",
+    "standard": "",
+    "keywords": "自然と安全の対立、合意形成"
+  },
+  "moral-13-nobody-cleaned": {
+    "grade": "小3-5",
+    "subject": "道徳",
+    "unit": "C(13)勤労，公共の精神",
+    "standard": "",
+    "keywords": "責任の連鎖、傍観者効果"
+  },
+  "moral-14-sand-castle": {
+    "grade": "小3-6",
+    "subject": "道徳",
+    "unit": "D(20)感動，畏敬の念",
+    "standard": "",
+    "keywords": "壊れるものの美しさ、創作と喪失"
+  },
+  "moral-15-transfer-lunch": {
+    "grade": "小4-中1",
+    "subject": "道徳",
+    "unit": "C(16)国際理解，国際親善",
+    "standard": "",
+    "keywords": "異文化理解、食文化の違い、多様性"
+  }
+}
