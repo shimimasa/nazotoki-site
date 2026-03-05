@@ -2,8 +2,10 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { loadAllScenarios } from '../lib/data';
 import { SERIES_CONFIG, getSeriesConfig } from '../lib/series';
+import curriculumData from '../data/meta/curriculum.json';
 
 const scenarios = loadAllScenarios();
+const curriculum: Record<string, any> = curriculumData;
 
 // シリーズ別にグループ化
 const seriesGroups = new Map<string, typeof scenarios>();
@@ -18,9 +20,52 @@ const orderedSeries = [...seriesGroups.entries()].sort((a, b) => {
   const orderB = SERIES_CONFIG[b[0]]?.emoji ? Object.keys(SERIES_CONFIG).indexOf(b[0]) : 99;
   return orderA - orderB;
 });
+
+// フィルタ用: 全シナリオの学年リストを抽出
+const gradeSet = new Set<string>();
+for (const s of scenarios) {
+  const cur = curriculum[s.slug];
+  if (cur?.grade) gradeSet.add(cur.grade);
+}
+// 学年ソート（小3→小4→...→中3）
+const grades = [...gradeSet].sort((a, b) => {
+  const toNum = (g: string) => {
+    const m = g.match(/小(\d)/);
+    if (m) return parseInt(m[1]);
+    const m2 = g.match(/中(\d)/);
+    if (m2) return parseInt(m2[1]) + 6;
+    if (g.includes('中')) return 7;
+    return 99;
+  };
+  return toNum(a) - toNum(b);
+});
+
+// フィルタ用データ: シナリオごとの学年・教科を埋め込み
+const filterData = scenarios.map(s => {
+  const cur = curriculum[s.slug];
+  return {
+    slug: s.slug,
+    title: s.title,
+    series: s.series,
+    volume: s.volume,
+    grade: cur?.grade || '',
+    unit: cur?.unit || '',
+    difficulty: s.difficulty,
+    players: s.players.split('（')[0],
+    time: s.time,
+    synopsis: s.synopsis.split('\n')[0],
+    thumbnailUrl: s.thumbnailUrl || '',
+  };
+});
+
+const seriesOptions = Object.entries(SERIES_CONFIG).map(([key, c]) => ({
+  key,
+  name: c.name,
+  emoji: c.emoji,
+}));
 ---
 <BaseLayout title="ナゾトキ探偵団">
-  <div class="text-center mb-12">
+  <div class="text-center mb-10">
     <h1 class="text-4xl sm:text-5xl font-black tracking-tight">
       <span class="text-amber-600">🔍</span> ナゾトキ探偵団
     </h1>
@@ -29,7 +74,8 @@ const orderedSeries = [...seriesGroups.entries()].sort((a, b) => {
     <a href={`${import.meta.env.BASE_URL}guide/`} class="inline-block mt-3 text-sm text-amber-600 font-bold hover:text-amber-700 no-underline">📘 はじめての方はこちら →</a>
   </div>
 
-  <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+  {/* シリーズカード */}
+  <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-12">
     {orderedSeries.map(([series, items]) => {
       const config = getSeriesConfig(series);
       return (
@@ -47,12 +93,43 @@ const orderedSeries = [...seriesGroups.entries()].sort((a, b) => {
     })}
   </div>
 
+  {/* シナリオ検索フィルタ */}
+  <section class="bg-white rounded-xl border border-gray-200 p-6 mb-8" id="search-section">
+    <h2 class="text-2xl font-black mb-4">シナリオを探す</h2>
+    <div class="flex flex-wrap gap-3 mb-4">
+      {/* 教科フィルタ */}
+      <select id="filter-series" class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+        <option value="">すべての教科</option>
+        {seriesOptions.map(s => (
+          <option value={s.key}>{s.emoji} {s.name}</option>
+        ))}
+      </select>
+      {/* 学年フィルタ */}
+      <select id="filter-grade" class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+        <option value="">すべての学年</option>
+        {grades.map(g => (
+          <option value={g}>{g}</option>
+        ))}
+      </select>
+      {/* キーワード検索 */}
+      <input
+        type="text"
+        id="filter-keyword"
+        placeholder="タイトル・単元で検索..."
+        class="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 min-w-[180px]"
+      />
+    </div>
+    <p id="filter-count" class="text-sm text-gray-500 mb-4"></p>
+    <div id="filter-results" class="grid gap-3 sm:grid-cols-2"></div>
+    <p id="filter-empty" class="hidden text-center text-gray-400 py-8">条件に一致するシナリオが見つかりませんでした</p>
+  </section>
+
   {/* はじめてガイド */}
-  <section class="mt-12 grid gap-4 sm:grid-cols-3">
+  <section class="grid gap-4 sm:grid-cols-3">
     <div class="bg-amber-50 border-2 border-amber-200 rounded-xl p-5 text-center">
       <div class="text-3xl mb-2">1</div>
       <h3 class="font-black text-amber-900">シナリオを選ぶ</h3>
-      <p class="text-sm text-gray-600 mt-2">上から教科を選び、難易度を見てシナリオを決定</p>
+      <p class="text-sm text-gray-600 mt-2">教科と学年で絞り込み、シナリオを決定</p>
     </div>
     <div class="bg-amber-50 border-2 border-amber-200 rounded-xl p-5 text-center">
       <div class="text-3xl mb-2">2</div>
@@ -79,3 +156,71 @@ const orderedSeries = [...seriesGroups.entries()].sort((a, b) => {
     </div>
   </section>
 </BaseLayout>
+
+<script define:vars={{ filterData }}>
+  const BASE = document.querySelector('link[rel="canonical"]')?.href.replace(/[^/]*$/, '') || '/';
+
+  const SERIES_COLORS = {
+    'time-travel': { emoji: '🕰️', color: '#92400e' },
+    'literature': { emoji: '📖', color: '#3730a3' },
+    'popculture': { emoji: '🎭', color: '#6b21a8' },
+    'math': { emoji: '🔢', color: '#065f46' },
+    'science': { emoji: '🔬', color: '#1e40af' },
+    'moral': { emoji: '⚖️', color: '#9a3412' },
+  };
+
+  const elSeries = document.getElementById('filter-series');
+  const elGrade = document.getElementById('filter-grade');
+  const elKeyword = document.getElementById('filter-keyword');
+  const elResults = document.getElementById('filter-results');
+  const elCount = document.getElementById('filter-count');
+  const elEmpty = document.getElementById('filter-empty');
+
+  function renderResults() {
+    const series = elSeries.value;
+    const grade = elGrade.value;
+    const keyword = elKeyword.value.trim().toLowerCase();
+
+    const filtered = filterData.filter(s => {
+      if (series && s.series !== series) return false;
+      if (grade && !s.grade.includes(grade)) return false;
+      if (keyword && !s.title.toLowerCase().includes(keyword) && !s.unit.toLowerCase().includes(keyword)) return false;
+      return true;
+    });
+
+    elCount.textContent = `${filtered.length}件のシナリオ`;
+    elEmpty.classList.toggle('hidden', filtered.length > 0);
+
+    elResults.innerHTML = filtered.map(s => {
+      const c = SERIES_COLORS[s.series] || SERIES_COLORS['time-travel'];
+      const thumb = s.thumbnailUrl
+        ? `<img src="${BASE}${s.thumbnailUrl.replace(/^\//, '')}" alt="" width="60" height="60" class="rounded-md object-cover w-14 h-14 flex-shrink-0" loading="lazy" />`
+        : '';
+      const gradeBadge = s.grade
+        ? `<span class="inline-block mt-1 text-xs bg-amber-50 text-amber-700 rounded px-1.5 py-0.5">${s.grade}${s.unit ? ' | ' + s.unit : ''}</span>`
+        : '';
+      return `
+        <a href="${BASE}play/${s.slug}/" class="flex gap-3 items-start rounded-lg border border-gray-200 p-3 hover:shadow-md transition-shadow no-underline bg-white">
+          ${thumb}
+          <div class="min-w-0 flex-1">
+            <div class="text-xs font-bold" style="color:${c.color}">${c.emoji} Vol.${s.volume}</div>
+            <div class="font-bold text-gray-900 text-sm mt-0.5 leading-snug">${s.title}</div>
+            <p class="text-xs text-gray-500 mt-1 line-clamp-1">${s.synopsis}</p>
+            ${gradeBadge}
+            <div class="flex gap-2 mt-1 text-xs text-gray-400">
+              <span>${s.players}</span>
+              <span>${s.time}</span>
+              <span>${s.difficulty}</span>
+            </div>
+          </div>
+        </a>
+      `;
+    }).join('');
+  }
+
+  elSeries.addEventListener('change', renderResults);
+  elGrade.addEventListener('change', renderResults);
+  elKeyword.addEventListener('input', renderResults);
+
+  renderResults();
+</script>

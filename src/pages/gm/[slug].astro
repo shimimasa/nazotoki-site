@@ -174,11 +174,11 @@ const cur = curriculum[scenario.slug];
   {/* 操作ボタン */}
   <div class="flex flex-wrap gap-3 justify-center mt-8 print:hidden">
     <a href={`${import.meta.env.BASE_URL}play/${scenario.slug}/`}
-       class="inline-block bg-gray-200 text-gray-800 px-5 py-2.5 rounded-lg font-bold hover:bg-gray-300 transition-colors no-underline text-sm">
-      &larr; プレイヤーページへ
+       class="inline-block bg-gray-100 text-gray-700 px-5 py-2.5 rounded-xl font-bold hover:bg-gray-200 transition-colors no-underline text-sm">
+      ← プレイヤーページへ
     </a>
     <button onclick="window.print()"
-            class="bg-gray-800 text-white px-5 py-2.5 rounded-lg font-bold hover:bg-gray-700 transition-colors text-sm">
+            class="bg-gray-800 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-gray-700 transition-colors text-sm">
       このページを印刷する
     </button>
   </div>

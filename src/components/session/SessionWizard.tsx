@@ -138,6 +138,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   }, []);
 
   const handleComplete = useCallback(async () => {
+    if (!confirm('セッションを完了しますか？\n（完了後はデータが保存されます）')) return;
     setSaving(true);
 
     // Calculate phase durations

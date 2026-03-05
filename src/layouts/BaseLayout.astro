@@ -99,12 +99,41 @@ const ogImageUrl = ogImage ? new URL(`${import.meta.env.BASE_URL}${ogImage.repla
     <slot />
   </main>
 
-  <footer class="border-t border-gray-200 mt-16 print:hidden">
-    <div class="max-w-5xl mx-auto px-4 py-6 text-center text-sm text-gray-500">
-      <p>ナゾトキ探偵団 &mdash; 教育マダミス無料配布プロジェクト</p>
-      <p class="mt-1">
-        <a href="https://x.com/smz_nazotoki" class="hover:text-gray-700" target="_blank" rel="noopener">@smz_nazotoki</a>
-      </p>
+  <footer class="border-t border-gray-200 mt-16 print:hidden bg-gray-50">
+    <div class="max-w-5xl mx-auto px-4 py-8">
+      <div class="grid gap-8 sm:grid-cols-3">
+        {/* シリーズ */}
+        <div>
+          <h3 class="font-bold text-sm text-gray-700 mb-3">シリーズ</h3>
+          <ul class="space-y-1.5 text-sm text-gray-500">
+            <li><a href={`${import.meta.env.BASE_URL}series/time-travel/`} class="hover:text-gray-700 no-underline">🕰️ タイムトラベル探偵団</a></li>
+            <li><a href={`${import.meta.env.BASE_URL}series/literature/`} class="hover:text-gray-700 no-underline">📖 名作文学ミステリー</a></li>
+            <li><a href={`${import.meta.env.BASE_URL}series/popculture/`} class="hover:text-gray-700 no-underline">🎭 マンガ教養ミステリー</a></li>
+            <li><a href={`${import.meta.env.BASE_URL}series/math/`} class="hover:text-gray-700 no-underline">🔢 数字の迷宮</a></li>
+            <li><a href={`${import.meta.env.BASE_URL}series/science/`} class="hover:text-gray-700 no-underline">🔬 サイエンス捜査班</a></li>
+            <li><a href={`${import.meta.env.BASE_URL}series/moral/`} class="hover:text-gray-700 no-underline">⚖️ 答えのない法廷</a></li>
+          </ul>
+        </div>
+        {/* ガイド・ツール */}
+        <div>
+          <h3 class="font-bold text-sm text-gray-700 mb-3">ガイド・ツール</h3>
+          <ul class="space-y-1.5 text-sm text-gray-500">
+            <li><a href={`${import.meta.env.BASE_URL}guide/`} class="hover:text-gray-700 no-underline">📘 遊び方ガイド</a></li>
+            <li><a href={`${import.meta.env.BASE_URL}dashboard/`} class="hover:text-gray-700 no-underline">📊 教員ダッシュボード</a></li>
+          </ul>
+        </div>
+        {/* リンク */}
+        <div>
+          <h3 class="font-bold text-sm text-gray-700 mb-3">リンク</h3>
+          <ul class="space-y-1.5 text-sm text-gray-500">
+            <li><a href="https://x.com/smz_nazotoki" class="hover:text-gray-700 no-underline" target="_blank" rel="noopener">X (@smz_nazotoki)</a></li>
+            <li><a href="https://note.com/masa0714" class="hover:text-gray-700 no-underline" target="_blank" rel="noopener">note</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-gray-200 mt-6 pt-4 text-center text-xs text-gray-400">
+        <p>ナゾトキ探偵団 &mdash; AIが作り、人間が考える教育マダミス &mdash; 全100シナリオ無料配布</p>
+      </div>
     </div>
   </footer>
   <!-- Goatcounter: 無料・Cookie不使用・プライバシーフレンドリー -->
