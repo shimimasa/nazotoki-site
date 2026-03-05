@@ -11,10 +11,24 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <span>遊び方ガイド</span>
   </nav>
 
-  <h1 class="text-3xl sm:text-4xl font-black mb-8">遊び方ガイド</h1>
+  <h1 class="text-3xl sm:text-4xl font-black mb-6">遊び方ガイド</h1>
+
+  {/* 目次 */}
+  <nav class="bg-white rounded-xl border border-gray-200 p-5 mb-8">
+    <h2 class="font-bold text-sm text-gray-500 mb-3">このページの内容</h2>
+    <ol class="grid sm:grid-cols-2 gap-x-6 gap-y-1 text-sm list-decimal list-inside text-gray-700">
+      <li><a href="#what" class="hover:text-amber-700">教育マダミスとは？</a></li>
+      <li><a href="#series" class="hover:text-amber-700">6教科のシリーズ</a></li>
+      <li><a href="#how-to-play" class="hover:text-amber-700">遊び方</a></li>
+      <li><a href="#gm" class="hover:text-amber-700">GM（進行役）について</a></li>
+      <li><a href="#effects" class="hover:text-amber-700">期待できる教育効果</a></li>
+      <li><a href="#scenes" class="hover:text-amber-700">こんな場面で使えます</a></li>
+      <li><a href="#teacher" class="hover:text-amber-700">教員向け機能</a></li>
+    </ol>
+  </nav>
 
   <!-- 教育マダミスとは -->
-  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+  <section id="what" class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8 scroll-mt-4">
     <h2 class="text-2xl font-black mb-4">教育マダミスとは？</h2>
     <div class="prose max-w-none text-gray-700">
       <p>
@@ -29,7 +43,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   </section>
 
   <!-- 6教科 -->
-  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+  <section id="series" class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8 scroll-mt-4">
     <h2 class="text-2xl font-black mb-4">6教科のシリーズ</h2>
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
@@ -66,7 +80,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   </section>
 
   <!-- 遊び方 -->
-  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+  <section id="how-to-play" class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8 scroll-mt-4">
     <h2 class="text-2xl font-black mb-4">遊び方</h2>
     <div class="prose max-w-none text-gray-700">
       <h3>基本情報</h3>
@@ -130,7 +144,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   </section>
 
   <!-- GM（進行役）について -->
-  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+  <section id="gm" class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8 scroll-mt-4">
     <h2 class="text-2xl font-black mb-4">GM（進行役）について</h2>
     <div class="prose max-w-none text-gray-700">
       <p>
@@ -151,8 +165,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   </section>
 
   <!-- 教育効果 -->
-  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
-    <h2 class="text-2xl font-black mb-4">期待できる教育効果</h2>
+  <section id="effects" class="bg-amber-50 rounded-xl border-2 border-amber-200 p-6 sm:p-8 mb-8 scroll-mt-4">
+    <h2 class="text-2xl font-black mb-4 text-amber-900">期待できる教育効果</h2>
     <div class="grid gap-4 sm:grid-cols-2 mt-2">
       <div class="bg-amber-50 rounded-lg p-5 border border-amber-200">
         <h3 class="font-black text-amber-900">論理的思考力</h3>
@@ -191,7 +205,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   </section>
 
   <!-- 利用シーン -->
-  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+  <section id="scenes" class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8 scroll-mt-4">
     <h2 class="text-2xl font-black mb-4">こんな場面で使えます</h2>
     <div class="prose max-w-none text-gray-700">
       <h3>教室で</h3>
@@ -218,8 +232,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </div>
   </section>
 
-  <!-- 教員向けダッシュボード -->
-  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+  <!-- 教員向け機能 -->
+  <section id="teacher" class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8 scroll-mt-4">
     <h2 class="text-2xl font-black mb-4">教員向け機能</h2>
     <div class="prose max-w-none text-gray-700">
       <h3>セッション進行モード</h3>

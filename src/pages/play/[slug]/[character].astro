@@ -63,6 +63,9 @@ const characterHtml = renderMarkdown(character.fullContent);
           {scenario.seriesName} Vol.{scenario.volume}「{scenario.title}」
         </span>
         <h1 class="text-3xl font-black mt-2">{character.name}</h1>
+        {character.role && (
+          <p class="text-sm text-gray-600 mt-1">{character.role}</p>
+        )}
       </div>
     </div>
   </div>

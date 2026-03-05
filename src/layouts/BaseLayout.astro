@@ -43,17 +43,57 @@ const ogImageUrl = ogImage ? new URL(`${import.meta.env.BASE_URL}${ogImage.repla
 <body class="min-h-screen bg-gray-50 text-gray-900 font-sans antialiased">
   <header class="bg-white border-b border-gray-200 print:hidden">
     <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
-      <a href={import.meta.env.BASE_URL} class="flex items-center gap-2 text-gray-900 hover:text-amber-700 transition-colors no-underline">
+      <a href={import.meta.env.BASE_URL} class="flex items-center gap-2 text-gray-900 hover:text-amber-700 transition-colors no-underline flex-shrink-0">
         <span class="text-2xl">🔍</span>
-        <span class="font-black text-lg tracking-tight">ナゾトキ探偵団</span>
+        <span class="font-black text-lg tracking-tight hidden sm:inline">ナゾトキ探偵団</span>
       </a>
-      <span class="text-xs text-gray-400 hidden sm:inline">教育マダミス 無料配布</span>
-      <div class="ml-auto flex gap-4">
-        <a href={`${import.meta.env.BASE_URL}guide/`} class="text-sm text-gray-500 hover:text-amber-600 transition-colors no-underline font-bold">📘 遊び方</a>
-        <a href={`${import.meta.env.BASE_URL}dashboard/`} class="text-sm text-gray-500 hover:text-amber-600 transition-colors no-underline font-bold">📊 ダッシュボード</a>
+      <div class="ml-auto flex items-center gap-2 sm:gap-4">
+        {/* シリーズドロップダウン */}
+        <div class="relative" id="series-dropdown">
+          <button
+            type="button"
+            class="text-sm text-gray-500 hover:text-amber-600 transition-colors font-bold flex items-center gap-1"
+            id="series-dropdown-btn"
+          >
+            📚 教科 <span class="text-xs">▼</span>
+          </button>
+          <div id="series-dropdown-menu" class="hidden absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 w-56 py-2">
+            <a href={`${import.meta.env.BASE_URL}series/time-travel/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 no-underline">
+              <span>🕰️</span> タイムトラベル探偵団
+            </a>
+            <a href={`${import.meta.env.BASE_URL}series/literature/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 no-underline">
+              <span>📖</span> 名作文学ミステリー
+            </a>
+            <a href={`${import.meta.env.BASE_URL}series/popculture/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 no-underline">
+              <span>🎭</span> マンガ教養ミステリー
+            </a>
+            <a href={`${import.meta.env.BASE_URL}series/math/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 no-underline">
+              <span>🔢</span> 数字の迷宮
+            </a>
+            <a href={`${import.meta.env.BASE_URL}series/science/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 no-underline">
+              <span>🔬</span> サイエンス捜査班
+            </a>
+            <a href={`${import.meta.env.BASE_URL}series/moral/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 no-underline">
+              <span>⚖️</span> 答えのない法廷
+            </a>
+          </div>
+        </div>
+        <a href={`${import.meta.env.BASE_URL}guide/`} class="text-sm text-gray-500 hover:text-amber-600 transition-colors no-underline font-bold">📘 <span class="hidden sm:inline">遊び方</span></a>
+        <a href={`${import.meta.env.BASE_URL}dashboard/`} class="text-sm text-gray-500 hover:text-amber-600 transition-colors no-underline font-bold hidden sm:inline">📊 ダッシュボード</a>
       </div>
     </div>
   </header>
+  <script>
+    const btn = document.getElementById('series-dropdown-btn');
+    const menu = document.getElementById('series-dropdown-menu');
+    if (btn && menu) {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        menu.classList.toggle('hidden');
+      });
+      document.addEventListener('click', () => menu.classList.add('hidden'));
+    }
+  </script>
 
   <main class="max-w-5xl mx-auto px-4 py-8">
     <slot />
