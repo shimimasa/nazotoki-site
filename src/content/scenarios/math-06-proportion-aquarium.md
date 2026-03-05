@@ -12,19 +12,19 @@ difficulty: ★★★★（やや難）
 synopsis: 「みなと子ども水族館」の目玉、大型水槽「ブルーオーシャン」の水位が毎朝少しずつ下がっている。水漏れではない——誰かが夜のうちに水を抜いている。水位センサーの記録は「1時間あたり5cmずつ減少」を示す。夜間に水族館に入れたのは、飼育員見習いの4人だけ。水位変化の時系列データと、各自の行動時間を突き合わせれば、犯人が分かるはず。「2倍の速さ」の意味をめぐって証言が食い違う——。
 characters:
   - id: aoi
-    name: aoi
+    name: アオイ
     role: ""
     isNPC: false
   - id: hinata
-    name: hinata
+    name: ヒナタ
     role: ""
     isNPC: false
   - id: kaito
-    name: kaito
+    name: カイト
     role: ""
     isNPC: false
   - id: ren
-    name: ren
+    name: レン
     role: ""
     isNPC: false
 ---

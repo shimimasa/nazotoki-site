@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小5〜中2
 time: 45分
 difficulty: ★★★★
-synopsis: ""
+synopsis: 建長5年（1253年）、鎌倉。中国・宋から渡来した蘭溪道隆（らんけいどうりゅう）が開山した建長寺。宝物庫に保管されていた宋版の貴重な経典（きょうてん）の巻物が1巻消えた。宝物庫は石壁に囲まれ、重い扉は外側から閂（かんぬき）と錠前（じょうまえ）で二重に施錠。窓もない。完全な密室——なのに中身だけが消えた。鎌倉時代の寺院建築と「約束」の歴史が、密室の謎を解く鍵になる。
 characters:
   - id: akira
-    name: akira
+    name: アキラ
     role: ""
     isNPC: false
   - id: jun
-    name: jun
+    name: ジュン
     role: ""
     isNPC: false
   - id: kai
-    name: kai
+    name: カイ
     role: ""
     isNPC: false
   - id: takeru
-    name: takeru
+    name: タケル
     role: ""
     isNPC: false
 ---

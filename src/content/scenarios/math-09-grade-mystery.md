@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小5〜中2（割合の学習後）
 time: 45分
 difficulty: ★★★★
-synopsis: ""
+synopsis: 算数の単元テスト返却日。先生が採点済みの答案を並べていたら、1枚だけ点数が書き換えられた形跡があった。元の点数65点が75点に直されている。4人の中で誰がやったのか。答案返却前の「クラス平均点」と個人の点数の関係を割合で計算すると、書き換えた人物が浮かび上がる。
 characters:
   - id: makoto
-    name: makoto
+    name: マコト
     role: ""
     isNPC: false
   - id: rina
-    name: rina
+    name: リナ
     role: ""
     isNPC: false
   - id: shou
-    name: shou
+    name: ショウ
     role: ""
     isNPC: false
   - id: yuki
-    name: yuki
+    name: ユキ
     role: ""
     isNPC: false
 ---

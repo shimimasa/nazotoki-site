@@ -35,6 +35,22 @@ const learningHtml = renderMarkdown(scenario.learningGoals);
     <p class="text-sm mt-1 opacity-80">GM（進行役）のみ閲覧してください。プレイヤーは見ないでね！</p>
   </div>
 
+  {/* セッションモード — 目立つ位置に配置 */}
+  <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-300 p-5 mb-8 print:hidden">
+    <div class="flex items-center gap-4">
+      <div class="flex-1">
+        <h2 class="text-lg font-black text-amber-900">🎮 セッションモード</h2>
+        <p class="text-sm text-amber-800 mt-1">
+          タイマー付きのステップバイステップ進行。プロジェクター・タブレット対応。
+        </p>
+      </div>
+      <a href={`${import.meta.env.BASE_URL}session/${scenario.slug}/`}
+         class="inline-flex items-center gap-2 bg-amber-500 text-white px-5 py-3 rounded-xl font-bold hover:bg-amber-600 transition-colors no-underline text-sm whitespace-nowrap shadow-md">
+        ▶ セッション開始
+      </a>
+    </div>
+  </div>
+
   {/* パンくず */}
   <nav class="text-sm text-gray-500 mb-6 print:hidden">
     <a href={import.meta.env.BASE_URL} class="hover:text-gray-700">トップ</a>
@@ -110,22 +126,6 @@ const learningHtml = renderMarkdown(scenario.learningGoals);
       <div class="prose max-w-none" set:html={learningHtml} />
     </section>
   )}
-
-  {/* セッションモード */}
-  <section class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-300 p-6 sm:p-8 mb-8 print:hidden">
-    <div class="flex items-center gap-4">
-      <div class="flex-1">
-        <h2 class="text-xl font-black text-amber-900">🎮 セッションモード</h2>
-        <p class="text-sm text-amber-800 mt-1">
-          タイマー付きのステップバイステップ進行。プロジェクター・タブレット対応。
-        </p>
-      </div>
-      <a href={`${import.meta.env.BASE_URL}session/${scenario.slug}/`}
-         class="inline-flex items-center gap-2 bg-amber-500 text-white px-5 py-3 rounded-xl font-bold hover:bg-amber-600 transition-colors no-underline text-sm whitespace-nowrap shadow-md">
-        ▶ セッション開始
-      </a>
-    </div>
-  </section>
 
   {/* GMツールセクション */}
   <section id="gm-tools" class="bg-white rounded-xl border-2 border-gray-300 p-6 sm:p-8 mb-8 print:hidden">

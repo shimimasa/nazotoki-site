@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小5〜中3
 time: 45分
 difficulty: ★★★
-synopsis: ""
+synopsis: 大正10年、横浜・山手の洋館「曙館（あけぼのかん）」。主人が大切にしていたスイス製オルゴールが書斎から消えた。書斎の鍵を持っていた書生・リュウノスケが「怪しい」と疑われる。でも「書生だから」は正しい推理か？ 洋館の構造と大正時代の文化を手がかりに、偏見を超えて真犯人を見つけ出せ。
 characters:
   - id: hanako
-    name: hanako
+    name: ハナコ
     role: ""
     isNPC: false
   - id: midori
-    name: midori
+    name: ミドリ
     role: ""
     isNPC: false
   - id: ryunosuke
-    name: ryunosuke
+    name: リュウノスケ
     role: ""
     isNPC: false
   - id: yusaku
-    name: yusaku
+    name: ユウサク
     role: ""
     isNPC: false
 ---

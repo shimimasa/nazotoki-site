@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小5〜中3
 time: 45分
 difficulty: ★★★
-synopsis: ""
+synopsis: 文化祭前日の放課後、中学の漫研部員たちが準備室に集まると鍵がかかっていた。中には明日の展示作品がすべて入っている。最後に準備室に入ったのは誰か？なぜ鍵がかかったのか？部員4人の証言が少しずつ食い違う中、「本当のこと」と「言っていること」の差が浮かび上がってくる。
 characters:
   - id: akane
-    name: akane
-    role: ""
+    name: アカネ
+    role: "名前: アカネ"
     isNPC: false
   - id: hina
-    name: hina
-    role: ""
+    name: ヒナ
+    role: "名前なまえ: ヒナ"
     isNPC: false
   - id: kenji
-    name: kenji
-    role: ""
+    name: ケンジ
+    role: "名前: ケンジ"
     isNPC: false
   - id: souta
-    name: souta
-    role: ""
+    name: ソウタ
+    role: "名前: ソウタ"
     isNPC: false
 ---

@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小5〜中2
 time: 45分
 difficulty: ★★★★
-synopsis: ""
+synopsis: 学校の読書週間「不思議の国のアリス展」。教室を4つのエリアに分けて物語のシーンを再現した。来場者投票の賞品「ハートの女王のティアラ」が展示台から消えた。4人の担当者にはアリバイがあるように見えるが、マッドハッターのお茶会の時計は5分遅れている——物語のように「時間がずれた」世界で、アリバイの嘘を見抜け。
 characters:
   - id: aoi
-    name: aoi
+    name: アオイ
     role: ""
     isNPC: false
   - id: miku
-    name: miku
+    name: ミク
     role: ""
     isNPC: false
   - id: riko
-    name: riko
+    name: リコ
     role: ""
     isNPC: false
   - id: yuka
-    name: yuka
+    name: ユカ
     role: ""
     isNPC: false
 ---

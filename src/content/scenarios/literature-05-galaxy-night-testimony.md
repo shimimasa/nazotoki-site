@@ -9,7 +9,7 @@ players: 4人 + GM
 age: 小5〜中1
 time: 45分
 difficulty: ★★★（3-4要素同時保持）
-synopsis: ""
+synopsis: ナゾトキ小学校の5年1組は、来週の学習発表会で「銀河鉄道の夜」の朗読劇をやることになった。4人の実行委員がそれぞれ担当パートの解釈シートを作り、クラス全員に配る予定だった。
 characters:
   - id: hikaru
     name: ヒカル

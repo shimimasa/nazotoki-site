@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小5〜中1
 time: 45分
 difficulty: ★★★★
-synopsis: ""
+synopsis: 竹取の翁（おきな）の屋敷の宝物庫から、帝（みかど）からかぐや姫に贈られた「天の羽衣（はごろも）の飾り帯」が消えた。宝物庫の扉は内側から閂（かんぬき）がかかっていた。鍵を持つ者はいない。密室の中から宝が消える——古典の言葉と竹取物語の知識を手掛かりに、密室のトリックを解き明かせ。
 characters:
   - id: akira
-    name: akira
+    name: アキラ
     role: ""
     isNPC: false
   - id: hikari
-    name: hikari
+    name: ヒカリ
     role: ""
     isNPC: false
   - id: miyabi
-    name: miyabi
+    name: ミヤビ
     role: ""
     isNPC: false
   - id: satsuki
-    name: satsuki
+    name: サツキ
     role: ""
     isNPC: false
 ---

@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小4（概数の学習済みが望ましい）
 time: 40分
 difficulty: ★★★☆
-synopsis: ""
+synopsis: 学校のお楽しみ会の予算は5000円。4人の買い物係がそれぞれ買い出しに行き、使った金額を「概数」で報告した。ところが報告の合計は「約5000円」なのに、おつりを集めたら200円足りない。4人全員が「ざっくりこれくらい使った」と言うが、概数の報告と正確な金額を突き合わせると、1人だけ「差が大きすぎる」人がいる。
 characters:
   - id: haruto
-    name: haruto
-    role: ""
+    name: ハルト
+    role: "役割やくわりタイプ: 情報型じょうほうがた"
     isNPC: false
   - id: kotone
-    name: kotone
-    role: ""
+    name: コトネ
+    role: "役割やくわりタイプ: 観察型かんさつがた"
     isNPC: false
   - id: misaki
-    name: misaki
-    role: ""
+    name: ミサキ
+    role: "役割やくわりタイプ: 行動型こうどうがた（犯人はんにん）"
     isNPC: false
   - id: sora
-    name: sora
-    role: ""
+    name: ソラ
+    role: "役割やくわりタイプ: 感情型かんじょうがた"
     isNPC: false
 ---

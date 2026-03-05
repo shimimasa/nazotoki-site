@@ -47,12 +47,18 @@ function yamlStr(s) {
 
 // ── overview.md パーサ ────────────────────────
 function parseTitle(md) {
+  // H1 から「タイトル」を抽出
   const m = md.match(/^#\s+(.+)/m);
   if (!m) return '';
-  // "ナゾトキ探偵団 Vol.1「消えた黄金の茶室」" → "消えた黄金の茶室"
   const full = m[1].trim();
   const titleMatch = full.match(/[「『](.+?)[」』]/);
-  return titleMatch ? titleMatch[1] : full;
+  if (titleMatch) return titleMatch[1];
+
+  // H1に「」がない場合（例: "# シナリオ概要（GM用）"）→ H2から探す
+  const h2Match = md.match(/^##\s+.*?[「『](.+?)[」』]/m);
+  if (h2Match) return h2Match[1];
+
+  return full;
 }
 
 function parseFullTitle(md) {
@@ -61,14 +67,17 @@ function parseFullTitle(md) {
 }
 
 function parseSection(md, headerPattern, nextHeaderLevel = 3) {
-  const regex = new RegExp(`^#{${nextHeaderLevel}}\\s+${headerPattern}[\\s\\S]*?$`, 'gm');
+  // H2/H3 両方にマッチ（世代ごとのヘッダーレベル差を吸収）
+  const minLevel = Math.max(nextHeaderLevel - 1, 2);
+  const regex = new RegExp(`^#{${minLevel},${nextHeaderLevel}}\\s+${headerPattern}[^\\n]*$`, 'gm');
   const match = md.match(regex);
   if (!match) return '';
 
   const startIdx = md.indexOf(match[0]);
   const afterHeader = md.slice(startIdx + match[0].length);
   // Find next same-level or higher header
-  const nextMatch = afterHeader.match(new RegExp(`^#{1,${nextHeaderLevel}}\\s+`, 'm'));
+  const headerLevel = match[0].match(/^(#+)/)[1].length;
+  const nextMatch = afterHeader.match(new RegExp(`^#{1,${headerLevel}}\\s+`, 'm'));
   const content = nextMatch
     ? afterHeader.slice(0, nextMatch.index)
     : afterHeader;
@@ -76,20 +85,31 @@ function parseSection(md, headerPattern, nextHeaderLevel = 3) {
 }
 
 function parseSynopsis(md) {
-  // 「あらすじ」セクションの内容を取得
-  const section = parseSection(md, 'あらすじ');
-  return section.replace(/\n+/g, '\n').trim();
+  // 「あらすじ」「ストーリー概要」「事件の概要」セクションの内容を取得
+  // ふりがな混在対応: 事件じけんの概要 etc.
+  for (const pattern of ['あらすじ', 'ストーリー概要', '事件[^\\n]*概要']) {
+    const section = parseSection(md, pattern);
+    if (section) return section.replace(/\n+/g, '\n').trim();
+  }
+  return '';
 }
 
 function parseTruth(md) {
-  // 「事件の真相」セクションの内容を取得
-  const section = parseSection(md, '事件の真相');
-  return section.trim();
+  // ふりがな混在対応: 事件じけんの真相しんそう etc.
+  for (const pattern of ['事件[^\\n]*真相', '犯人[^\\n]*動機', '真相[^\\n]*動機', '4人の関わり']) {
+    const section = parseSection(md, pattern);
+    if (section) return section.trim();
+  }
+  return '';
 }
 
 function parseLearningGoals(md) {
-  const section = parseSection(md, '学習目標');
-  return section.trim();
+  // ふりがな混在対応: 学習がくしゅう目標 / 学習テーマ
+  for (const pattern of ['学習[^\\n]*目標', '学習[^\\n]*テーマ']) {
+    const section = parseSection(md, pattern);
+    if (section) return section.trim();
+  }
+  return '';
 }
 
 function parseBasicInfo(md) {
@@ -203,33 +223,44 @@ function parseEvidenceCards(md) {
 
 // ── character-*.md パーサ ─────────────────────
 function parseCharacter(id, md) {
-  // Name from title
-  const titleMatch = md.match(/^#\s*キャラクターシート[：:]\s*(.+)/m);
-  const name = titleMatch ? titleMatch[1].trim() : id;
-
-  // Split into public and secret sections
-  const publicMarker = /###\s*みんなに言っていい情報/;
-  const secretMarker = /###\s*★\s*秘密/;
+  // Name from title — 3フォーマット対応
+  // Format A/B: "# キャラクターシート：名前" or "# キャラクターシート: 名前"
+  // Format B: "# キャラクターシート — 名前"
+  // Format C: "# 名前のキャラクターシート"
+  let name = id;
+  const titleA = md.match(/^#\s*キャラクターシート\s*[：:—–\-]\s*(.+)/m);
+  const titleC = md.match(/^#\s*(.+?)のキャラクターシート/m);
+  if (titleA) {
+    name = titleA[1].trim();
+  } else if (titleC) {
+    name = titleC[1].trim();
+  }
+  // 補足情報を除去: "ハナコ（部長・中3）" → "ハナコ" / "アキラ（5年1組）★犯人★" → "アキラ"
+  name = name.replace(/[（(].+$/, '').replace(/★.+$/, '').trim();
 
   let introContent = '';
   let publicContent = '';
   let secretContent = '';
 
-  // Intro: everything from "きみはだれ？" to public info
-  const introMatch = md.match(/###\s*きみはだれ？([\s\S]*?)(?=###\s*みんなに言っていい|$)/);
+  // Intro: "きみはだれ？" (A/B) or "あなたは「XX」" (C)
+  const introMatch = md.match(/#{2,3}\s*(?:きみはだれ？|あなたは[^\n]*)\n([\s\S]*?)(?=#{2,3}\s*(?:みんなに|公開|こうかい)|$)/);
   if (introMatch) introContent = introMatch[1].trim();
 
-  // Public info section
-  const publicMatch = md.match(/###\s*みんなに言っていい情報[^\n]*([\s\S]*?)(?=###\s*★|$)/);
+  // Public info: multiple variants
+  // A: "### みんなに言っていい情報（公開情報）" (with furigana)
+  // C: "## 公開情報（みんなに話してOK）"
+  const publicMatch = md.match(/#{2,3}\s*(?:みんなに[^\n]*情報|公開[^\n]*情報)[^\n]*([\s\S]*?)(?=#{2,3}\s*(?:★|秘密|ひみつ)|$)/);
   if (publicMatch) publicContent = publicMatch[1].trim();
 
-  // Secret info section (everything from ★秘密 onwards)
-  const secretMatch = md.match(/(###\s*★\s*秘密[\s\S]*$)/);
+  // Secret info: multiple variants
+  // A: "### ★秘密の情報★" (with furigana)
+  // C: "## 秘密情報" / "## ひみつの情報"
+  const secretMatch = md.match(/(#{2,3}\s*(?:★\s*)?(?:秘密|ひみつ)[^\n]*\n[\s\S]*$)/);
   if (secretMatch) secretContent = secretMatch[1].trim();
 
   // Role from intro
   const roleMatch = introContent.match(/^(.+?)(?:\n|$)/);
-  const role = roleMatch ? roleMatch[1].replace(/\*\*/g, '').replace(/——/g, '').trim().slice(0, 50) : '';
+  const role = roleMatch ? roleMatch[1].replace(/\*\*/g, '').replace(/——/g, '').replace(/—/g, '').trim().slice(0, 50) : '';
 
   return {
     id,
@@ -240,6 +271,40 @@ function parseCharacter(id, md) {
     publicContent,
     fullContent: md,
   };
+}
+
+// ── 議論セクション抽出 ─────────────────────────
+/**
+ * gm-guide.md から議論フェーズに必要な情報のみを抽出する。
+ * 「議論」「話し合い」セクション + 「キラー質問」の内容。
+ */
+function parseDiscussionSection(md) {
+  if (!md) return '';
+
+  const sections = [];
+
+  // 議論セクション: "ステップ2：話し合い" / "ステップ2: 議論" / "④議論"
+  // ふりがな混在対応: 議論ぎろん / 話し合い etc.
+  const discussMatch = md.match(/^(#{2,4})\s*[^\n]*(?:議論|ぎろん|話し合)[^\n]*$([\s\S]*?)(?=^#{1,4}\s+(?![^\n]*(?:キラー|後半|最終))|\n---\n|$)/m);
+  if (discussMatch) {
+    sections.push(discussMatch[0].trim());
+  }
+
+  // キラー質問（議論セクション外にある場合も拾う）
+  if (!discussMatch || !/キラー/.test(discussMatch[0])) {
+    const killerMatch = md.match(/^(#{2,5})\s*[^\n]*キラー質問[^\n]*$([\s\S]*?)(?=^#{1,4}\s|\n---\n|$)/m);
+    if (killerMatch) {
+      sections.push(killerMatch[0].trim());
+    }
+    // インラインのキラー質問（**キラー質問**: ...）
+    const inlineKiller = md.match(/\*\*キラー質問[^\n]*\*\*[：:][^\n]+([\s\S]*?)(?=\n\n#{2,4}|\n---|\n\n\*\*|$)/);
+    if (inlineKiller && !killerMatch) {
+      sections.push(inlineKiller[0].trim());
+    }
+  }
+
+  if (sections.length === 0) return '';
+  return sections.join('\n\n');
 }
 
 // ── GMガイド Web変換 ──────────────────────────
@@ -436,6 +501,9 @@ async function processScenario(slug) {
   const truth = parseTruth(overviewRaw);
   const learningGoals = parseLearningGoals(overviewRaw);
 
+  // 議論セクション（gm-guideから抽出）
+  const discussionGuide = parseDiscussionSection(gmGuideRaw);
+
   // 証拠カード
   const { cards: evidenceCards, card5 } = parseEvidenceCards(evidenceRaw);
 
@@ -516,6 +584,7 @@ async function processScenario(slug) {
     characters,
     solution: cleanFileReferences(solutionRaw),
     gmGuide: transformGmGuideForWeb(gmGuideRaw, slug),
+    discussionGuide: cleanFileReferences(discussionGuide),
     thumbnailUrl: images.thumbnailUrl || undefined,
   };
 

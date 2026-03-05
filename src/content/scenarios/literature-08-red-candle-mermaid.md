@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小5〜中1
 time: 45分
 difficulty: ★★★★
-synopsis: ""
+synopsis: 港町の神社に飾られていた「赤いろうそく」が割られた。ろうそくには人魚が描いた美しい絵が施されており、町の宝だった。「人魚の子が壊した」と町の人々は言う。でも——「人魚だから」は正しい推理か？ 小川未明の物語世界に飛び込み、象徴表現と偏見の構造を読み解いて、真犯人を見つけ出せ。
 characters:
   - id: obaa
-    name: obaa
+    name: オバア
     role: ""
     isNPC: false
   - id: takeru
-    name: takeru
+    name: タケル
     role: ""
     isNPC: false
   - id: tsukiyo
-    name: tsukiyo
+    name: ツキヨ
     role: ""
     isNPC: false
   - id: umi
-    name: umi
+    name: ウミ
     role: ""
     isNPC: false
 ---

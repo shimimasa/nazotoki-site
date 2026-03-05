@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小4〜中1
 time: 45分
 difficulty: ★★★
-synopsis: ""
+synopsis: 金曜日の放課後、理科室のそうじ当番に4人全員が来なかった。月曜日、先生が汚れた理科室を発見。4人に理由を聞くと、全員が「自分は来なくてよかった」と思っていたことが判明する。部活優先、当番表の見間違い、ルールの誤解、他人任せ——4つの言い訳に共通するパターンを見つけ、「公平なルール」とは何かを考える。
 characters:
   - id: daiki
-    name: daiki
+    name: ダイキ
     role: ""
     isNPC: false
   - id: hana
-    name: hana
+    name: ハナ
     role: ""
     isNPC: false
   - id: ken
-    name: ken
+    name: ケン
     role: ""
     isNPC: false
   - id: saori
-    name: saori
+    name: サオリ
     role: ""
     isNPC: false
 ---

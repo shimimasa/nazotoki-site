@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小5〜中1
 time: 45分
 difficulty: ★★★★
-synopsis: ""
+synopsis: 1483年、京都・東山。将軍（しょうぐん）を引退した足利義政（あしかがよしまさ）は、東山山荘で文化の集いを開いている。「わび・さび」を大切にする東山文化の拠点だ。ところがある朝、義政が最も大切にしていた雪舟（せっしゅう）の水墨画（すいぼくが）の掛け軸（かけじく）が、偽物にすり替えられていた。本物はどこへ？ そして偽物を描いたのは誰だ？
 characters:
   - id: ginga
-    name: ginga
+    name: ギンガ
     role: ""
     isNPC: false
   - id: kogane
-    name: kogane
+    name: コガネ
     role: ""
     isNPC: false
   - id: mai
-    name: mai
+    name: マイ
     role: ""
     isNPC: false
   - id: wabisuke
-    name: wabisuke
+    name: ワビスケ
     role: ""
     isNPC: false
 ---

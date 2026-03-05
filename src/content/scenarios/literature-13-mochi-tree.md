@@ -9,22 +9,22 @@ players: 4人＋GM
 age: 小学3年〜6年
 time: 40分
 difficulty: ★★☆
-synopsis: ""
+synopsis: "3年生のクラスで「モチモチの木」を学習。みんなで大きな**切り絵のモチモチの木**を作って教室の壁に飾った。滝平二郎の挿絵のような、力強い黒い木の切り絵。"
 characters:
   - id: hina
-    name: hina
-    role: ""
+    name: ヒナ
+    role: "役割やくわりタイプ: 観察型かんさつがた"
     isNPC: false
   - id: kai
-    name: kai
-    role: ""
+    name: カイ
+    role: "役割やくわりタイプ: 行動型こうどうがた（犯人はんにん）"
     isNPC: false
   - id: masato
-    name: masato
-    role: ""
+    name: マサト
+    role: "役割やくわりタイプ: 情報型じょうほうがた"
     isNPC: false
   - id: yuka
-    name: yuka
-    role: ""
+    name: ユカ
+    role: "役割やくわりタイプ: 感情型かんじょうがた（初期容疑者ようぎしゃでも無実むじつ！）"
     isNPC: false
 ---

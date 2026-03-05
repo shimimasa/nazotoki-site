@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小5〜中2
 time: 45分
 difficulty: ★★★★
-synopsis: ""
+synopsis: "昭和39年（1964年）10月。東京オリンピック開催直前。日本橋の百貨店で開催中の「オリンピック記念展」から、特別展示の記念金貨レプリカが消えた。容疑者のショウイチは「午前10時に大阪にいた。東京まで6時間半かかる」とアリバイを主張する。だが3日前に開業したばかりの**東海道新幹線「ひかり号」**を使えば——東京まで4時間。「6時間半」の常識は、もう古い。"
 characters:
   - id: kenji
-    name: kenji
+    name: ケンジ
     role: ""
     isNPC: false
   - id: sachiko
-    name: sachiko
+    name: サチコ
     role: ""
     isNPC: false
   - id: shouichi
-    name: shouichi
+    name: ショウイチ
     role: ""
     isNPC: false
   - id: tatsuo
-    name: tatsuo
+    name: タツオ
     role: ""
     isNPC: false
 ---

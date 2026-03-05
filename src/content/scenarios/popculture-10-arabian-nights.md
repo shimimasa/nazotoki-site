@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小5〜中2
 time: 45分
 difficulty: ★★★★
-synopsis: ""
+synopsis: 図書室の「アラビアンナイト読書週間」で展示されていた「アラジンの魔法のランプ」（真鍮製の本格レプリカ）が、安い偽物にすり替えられていた。4人の図書委員は誰もすり替えていないと主張する。偽物と本物の違いを見抜き、千夜一夜物語の「約束」の教訓を手がかりに、すり替えた犯人を突き止めよ。
 characters:
   - id: ari
-    name: ari
+    name: アリ
     role: ""
     isNPC: false
   - id: jasmine
-    name: jasmine
+    name: ジャスミン
     role: ""
     isNPC: false
   - id: shehera
-    name: shehera
+    name: シェヘラ
     role: ""
     isNPC: false
   - id: sindbad
-    name: sindbad
+    name: シンドバ
     role: ""
     isNPC: false
 ---

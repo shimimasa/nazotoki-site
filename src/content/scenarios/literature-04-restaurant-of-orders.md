@@ -9,14 +9,14 @@ players: "**2人**（GM不要。セルフ進行）"
 age: 小4〜小6（ふりがな付き）
 time: 30〜40分
 difficulty: ★★★☆（テキスト精読が必要）
-synopsis: ""
+synopsis: "小学5年のケイとマナは、国語の宿題で「注文の多い料理店」の感想文を書いた。翌朝、早く登校した2人が教室に入ると——先生の机の上のファイルから、**ケイとマナの感想文だけが抜き取られている**。"
 characters:
   - id: kei
-    name: kei
+    name: ケイ
     role: ""
     isNPC: false
   - id: mana
-    name: mana
+    name: マナ
     role: ""
     isNPC: false
 ---

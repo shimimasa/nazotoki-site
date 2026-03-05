@@ -28,6 +28,7 @@ export interface SessionScenarioData {
   evidenceCards: EvidenceCardData[];
   evidence5: EvidenceCardData | null;
   gmGuideHtml: string;
+  discussionHtml: string;
   solutionHtml: string;
   learningGoalsHtml: string;
   truthHtml: string;

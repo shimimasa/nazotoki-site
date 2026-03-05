@@ -9,18 +9,18 @@ players: 3人（セルフ進行 / 軽量GM）
 age: 小5〜中1（ふりがな付き）
 time: 25〜35分
 difficulty: ★★★☆（タイムライン再構成が必要）
-synopsis: ""
+synopsis: "寿永（じゅえい）4年（1185年）3月24日。源平合戦の最後の戦い——**壇ノ浦の戦い**が終わった。源氏の勝利。平家は滅（ほろ）びた。"
 characters:
   - id: munemori
-    name: munemori
+    name: ムネモリ
     role: ""
     isNPC: false
   - id: suzu
-    name: suzu
+    name: スズ
     role: ""
     isNPC: false
   - id: yoshitsune
-    name: yoshitsune
+    name: ヨシツネ
     role: ""
     isNPC: false
 ---

@@ -9,18 +9,18 @@ players: 2〜3人 + GM
 age: 小5〜中1（ふりがな付きで小4も可）
 time: 35〜45分
 difficulty: ★★★☆（テキスト精読が必要）
-synopsis: ""
+synopsis: 小学5年の国語の授業で「蜘蛛の糸」を勉強することになった。先生はクラスの朗読係（ろうどくがかり）3人——ユウキ、ヒナ、ソラに、朗読用プリントの準備を頼んだ。3人は放課後にパソコン室で、先生が作った原稿データからプリントを印刷し、翌朝クラスに配る手はずだった。
 characters:
   - id: hina
-    name: hina
+    name: ヒナ
     role: ""
     isNPC: false
   - id: sora
-    name: sora
+    name: ソラ
     role: ""
     isNPC: false
   - id: yuuki
-    name: yuuki
+    name: ユウキ
     role: ""
     isNPC: false
 ---

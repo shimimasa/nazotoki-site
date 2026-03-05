@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小6（電気の利用の学習後）
 time: 40分
 difficulty: ★★★★☆
-synopsis: ""
+synopsis: 理科の「電気の利用」の実験が終わった後、準備室に実験器具を片付けて鍵をかけた。翌朝、鍵のかかった準備室を開けると——ブレーカーが落ちて真っ暗。実験用の豆電球セットが1つ焼き切れ、配線がぐちゃぐちゃ。しかも先生の「電気の利用テスト」の答案用紙が1枚なくなっていた。鍵は先生と理科係の2人しか持っていない。密室で何が起きた？
 characters:
   - id: hina
-    name: hina
-    role: ""
+    name: ヒナ
+    role: "役割やくわりタイプ: 観察型かんさつがた"
     isNPC: false
   - id: minato
-    name: minato
-    role: ""
+    name: ミナト
+    role: "役割やくわりタイプ: 行動型こうどうがた（犯人はんにん）"
     isNPC: false
   - id: sora
-    name: sora
-    role: ""
+    name: ソラ
+    role: "役割やくわりタイプ: 情報型じょうほうがた"
     isNPC: false
   - id: yuu
-    name: yuu
-    role: ""
+    name: ユウ
+    role: "役割やくわりタイプ: 感情型かんじょうがた"
     isNPC: false
 ---

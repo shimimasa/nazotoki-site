@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小5〜中3
 time: 45分
 difficulty: ★★★
-synopsis: ""
+synopsis: 中学の文芸部。夏目漱石「吾輩は猫である」の研究発表会の前日、3ヶ月かけて作った調査ノートが部室から消えた。部室の鍵は部長だけが持っているはずなのに、なぜ消えたのか。4人が互いのタイムラインを並べ直す中で、「猫の目」のような客観的な観察だけが真実を照らし出す。
 characters:
   - id: hanako
-    name: hanako
-    role: ""
+    name: ハナコ
+    role: "名前: ハナコ"
     isNPC: false
   - id: miki
-    name: miki
-    role: ""
+    name: ミキ
+    role: "名前: ミキ"
     isNPC: false
   - id: takumi
-    name: takumi
-    role: ""
+    name: タクミ
+    role: "名前: タクミ"
     isNPC: false
   - id: yoshiki
-    name: yoshiki
-    role: ""
+    name: ヨシキ
+    role: "名前: ヨシキ"
     isNPC: false
 ---

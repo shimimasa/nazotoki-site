@@ -9,22 +9,22 @@ players: 2〜4人 + GM
 age: 小4〜小6（ふりがな付き）
 time: 35〜45分
 difficulty: ★★★☆（Vol.3より少し難しい）
-synopsis: ""
+synopsis: "理科クラブの4人は、先生と一緒に川岸（かわぎし）の崖（がけ）で「地層観察（ちそうかんさつ）」のフィールドワークに来ている。先生は学校の理科室から大切な**アンモナイトの化石**を持ってきて、崖の地層と見比べる授業をしていた。ところが、急な雨が降り、みんなが避難（ひなん）している間に崖の一部が崩（くず）れた。雨が止んで戻ると——**アンモナイトの化石が、なくなっていた！** 4人それぞれが持つ「スケッチ」「マップ」「写真」「岩石サンプル」を突き合わせて、化石が消えたなぞを解き明かせ！"
 characters:
   - id: hayate
-    name: hayate
+    name: ハヤテ
     role: ""
     isNPC: false
   - id: koharu
-    name: koharu
+    name: コハル
     role: ""
     isNPC: false
   - id: riku
-    name: riku
+    name: リク
     role: ""
     isNPC: false
   - id: tsumugi
-    name: tsumugi
+    name: ツムギ
     role: ""
     isNPC: false
 ---

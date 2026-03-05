@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小4〜小6
 time: 45分
 difficulty: ★★★（3-4要素を同時に扱う）
-synopsis: ""
+synopsis: 星ヶ丘小学校の音楽クラブ4人——ソラ、ハル、マイ、リンは、来週の文化祭で「セロ弾きのゴーシュ」の音楽朗読劇を発表する。ソラがピアノ、ハルがナレーション、マイがチェロ独奏、リンがフルートを担当する。
 characters:
   - id: haru
-    name: haru
+    name: ハル
     role: ""
     isNPC: false
   - id: mai
-    name: mai
+    name: マイ
     role: ""
     isNPC: false
   - id: rin
-    name: rin
+    name: リン
     role: ""
     isNPC: false
   - id: sora
-    name: sora
+    name: ソラ
     role: ""
     isNPC: false
 ---

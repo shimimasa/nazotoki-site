@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小6〜中2（電磁石の学習後）
 time: 45分
 difficulty: ★★★★
-synopsis: ""
+synopsis: 中学2年の理科。電磁石の競技実験（コイルの巻き数を変えて磁力を競う）で、ある班の記録に物理的にありえない数値が書かれていた。先生が「これは改ざんだ」と言った。4人のうち誰が書き換えたのか。電磁石の原理を正しく理解した人だけが、「なぜその数値が不可能か」を証明できる。
 characters:
   - id: aki
-    name: aki
-    role: ""
+    name: アキ
+    role: "名前: アキ"
     isNPC: false
   - id: ken
-    name: ken
-    role: ""
+    name: ケン
+    role: "名前: ケン"
     isNPC: false
   - id: nao
-    name: nao
-    role: ""
+    name: ナオ
+    role: "名前: ナオ"
     isNPC: false
   - id: yui
-    name: yui
-    role: ""
+    name: ユイ
+    role: "名前: ユイ"
     isNPC: false
 ---

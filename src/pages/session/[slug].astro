@@ -60,6 +60,7 @@ export async function getStaticPaths() {
         contentHtml: renderMarkdown(s.evidence5.content),
       } : null,
       gmGuideHtml: renderMarkdown(s.gmGuide),
+      discussionHtml: s.discussionGuide ? renderMarkdown(s.discussionGuide) : '',
       solutionHtml: renderMarkdown(s.solution),
       learningGoalsHtml: renderMarkdown(s.learningGoals),
       truthHtml: renderMarkdown(s.truth),

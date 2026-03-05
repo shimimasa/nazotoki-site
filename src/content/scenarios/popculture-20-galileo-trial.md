@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小5〜中1
 time: 45分
 difficulty: ★★★★★★★（7）
-synopsis: ""
+synopsis: "「偉人科学フェスティバル」でガリレオ・ガリレイの研究ポスターを作った4人。ところが昼休みの間にポスターが改ざんされた。「地動説の証拠」が「天動説が正しい」に書き換えられ、裏には**「by リュウ」**と書かれている。リュウが犯人なのか？ だがこれは400年前の**異端審問**と同じ構造だ——**真実を言う人に罪を着せる**。これまでの推理スキルをすべて使って、真犯人を暴け。"
 characters:
   - id: daichi
-    name: daichi
-    role: ""
+    name: ダイチ
+    role: "役割タイプ: 行動型"
     isNPC: false
   - id: hina
-    name: hina
-    role: ""
+    name: ヒナ
+    role: "役割タイプ: 観察型"
     isNPC: false
   - id: ryuu
-    name: ryuu
-    role: ""
+    name: リュウ
+    role: "役割タイプ: 感情型"
     isNPC: false
   - id: sora
-    name: sora
-    role: ""
+    name: ソラ
+    role: "役割タイプ: 情報型"
     isNPC: false
 ---

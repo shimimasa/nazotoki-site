@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小4〜小6
 time: 35〜45分
 difficulty: ★★★（中級）
-synopsis: ""
+synopsis: 理科クラブの天体観測合宿。4人の部員が山の宿泊施設で冬の星座を観測し、「コンクール出品用の星座早見盤」を共同制作していた。
 characters:
   - id: haru
-    name: haru
+    name: ハル
     role: ""
     isNPC: false
   - id: hikaru
-    name: hikaru
+    name: ヒカル
     role: ""
     isNPC: false
   - id: sora
-    name: sora
+    name: ソラ
     role: ""
     isNPC: false
   - id: tsuki
-    name: tsuki
+    name: ツキ
     role: ""
     isNPC: false
 ---

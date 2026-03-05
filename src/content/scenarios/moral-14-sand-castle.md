@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小3〜小6
 time: 45分
 difficulty: ★★★
-synopsis: ""
+synopsis: 図工の時間に校庭の砂場で作った「砂の城」。4人が力を合わせて作った力作。放課後に見に行くと、城は崩れていた。風？ 猫？ 誰か？ 4人はそれぞれ「見に行った」時間があるが、誰が壊したか確定できない。しかし調査の中で「誰が壊したか」より「この作品に込めた気持ち」「壊れるものの美しさ」に向き合う。
 characters:
   - id: haru
-    name: haru
-    role: ""
+    name: ハル
+    role: "役割タイプ: 観察型"
     isNPC: false
   - id: nao
-    name: nao
-    role: ""
+    name: ナオ
+    role: "役割タイプ: 情報型"
     isNPC: false
   - id: rina
-    name: rina
-    role: ""
+    name: リナ
+    role: "役割タイプ: 感情型"
     isNPC: false
   - id: yuuta
-    name: yuuta
-    role: ""
+    name: ユウタ
+    role: "役割タイプ: 行動型（疑われやすいが、確定はしない）"
     isNPC: false
 ---

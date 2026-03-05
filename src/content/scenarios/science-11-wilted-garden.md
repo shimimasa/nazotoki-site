@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小5（植物の成長の学習後）
 time: 40分
 difficulty: ★★★★☆
-synopsis: ""
+synopsis: 5年3組が理科の授業で育てていたヒマワリの花壇が、木曜日の朝に突然しおれて枯れ始めた。毎日水をやっていたし、日当たりの良い場所なのに、なぜ？ 4人の花壇当番はそれぞれ日曜から水曜に世話をしていた。植物の成長に必要な条件を1つずつ科学的に調べ、「枯れた原因」を突き止めれば、犯人が分かる。因果の連鎖をたどれ。
 characters:
   - id: haruka
-    name: haruka
-    role: ""
+    name: ハルカ
+    role: "役割やくわりタイプ: 情報型じょうほうがた（記録係きろくがかり）"
     isNPC: false
   - id: midori
-    name: midori
-    role: ""
+    name: ミドリ
+    role: "役割やくわりタイプ: 感情型かんじょうがた"
     isNPC: false
   - id: riku
-    name: riku
-    role: ""
+    name: リク
+    role: "役割やくわりタイプ: 観察型かんさつがた（植物博士しょくぶつはかせ）"
     isNPC: false
   - id: sora
-    name: sora
-    role: ""
+    name: ソラ
+    role: "役割やくわりタイプ: 行動型こうどうがた（犯人はんにん）"
     isNPC: false
 ---

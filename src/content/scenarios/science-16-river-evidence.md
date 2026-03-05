@@ -9,22 +9,22 @@ players: 4人 + GM
 age: 小5（流れる水の働きの学習後）
 time: 40分
 difficulty: ★★★★★
-synopsis: ""
+synopsis: 学校の裏を流れる小川の観察学習中、上流の砂場に作っていた「流れる水の実験モデル」が壊されていた。水路が崩され、小石のダムが破壊されている。4人は「自分じゃない」と主張するが、証言が食い違う。しかし川は嘘をつかない——上流で壊された痕跡は、水の侵食・運搬・堆積のパターンとして下流に証拠を残していた。
 characters:
   - id: aoi
-    name: aoi
-    role: ""
+    name: アオイ
+    role: "役割やくわりタイプ: 情報型じょうほうがた"
     isNPC: false
   - id: kouta
-    name: kouta
-    role: ""
+    name: コウタ
+    role: "役割やくわりタイプ: 行動型こうどうがた（犯人はんにん）"
     isNPC: false
   - id: mizuki
-    name: mizuki
-    role: ""
+    name: ミズキ
+    role: "役割やくわりタイプ: 感情型かんじょうがた"
     isNPC: false
   - id: sakura
-    name: sakura
-    role: ""
+    name: サクラ
+    role: "役割やくわりタイプ: 観察型かんさつがた"
     isNPC: false
 ---

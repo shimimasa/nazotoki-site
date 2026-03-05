@@ -1,5 +1,5 @@
 ---
-title: シナリオ概要がいよう（GM用）
+title: われた花びんとだまった4人
 series: moral
 seriesName: 答えのない法廷
 volume: 1
@@ -9,7 +9,7 @@ players: 2〜4人 + GM
 age: 小学3年生〜中学1年生
 time: 30〜45分
 difficulty: ★★☆☆☆（推理は易しいが、議論が深い）
-synopsis: ""
+synopsis: "放課後ほうかごの学校。廊下ろうかに飾かざられていた**「夢の花びん」**が割われた。"
 characters:
   - id: hayato
     name: ハヤト
