@@ -21,26 +21,7 @@ const orderedSeries = [...seriesGroups.entries()].sort((a, b) => {
   return orderA - orderB;
 });
 
-// フィルタ用: 全シナリオの学年リストを抽出
-const gradeSet = new Set<string>();
-for (const s of scenarios) {
-  const cur = curriculum[s.slug];
-  if (cur?.grade) gradeSet.add(cur.grade);
-}
-// 学年ソート（小3→小4→...→中3）
-const grades = [...gradeSet].sort((a, b) => {
-  const toNum = (g: string) => {
-    const m = g.match(/小(\d)/);
-    if (m) return parseInt(m[1]);
-    const m2 = g.match(/中(\d)/);
-    if (m2) return parseInt(m2[1]) + 6;
-    if (g.includes('中')) return 7;
-    return 99;
-  };
-  return toNum(a) - toNum(b);
-});
-
-// フィルタ用データ: シナリオごとの学年・教科を埋め込み
+// フィルタ用データ
 const filterData = scenarios.map(s => {
   const cur = curriculum[s.slug];
   return {
@@ -96,22 +77,18 @@ const seriesOptions = Object.entries(SERIES_CONFIG).map(([key, c]) => ({
   {/* シナリオ検索フィルタ */}
   <section class="bg-white rounded-xl border border-gray-200 p-6 mb-8" id="search-section">
     <h2 class="text-2xl font-black mb-4">シナリオを探す</h2>
+
+    {/* フィルタ行 */}
     <div class="flex flex-wrap gap-3 mb-4">
-      {/* 教科フィルタ */}
       <select id="filter-series" class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
         <option value="">すべての教科</option>
         {seriesOptions.map(s => (
           <option value={s.key}>{s.emoji} {s.name}</option>
         ))}
       </select>
-      {/* 学年フィルタ */}
       <select id="filter-grade" class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
         <option value="">すべての学年</option>
-        {grades.map(g => (
-          <option value={g}>{g}</option>
-        ))}
       </select>
-      {/* キーワード検索 */}
       <input
         type="text"
         id="filter-keyword"
@@ -119,8 +96,25 @@ const seriesOptions = Object.entries(SERIES_CONFIG).map(([key, c]) => ({
         class="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 min-w-[180px]"
       />
     </div>
-    <p id="filter-count" class="text-sm text-gray-500 mb-4"></p>
-    <div id="filter-results" class="grid gap-3 sm:grid-cols-2"></div>
+
+    {/* 初期メッセージ（フィルタ未選択時） */}
+    <div id="filter-prompt" class="text-center py-6 text-gray-400">
+      <p class="text-sm">教科や学年を選ぶと、シナリオが表示されます</p>
+    </div>
+
+    {/* 件数 */}
+    <p id="filter-count" class="text-sm text-gray-500 mb-3 hidden"></p>
+
+    {/* 結果グリッド */}
+    <div id="filter-results" class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"></div>
+
+    {/* もっと見るボタン */}
+    <div id="filter-more-wrap" class="hidden text-center mt-4">
+      <button id="filter-more-btn" class="text-sm text-amber-600 font-bold hover:text-amber-700 px-4 py-2 border border-amber-300 rounded-lg hover:bg-amber-50 transition-colors">
+      </button>
+    </div>
+
+    {/* 空結果 */}
     <p id="filter-empty" class="hidden text-center text-gray-400 py-8">条件に一致するシナリオが見つかりませんでした</p>
   </section>
 
@@ -159,6 +153,8 @@ const seriesOptions = Object.entries(SERIES_CONFIG).map(([key, c]) => ({
 
 <script define:vars={{ filterData }}>
   const BASE = document.querySelector('link[rel="canonical"]')?.href.replace(/[^/]*$/, '') || '/';
+  const PAGE_SIZE = 12;
+  let visibleCount = PAGE_SIZE;
 
   const SERIES_COLORS = {
     'time-travel': { emoji: '🕰️', color: '#92400e' },
@@ -175,52 +171,138 @@ const seriesOptions = Object.entries(SERIES_CONFIG).map(([key, c]) => ({
   const elResults = document.getElementById('filter-results');
   const elCount = document.getElementById('filter-count');
   const elEmpty = document.getElementById('filter-empty');
+  const elPrompt = document.getElementById('filter-prompt');
+  const elMoreWrap = document.getElementById('filter-more-wrap');
+  const elMoreBtn = document.getElementById('filter-more-btn');
 
-  function renderResults() {
+  // 学年ソート用
+  function gradeNum(g) {
+    const m = g.match(/小(\d)/);
+    if (m) return parseInt(m[1]);
+    const m2 = g.match(/中(\d)/);
+    if (m2) return parseInt(m2[1]) + 6;
+    if (g.includes('中')) return 7;
+    return 99;
+  }
+
+  // 教科選択に連動して学年ドロップダウンを更新
+  function updateGradeOptions() {
+    const series = elSeries.value;
+    const subset = series ? filterData.filter(s => s.series === series) : filterData;
+
+    // 対象シナリオの学年を収集（重複排除・ソート）
+    const gradeSet = new Set();
+    for (const s of subset) {
+      if (s.grade) gradeSet.add(s.grade);
+    }
+    const grades = [...gradeSet].sort((a, b) => gradeNum(a) - gradeNum(b));
+
+    const prev = elGrade.value;
+    elGrade.innerHTML = '<option value="">すべての学年</option>';
+    for (const g of grades) {
+      const opt = document.createElement('option');
+      opt.value = g;
+      opt.textContent = g;
+      if (g === prev) opt.selected = true;
+      elGrade.appendChild(opt);
+    }
+  }
+
+  function isFilterActive() {
+    return elSeries.value || elGrade.value || elKeyword.value.trim();
+  }
+
+  function getFiltered() {
     const series = elSeries.value;
     const grade = elGrade.value;
     const keyword = elKeyword.value.trim().toLowerCase();
 
-    const filtered = filterData.filter(s => {
+    return filterData.filter(s => {
       if (series && s.series !== series) return false;
       if (grade && !s.grade.includes(grade)) return false;
       if (keyword && !s.title.toLowerCase().includes(keyword) && !s.unit.toLowerCase().includes(keyword)) return false;
       return true;
     });
+  }
+
+  function renderCard(s) {
+    const c = SERIES_COLORS[s.series] || SERIES_COLORS['time-travel'];
+    const thumb = s.thumbnailUrl
+      ? `<img src="${BASE}${s.thumbnailUrl.replace(/^\//, '')}" alt="" width="48" height="48" class="rounded object-cover w-12 h-12 flex-shrink-0" loading="lazy" />`
+      : '';
+    const gradeBadge = s.grade
+      ? `<span class="text-xs text-amber-700">${s.grade}</span>`
+      : '';
+    return `
+      <a href="${BASE}play/${s.slug}/" class="flex gap-2.5 items-center rounded-lg border border-gray-200 px-3 py-2.5 hover:shadow-md hover:border-gray-300 transition-all no-underline bg-white">
+        ${thumb}
+        <div class="min-w-0 flex-1">
+          <div class="font-bold text-gray-900 text-sm leading-snug line-clamp-1">${s.title}</div>
+          <div class="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
+            <span style="color:${c.color}" class="font-bold">${c.emoji} Vol.${s.volume}</span>
+            ${gradeBadge}
+            <span>${s.difficulty}</span>
+          </div>
+        </div>
+        <span class="text-gray-300 text-sm flex-shrink-0">›</span>
+      </a>
+    `;
+  }
+
+  function renderResults() {
+    const active = isFilterActive();
+
+    // フィルタ未選択時: プロンプト表示
+    elPrompt.classList.toggle('hidden', active);
+    elCount.classList.toggle('hidden', !active);
+    elResults.classList.toggle('hidden', !active);
+
+    if (!active) {
+      elResults.innerHTML = '';
+      elEmpty.classList.add('hidden');
+      elMoreWrap.classList.add('hidden');
+      return;
+    }
+
+    const filtered = getFiltered();
 
     elCount.textContent = `${filtered.length}件のシナリオ`;
     elEmpty.classList.toggle('hidden', filtered.length > 0);
 
-    elResults.innerHTML = filtered.map(s => {
-      const c = SERIES_COLORS[s.series] || SERIES_COLORS['time-travel'];
-      const thumb = s.thumbnailUrl
-        ? `<img src="${BASE}${s.thumbnailUrl.replace(/^\//, '')}" alt="" width="60" height="60" class="rounded-md object-cover w-14 h-14 flex-shrink-0" loading="lazy" />`
-        : '';
-      const gradeBadge = s.grade
-        ? `<span class="inline-block mt-1 text-xs bg-amber-50 text-amber-700 rounded px-1.5 py-0.5">${s.grade}${s.unit ? ' | ' + s.unit : ''}</span>`
-        : '';
-      return `
-        <a href="${BASE}play/${s.slug}/" class="flex gap-3 items-start rounded-lg border border-gray-200 p-3 hover:shadow-md transition-shadow no-underline bg-white">
-          ${thumb}
-          <div class="min-w-0 flex-1">
-            <div class="text-xs font-bold" style="color:${c.color}">${c.emoji} Vol.${s.volume}</div>
-            <div class="font-bold text-gray-900 text-sm mt-0.5 leading-snug">${s.title}</div>
-            <p class="text-xs text-gray-500 mt-1 line-clamp-1">${s.synopsis}</p>
-            ${gradeBadge}
-            <div class="flex gap-2 mt-1 text-xs text-gray-400">
-              <span>${s.players}</span>
-              <span>${s.time}</span>
-              <span>${s.difficulty}</span>
-            </div>
-          </div>
-        </a>
-      `;
-    }).join('');
+    // 上限付き表示
+    const showing = filtered.slice(0, visibleCount);
+    elResults.innerHTML = showing.map(renderCard).join('');
+
+    // もっと見るボタン
+    const remaining = filtered.length - visibleCount;
+    if (remaining > 0) {
+      elMoreWrap.classList.remove('hidden');
+      elMoreBtn.textContent = `さらに${Math.min(remaining, PAGE_SIZE)}件を表示（残り${remaining}件）`;
+    } else {
+      elMoreWrap.classList.add('hidden');
+    }
   }
 
-  elSeries.addEventListener('change', renderResults);
-  elGrade.addEventListener('change', renderResults);
-  elKeyword.addEventListener('input', renderResults);
+  // イベント
+  elSeries.addEventListener('change', () => {
+    updateGradeOptions();
+    visibleCount = PAGE_SIZE;
+    renderResults();
+  });
+  elGrade.addEventListener('change', () => {
+    visibleCount = PAGE_SIZE;
+    renderResults();
+  });
+  elKeyword.addEventListener('input', () => {
+    visibleCount = PAGE_SIZE;
+    renderResults();
+  });
+  elMoreBtn.addEventListener('click', () => {
+    visibleCount += PAGE_SIZE;
+    renderResults();
+  });
 
+  // 初期化
+  updateGradeOptions();
   renderResults();
 </script>
