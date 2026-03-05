@@ -85,7 +85,7 @@
     },
     {
       "id": "npc-4",
-      "name": "ディオニス王（おう）",
+      "name": "{ディオニス王",
       "role": "シラクサの暴君。人間不信",
       "isNPC": true,
       "introContent": "",

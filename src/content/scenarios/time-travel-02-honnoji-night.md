@@ -20,7 +20,7 @@ characters:
     role: "ミツヒデノブナガ殿につかえる{武将|ぶしょう}。"
     isNPC: false
   - id: nou
-    name: ノウ姫
+    name: "{ノウ姫|ひめ}"
     role: "ノウ姫ノブナガ殿の{正室|せいしつ}（{奥|おく}さん）。"
     isNPC: false
   - id: ranmaru

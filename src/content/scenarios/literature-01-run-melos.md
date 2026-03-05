@@ -28,7 +28,7 @@ characters:
     role: "セリヌンティウス石工いしく（石を{彫|ほ}って{像|ぞう}をつくる{職人|しょくにん}）。"
     isNPC: false
   - id: npc-4
-    name: ディオニス王（おう）
+    name: "{ディオニス王"
     role: シラクサの暴君。人間不信
     isNPC: true
 ---

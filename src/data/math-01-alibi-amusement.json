@@ -85,7 +85,7 @@
     },
     {
       "id": "npc-4",
-      "name": "ワンダー園長（えんちょう）",
+      "name": "{ワンダー園長",
       "role": "—",
       "isNPC": true,
       "introContent": "",

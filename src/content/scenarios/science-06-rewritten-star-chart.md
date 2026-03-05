@@ -4,12 +4,12 @@ series: science
 seriesName: サイエンス捜査班
 volume: 6
 scenarioSlug: science-06-rewritten-star-chart
-subject: 理科（天体観測 — 星座の動き、星の明るさと色、星座早見盤の使い方）
+subject: "きょうか}"
 players: 4人 + GM
-age: 小4〜小6
+age: 小学3年〜6年
 time: 35〜45分
-difficulty: ★★★（中級）
-synopsis: 理科クラブの天体観測合宿。4人の部員が山の宿泊施設で冬の星座を観測し、「コンクール出品用の星座早見盤」を共同制作していた。
+difficulty: ★★☆
+synopsis: "{理科|りか}クラブの{天体|てんたい}観測{合宿|がっしゅく}。4人の{部員|ぶいん}が山の{宿泊|しゅくはく}{施設|しせつ}で冬の{星座|せいざ}を観測し、「コンクール出品用の{星座|せいざ}早見{盤|ばん}」を{共同|きょうどう}制作していた。"
 characters:
   - id: haru
     name: ハル

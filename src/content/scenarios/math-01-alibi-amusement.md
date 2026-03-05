@@ -28,7 +28,7 @@ characters:
     role: ノンビリおばちゃんチケット売り場のベテランスタッフ。58歳さい。
     isNPC: false
   - id: npc-4
-    name: ワンダー園長（えんちょう）
+    name: "{ワンダー園長"
     role: —
     isNPC: true
 ---
