@@ -66,3 +66,61 @@ export async function saveReflections(reflections: ReflectionRecord[]) {
   if (!supabase || reflections.length === 0) return;
   await supabase.from('reflections').insert(reflections);
 }
+
+// --- Dashboard query functions ---
+
+export interface SessionRow {
+  id: string;
+  teacher_name: string;
+  slug: string;
+  scenario_title: string;
+  environment: string;
+  player_count: number;
+  started_at: string;
+  completed_at: string | null;
+  phase_durations: Record<string, number> | null;
+  created_at: string;
+}
+
+export interface VoteRow {
+  id: string;
+  session_id: string;
+  voter_name: string;
+  suspect_name: string;
+  is_correct: boolean;
+}
+
+export interface ReflectionRow {
+  id: string;
+  session_id: string;
+  content: string;
+  created_at: string;
+}
+
+export async function fetchSessions(): Promise<SessionRow[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('sessions')
+    .select('*')
+    .order('started_at', { ascending: false });
+  if (error) {
+    console.error('Failed to fetch sessions:', error);
+    return [];
+  }
+  return data || [];
+}
+
+export async function fetchSessionDetail(sessionId: string) {
+  if (!supabase) return null;
+  const [sessionRes, votesRes, reflectionsRes] = await Promise.all([
+    supabase.from('sessions').select('*').eq('id', sessionId).single(),
+    supabase.from('votes').select('*').eq('session_id', sessionId),
+    supabase.from('reflections').select('*').eq('session_id', sessionId),
+  ]);
+  if (sessionRes.error) return null;
+  return {
+    session: sessionRes.data as SessionRow,
+    votes: (votesRes.data || []) as VoteRow[],
+    reflections: (reflectionsRes.data || []) as ReflectionRow[],
+  };
+}

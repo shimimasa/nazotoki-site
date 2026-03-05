@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Dashboard from '../components/dashboard/Dashboard';
+---
+<BaseLayout
+  title="教員ダッシュボード"
+  description="セッション履歴・振り返りの閲覧"
+  noIndex={true}
+>
+  <div class="mb-6">
+    <h1 class="text-3xl font-black">📊 教員ダッシュボード</h1>
+    <p class="text-gray-500 mt-2">セッション履歴と振り返りを確認できます</p>
+  </div>
+
+  <Dashboard client:load />
+</BaseLayout>
