@@ -13,18 +13,18 @@ synopsis: "理科の「物の溶け方」の授業で、結晶作りコンテス
 characters:
   - id: mei
     name: メイ
-    role: "役割やくわりタイプ: 行動型こうどうがた（犯人はんにん）"
+    role: "{役割|やくわり}タイプ: {行動型|こうどうがた}（{犯人|はんにん}）"
     isNPC: false
   - id: ryuu
     name: リュウ
-    role: "役割やくわりタイプ: 感情型かんじょうがた"
+    role: "{役割|やくわり}タイプ: {感情型|かんじょうがた}"
     isNPC: false
   - id: shiori
     name: シオリ
-    role: "役割やくわりタイプ: 情報型じょうほうがた"
+    role: "{役割|やくわり}タイプ: {情報型|じょうほうがた}"
     isNPC: false
   - id: takumi
     name: タクミ
-    role: "役割やくわりタイプ: 観察型かんさつがた"
+    role: "{役割|やくわり}タイプ: {観察型|かんさつがた}"
     isNPC: false
 ---

@@ -13,19 +13,19 @@ synopsis: "学校の理科フェスティバル当日。理科室に特別展示
 characters:
   - id: ame
     name: アメちゃん
-    role: アメちゃん甘あまいもの大好きな元気な生徒。
+    role: "アメちゃん{甘|あま}いもの大好きな元気な生徒。"
     isNPC: false
   - id: awako
     name: アワコ
-    role: アワコ好奇心こうきしん旺盛おうせいな生徒。
+    role: "アワコ{好奇心|こうきしん}{旺盛|おうせい}な生徒。"
     isNPC: false
   - id: shiori
     name: シオリ
-    role: シオリおとなしくて真面目まじめな生徒。
+    role: "シオリおとなしくて{真面目|まじめ}な生徒。"
     isNPC: false
   - id: toromi
     name: トロミ
-    role: トロミ料理部りょうりぶと理科が大好きな生徒。
+    role: "トロミ{料理部|りょうりぶ}と理科が大好きな生徒。"
     isNPC: false
   - id: npc-4
     name: ハカセ先生

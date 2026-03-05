@@ -21,7 +21,7 @@ characters:
     isNPC: false
   - id: mamoru
     name: マモル
-    role: マモル遊園地の警備員けいびいん。22歳さい。
+    role: "マモル遊園地の{警備員|けいびいん}。22歳さい。"
     isNPC: false
   - id: nonbiri
     name: ノンビリおばちゃん

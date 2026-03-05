@@ -17,7 +17,7 @@ characters:
     isNPC: false
   - id: hina
     name: ヒナ
-    role: "名前なまえ: ヒナ"
+    role: "{名前|なまえ}: ヒナ"
     isNPC: false
   - id: kenji
     name: ケンジ

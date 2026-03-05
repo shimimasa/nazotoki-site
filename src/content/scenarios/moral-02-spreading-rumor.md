@@ -1,5 +1,5 @@
 ---
-title: 広がったウワサと4人の言いぶん
+title: "広がったウワサと4人の{言|い}ぶん"
 series: moral
 seriesName: 答えのない法廷
 volume: 2
