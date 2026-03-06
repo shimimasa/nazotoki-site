@@ -55,6 +55,19 @@ const seriesOptions = Object.entries(SERIES_CONFIG).map(([key, c]) => ({
     <a href={`${import.meta.env.BASE_URL}guide/`} class="inline-block mt-3 text-sm text-amber-600 font-bold hover:text-amber-700 no-underline">📘 はじめての方はこちら →</a>
   </div>
 
+  {/* 今日のナゾトキ導線 */}
+  <a href={`${import.meta.env.BASE_URL}challenge/`}
+     class="block mb-8 rounded-xl border-2 border-amber-300 bg-amber-50 p-5 hover:shadow-lg transition-shadow no-underline group">
+    <div class="flex items-center gap-4">
+      <span class="text-4xl">🧩</span>
+      <div>
+        <h2 class="text-lg font-black text-amber-800 group-hover:text-amber-900">今日のナゾトキ — 5分思考チャレンジ</h2>
+        <p class="text-sm text-amber-700 mt-1">毎日1問、5分で考える力を鍛えよう。道徳・推理・教科接続の全100問</p>
+      </div>
+      <span class="ml-auto text-amber-600 text-xl font-bold group-hover:translate-x-1 transition-transform">&rarr;</span>
+    </div>
+  </a>
+
   {/* シリーズカード */}
   <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-12">
     {orderedSeries.map(([series, items]) => {

@@ -1,0 +1,230 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import challenges from '../data/meta/challenges.json';
+
+const total = challenges.length;
+---
+<BaseLayout title="今日のナゾトキ — 5分思考チャレンジ" description="毎日1問、5分で考える力を鍛えよう。道徳ジレンマ・推理・教科接続の3カテゴリ100問。">
+
+  <div class="text-center mb-8">
+    <h1 class="text-3xl sm:text-4xl font-black tracking-tight">
+      <span class="text-amber-600">🧩</span> 今日のナゾトキ
+    </h1>
+    <p class="mt-2 text-gray-600">5分思考チャレンジ — 全{total}問</p>
+  </div>
+
+  {/* 今日の1問 */}
+  <section id="daily-challenge" class="mb-12">
+    <div class="bg-white rounded-xl border-2 border-amber-300 p-6 sm:p-8 shadow-sm">
+      <div class="flex items-center gap-3 mb-4">
+        <span id="daily-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700"></span>
+        <span id="daily-difficulty" class="px-2 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600"></span>
+        <span id="daily-subject" class="text-xs text-gray-500"></span>
+      </div>
+      <h2 id="daily-title" class="text-2xl font-black mb-4"></h2>
+      <div id="daily-question" class="text-gray-800 leading-relaxed mb-6"></div>
+
+      <div id="daily-hints" class="bg-amber-50 rounded-lg p-4 mb-4">
+        <h3 class="font-bold text-amber-800 mb-2">考えるヒント</h3>
+        <ol id="daily-hints-list" class="list-decimal list-inside space-y-1 text-sm text-amber-900"></ol>
+      </div>
+
+      <button
+        id="show-answer-btn"
+        class="w-full py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-bold text-gray-700 transition-colors"
+      >
+        答え・解説を見る ▼
+      </button>
+
+      <div id="daily-answer-section" class="hidden mt-4 bg-gray-50 rounded-lg p-4">
+        <div id="daily-answer" class="font-bold text-lg text-amber-700 mb-2"></div>
+        <div id="daily-explanation" class="text-gray-700 leading-relaxed text-sm whitespace-pre-line"></div>
+      </div>
+
+      <div class="mt-6 flex items-center justify-between text-sm text-gray-400">
+        <span id="daily-date"></span>
+        <span id="daily-id"></span>
+      </div>
+    </div>
+
+    <div class="flex gap-3 mt-4">
+      <button id="prev-btn" class="flex-1 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl font-bold text-gray-600 text-sm transition-colors">← 昨日の問題</button>
+      <button id="next-btn" class="flex-1 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl font-bold text-gray-600 text-sm transition-colors">明日の問題 →</button>
+    </div>
+  </section>
+
+  {/* カテゴリ別一覧 */}
+  <section class="mb-12">
+    <h2 class="text-2xl font-black mb-4">カテゴリ別に探す</h2>
+    <div class="grid gap-4 sm:grid-cols-3">
+      <button data-filter="all" class="filter-btn active-filter block rounded-xl border-2 border-gray-300 bg-white p-4 text-left hover:shadow transition-shadow">
+        <div class="text-2xl mb-1">🧩</div>
+        <div class="font-bold">全問</div>
+        <div class="text-sm text-gray-500">{total}問</div>
+      </button>
+      <button data-filter="moral" class="filter-btn block rounded-xl border-2 border-orange-200 bg-orange-50 p-4 text-left hover:shadow transition-shadow">
+        <div class="text-2xl mb-1">⚖️</div>
+        <div class="font-bold text-orange-700">道徳ジレンマ</div>
+        <div class="text-sm text-gray-500">{challenges.filter(c => c.category === 'moral').length}問</div>
+      </button>
+      <button data-filter="logic" class="filter-btn block rounded-xl border-2 border-blue-200 bg-blue-50 p-4 text-left hover:shadow transition-shadow">
+        <div class="text-2xl mb-1">🔍</div>
+        <div class="font-bold text-blue-700">推理</div>
+        <div class="text-sm text-gray-500">{challenges.filter(c => c.category === 'logic').length}問</div>
+      </button>
+      <button data-filter="subject" class="filter-btn block rounded-xl border-2 border-green-200 bg-green-50 p-4 text-left hover:shadow transition-shadow">
+        <div class="text-2xl mb-1">📚</div>
+        <div class="font-bold text-green-700">教科接続</div>
+        <div class="text-sm text-gray-500">{challenges.filter(c => c.category === 'subject').length}問</div>
+      </button>
+    </div>
+  </section>
+
+  {/* 問題一覧 */}
+  <section>
+    <div id="challenge-list" class="grid gap-3 sm:grid-cols-2">
+      {challenges.map((c, i) => {
+        const catColors = {
+          moral: 'border-orange-200 bg-orange-50',
+          logic: 'border-blue-200 bg-blue-50',
+          subject: 'border-green-200 bg-green-50',
+        };
+        const catBadge = {
+          moral: 'bg-orange-100 text-orange-700',
+          logic: 'bg-blue-100 text-blue-700',
+          subject: 'bg-green-100 text-green-700',
+        };
+        return (
+          <button
+            data-index={i}
+            data-category={c.category}
+            class={`challenge-card block rounded-xl border ${catColors[c.category]} p-4 text-left hover:shadow transition-shadow`}
+          >
+            <div class="flex items-center gap-2 mb-1">
+              <span class={`px-2 py-0.5 rounded-full text-xs font-bold ${catBadge[c.category]}`}>{c.id}</span>
+              <span class="text-xs text-gray-500">{c.difficulty}</span>
+            </div>
+            <div class="font-bold text-sm">{c.title}</div>
+          </button>
+        );
+      })}
+    </div>
+  </section>
+
+  <script define:vars={{ challenges }}>
+    // 今日の日付からインデックスを決定（100日周期）
+    function getDayIndex(offset = 0) {
+      const now = new Date();
+      now.setDate(now.getDate() + offset);
+      const start = new Date(2026, 2, 6); // 2026-03-06 を Day 0 とする
+      const diff = Math.floor((now.getTime() - start.getTime()) / 86400000);
+      return ((diff % challenges.length) + challenges.length) % challenges.length;
+    }
+
+    let currentOffset = 0;
+
+    function renderChallenge(offset) {
+      currentOffset = offset;
+      const idx = getDayIndex(offset);
+      const c = challenges[idx];
+
+      document.getElementById('daily-badge').textContent = c.categoryLabel;
+      document.getElementById('daily-difficulty').textContent = c.difficulty;
+      document.getElementById('daily-subject').textContent = c.subject;
+      document.getElementById('daily-title').textContent = c.title;
+      document.getElementById('daily-question').textContent = c.question;
+      document.getElementById('daily-id').textContent = c.id;
+
+      const now = new Date();
+      now.setDate(now.getDate() + offset);
+      document.getElementById('daily-date').textContent =
+        `${now.getFullYear()}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')}`;
+
+      const hintsList = document.getElementById('daily-hints-list');
+      hintsList.innerHTML = '';
+      for (const h of c.hints) {
+        const li = document.createElement('li');
+        li.textContent = h;
+        hintsList.appendChild(li);
+      }
+
+      const answerEl = document.getElementById('daily-answer');
+      answerEl.textContent = c.answer || '';
+      answerEl.style.display = c.answer ? 'block' : 'none';
+      document.getElementById('daily-explanation').textContent = c.explanation;
+      document.getElementById('daily-answer-section').classList.add('hidden');
+      document.getElementById('show-answer-btn').textContent = '答え・解説を見る ▼';
+    }
+
+    renderChallenge(0);
+
+    document.getElementById('show-answer-btn').addEventListener('click', () => {
+      const section = document.getElementById('daily-answer-section');
+      const btn = document.getElementById('show-answer-btn');
+      if (section.classList.contains('hidden')) {
+        section.classList.remove('hidden');
+        btn.textContent = '閉じる ▲';
+      } else {
+        section.classList.add('hidden');
+        btn.textContent = '答え・解説を見る ▼';
+      }
+    });
+
+    document.getElementById('prev-btn').addEventListener('click', () => renderChallenge(currentOffset - 1));
+    document.getElementById('next-btn').addEventListener('click', () => renderChallenge(currentOffset + 1));
+
+    // カードクリックで日替わり表示に反映
+    document.querySelectorAll('.challenge-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const idx = parseInt(card.dataset.index);
+        const c = challenges[idx];
+        document.getElementById('daily-badge').textContent = c.categoryLabel;
+        document.getElementById('daily-difficulty').textContent = c.difficulty;
+        document.getElementById('daily-subject').textContent = c.subject;
+        document.getElementById('daily-title').textContent = c.title;
+        document.getElementById('daily-question').textContent = c.question;
+        document.getElementById('daily-id').textContent = c.id;
+        document.getElementById('daily-date').textContent = '— 選択した問題 —';
+
+        const hintsList = document.getElementById('daily-hints-list');
+        hintsList.innerHTML = '';
+        for (const h of c.hints) {
+          const li = document.createElement('li');
+          li.textContent = h;
+          hintsList.appendChild(li);
+        }
+        const answerEl = document.getElementById('daily-answer');
+        answerEl.textContent = c.answer || '';
+        answerEl.style.display = c.answer ? 'block' : 'none';
+        document.getElementById('daily-explanation').textContent = c.explanation;
+        document.getElementById('daily-answer-section').classList.add('hidden');
+        document.getElementById('show-answer-btn').textContent = '答え・解説を見る ▼';
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+
+    // フィルタ
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active-filter'));
+        btn.classList.add('active-filter');
+        const filter = btn.dataset.filter;
+        document.querySelectorAll('.challenge-card').forEach(card => {
+          if (filter === 'all' || card.dataset.category === filter) {
+            card.style.display = '';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    });
+  </script>
+
+  <style>
+    .active-filter {
+      ring: 2px;
+      box-shadow: 0 0 0 2px rgb(217 119 6);
+    }
+  </style>
+</BaseLayout>
