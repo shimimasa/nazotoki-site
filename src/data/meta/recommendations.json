@@ -1,0 +1,92 @@
+{
+  "siteUpdatedAt": "2026-03-06",
+  "personas": [
+    {
+      "id": "family",
+      "title": "親子ではじめる",
+      "emoji": "🏠",
+      "description": "2人からOK。週末や長期休みに、親子で推理ゲームを楽しもう。GM（進行役）は保護者がやるだけ。台本どおり読めば大丈夫！",
+      "color": "amber",
+      "link": "for/parents/",
+      "scenarios": ["moral-01-broken-vase", "time-travel-01-golden-tearoom", "science-01-rainbow-crystal"]
+    },
+    {
+      "id": "classroom",
+      "title": "授業で使う",
+      "emoji": "🏫",
+      "description": "45分授業にぴったり。道徳・総合・教科のまとめに。学習指導要領対応、セッションモードで準備ゼロ。",
+      "color": "blue",
+      "link": "for/teachers/",
+      "scenarios": ["moral-01-broken-vase", "math-01-alibi-amusement", "science-01-rainbow-crystal"]
+    },
+    {
+      "id": "beginner-gm",
+      "title": "GM初心者向け",
+      "emoji": "🎮",
+      "description": "はじめてGM（進行役）をやる方へ。セッションモードなら画面の指示に従うだけ。まずはこの1本から。",
+      "color": "green",
+      "link": "for/beginners/",
+      "scenarios": ["moral-01-broken-vase", "literature-01-run-melos", "time-travel-01-golden-tearoom"]
+    }
+  ],
+  "featured": [
+    "moral-01-broken-vase",
+    "time-travel-01-golden-tearoom",
+    "math-01-alibi-amusement",
+    "science-01-rainbow-crystal",
+    "literature-01-run-melos",
+    "popculture-03-holmes-deduction"
+  ],
+  "labels": {
+    "moral-01-broken-vase": ["おすすめ", "初心者向け", "テストプレイ済み"],
+    "time-travel-01-golden-tearoom": ["おすすめ", "人気"],
+    "math-01-alibi-amusement": ["おすすめ"],
+    "science-01-rainbow-crystal": ["おすすめ"],
+    "literature-01-run-melos": ["おすすめ", "初心者向け"],
+    "popculture-03-holmes-deduction": ["おすすめ", "人気"]
+  },
+  "seriesComparison": [
+    {
+      "series": "time-travel",
+      "audience": "歴史好き・社会科の復習に",
+      "scene": "社会科のまとめ、親子の週末",
+      "difficultyRange": "★〜★★★",
+      "highlight": "歴史上の人物の立場で推理する"
+    },
+    {
+      "series": "literature",
+      "audience": "読書好き・国語の読解力を伸ばしたい子に",
+      "scene": "国語の単元学習、読書週間",
+      "difficultyRange": "★★〜★★★",
+      "highlight": "教科書の名作が推理の舞台に"
+    },
+    {
+      "series": "popculture",
+      "audience": "マンガ・偉人に興味がある子に",
+      "scene": "総合学習、お楽しみ会",
+      "difficultyRange": "★〜★★",
+      "highlight": "親しみやすい入口から本物の教養へ"
+    },
+    {
+      "series": "math",
+      "audience": "算数の応用力を鍛えたい子に",
+      "scene": "算数の単元まとめ、家庭学習",
+      "difficultyRange": "★★〜★★★",
+      "highlight": "公式がアリバイを崩す武器になる"
+    },
+    {
+      "series": "science",
+      "audience": "実験・観察が好きな子に",
+      "scene": "理科の実験後、自由研究",
+      "difficultyRange": "★★〜★★★",
+      "highlight": "科学的思考で事件を解決"
+    },
+    {
+      "series": "moral",
+      "audience": "考えることが好きな子・道徳授業に",
+      "scene": "道徳の授業、学級活動",
+      "difficultyRange": "★〜★★",
+      "highlight": "犯人なし。正解のない問いに向き合う"
+    }
+  ]
+}

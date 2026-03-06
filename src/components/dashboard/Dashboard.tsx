@@ -81,15 +81,74 @@ function SessionList({
 }) {
   if (sessions.length === 0) {
     return (
-      <div class="text-center py-12 text-gray-500">
-        <div class="text-4xl mb-4">📋</div>
-        <p class="text-lg font-bold">まだセッション記録がありません</p>
-        <p class="mt-2">
-          <a href="/" class="text-amber-600 underline">
-            シナリオ一覧
+      <div class="py-8">
+        <div class="text-center mb-8">
+          <div class="text-5xl mb-4">📋</div>
+          <p class="text-xl font-black text-gray-700">まだセッション記録がありません</p>
+          <p class="text-gray-500 mt-2">セッションを実施すると、ここに記録が蓄積されます</p>
+        </div>
+
+        {/* この画面で見られる内容 */}
+        <div class="bg-gray-50 rounded-xl border border-gray-200 p-6 mb-6">
+          <h3 class="font-bold text-gray-700 mb-3">📊 ダッシュボードでできること</h3>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div class="flex gap-3 items-start">
+              <span class="text-lg">⏱</span>
+              <div>
+                <div class="font-bold text-sm text-gray-700">所要時間の記録</div>
+                <div class="text-xs text-gray-500">フェーズごとの時間配分を可視化</div>
+              </div>
+            </div>
+            <div class="flex gap-3 items-start">
+              <span class="text-lg">🗳️</span>
+              <div>
+                <div class="font-bold text-sm text-gray-700">投票結果の記録</div>
+                <div class="text-xs text-gray-500">誰が誰に投票したかを保存</div>
+              </div>
+            </div>
+            <div class="flex gap-3 items-start">
+              <span class="text-lg">📝</span>
+              <div>
+                <div class="font-bold text-sm text-gray-700">振り返りテキスト</div>
+                <div class="text-xs text-gray-500">子どもたちの感想を一覧表示</div>
+              </div>
+            </div>
+            <div class="flex gap-3 items-start">
+              <span class="text-lg">📈</span>
+              <div>
+                <div class="font-bold text-sm text-gray-700">実施履歴の一覧</div>
+                <div class="text-xs text-gray-500">過去のセッションを振り返り</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* はじめ方 */}
+        <div class="bg-amber-50 rounded-xl border-2 border-amber-200 p-6">
+          <h3 class="font-bold text-amber-900 mb-3">🎮 始め方</h3>
+          <ol class="space-y-2 text-sm text-gray-700">
+            <li class="flex gap-2">
+              <span class="font-black text-amber-600">1.</span>
+              <span><a href="/" class="text-amber-600 font-bold underline">トップページ</a>からシナリオを選ぶ</span>
+            </li>
+            <li class="flex gap-2">
+              <span class="font-black text-amber-600">2.</span>
+              <span>「セッションモードで始める」ボタンを押す</span>
+            </li>
+            <li class="flex gap-2">
+              <span class="font-black text-amber-600">3.</span>
+              <span>画面の指示に従ってゲームを進行</span>
+            </li>
+            <li class="flex gap-2">
+              <span class="font-black text-amber-600">4.</span>
+              <span>完了すると、ここに記録が表示されます</span>
+            </li>
+          </ol>
+          <a href="/"
+             class="inline-block mt-4 bg-amber-500 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-amber-600 transition-colors no-underline text-sm">
+            まず1本プレイしてみる →
           </a>
-          からセッションを開始すると、ここに記録が表示されます。
-        </p>
+        </div>
       </div>
     );
   }
@@ -283,8 +342,9 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div class="text-center py-16 text-gray-400">
-        <div class="text-4xl mb-4">📊</div>
-        <p>データを読み込み中...</p>
+        <div class="text-4xl mb-4 animate-pulse">📊</div>
+        <p class="font-bold">データを読み込み中...</p>
+        <p class="text-sm mt-1">セッション履歴を取得しています</p>
       </div>
     );
   }

@@ -1,0 +1,177 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { loadAllScenarios } from '../../lib/data';
+import { getSeriesConfig } from '../../lib/series';
+import curriculumData from '../../data/meta/curriculum.json';
+
+const scenarios = loadAllScenarios();
+const curriculum: Record<string, any> = curriculumData;
+
+// 親子向けおすすめ: 難易度低め、道徳・歴史・理科から
+const recommended = [
+  'moral-01-broken-vase',
+  'time-travel-01-golden-tearoom',
+  'science-01-rainbow-crystal',
+  'literature-01-run-melos',
+  'popculture-03-holmes-deduction',
+  'math-01-alibi-amusement',
+].map(slug => scenarios.find(s => s.slug === slug)).filter(Boolean);
+
+// 学年別にグループ化
+const byGrade = new Map<string, typeof scenarios>();
+for (const s of scenarios) {
+  const grade = curriculum[s.slug]?.grade;
+  if (!grade) continue;
+  if (!byGrade.has(grade)) byGrade.set(grade, []);
+  byGrade.get(grade)!.push(s);
+}
+const gradeEntries = [...byGrade.entries()].sort((a, b) => {
+  const n = (g: string) => { const m = g.match(/小(\d)/); return m ? parseInt(m[1]) : 99; };
+  return n(a[0]) - n(b[0]);
+});
+---
+<BaseLayout
+  title="親子ではじめる教育マダミス"
+  description="2人からOK。週末や長期休みに親子で推理ゲーム。全100シナリオ無料。GM（進行役）は保護者が台本どおり読むだけ。"
+>
+  <nav class="text-sm text-gray-500 mb-6">
+    <a href={import.meta.env.BASE_URL} class="hover:text-gray-700">トップ</a>
+    <span class="mx-1">/</span>
+    <span>親子ではじめる</span>
+  </nav>
+
+  <header class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-6 sm:p-8 mb-8">
+    <div class="text-4xl mb-3">🏠</div>
+    <h1 class="text-3xl sm:text-4xl font-black text-amber-900">親子ではじめる教育マダミス</h1>
+    <p class="text-gray-700 mt-3 text-lg leading-relaxed">
+      2人からOK。週末や長期休みに、親子で推理ゲームを楽しもう。<br/>
+      GM（進行役）は保護者がやるだけ。台本どおり読めば大丈夫！
+    </p>
+  </header>
+
+  {/* 親子プレイの魅力 */}
+  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black mb-4">親子プレイの魅力</h2>
+    <div class="grid gap-4 sm:grid-cols-3">
+      <div class="bg-amber-50 rounded-lg p-4">
+        <div class="text-2xl mb-2">⏱</div>
+        <h3 class="font-black text-amber-900">30分で完結</h3>
+        <p class="text-sm text-gray-600 mt-1">準備ゼロ、片付けゼロ。スマホ1台で始められます</p>
+      </div>
+      <div class="bg-amber-50 rounded-lg p-4">
+        <div class="text-2xl mb-2">💬</div>
+        <h3 class="font-black text-amber-900">自然な対話が生まれる</h3>
+        <p class="text-sm text-gray-600 mt-1">「誰が怪しい？」「なぜそう思う？」。勉強っぽくない会話で思考力が育つ</p>
+      </div>
+      <div class="bg-amber-50 rounded-lg p-4">
+        <div class="text-2xl mb-2">📚</div>
+        <h3 class="font-black text-amber-900">教科の復習になる</h3>
+        <p class="text-sm text-gray-600 mt-1">算数の公式や歴史の知識が推理の武器に。遊んでいるうちに学べる</p>
+      </div>
+    </div>
+  </section>
+
+  {/* 始め方 */}
+  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black mb-4">始め方（3ステップ）</h2>
+    <div class="space-y-4">
+      <div class="flex gap-4 items-start">
+        <span class="text-2xl font-black text-amber-600 flex-shrink-0 w-8 text-center">1</span>
+        <div>
+          <h3 class="font-bold">下のおすすめから1本選ぶ</h3>
+          <p class="text-sm text-gray-600 mt-1">迷ったら「われた花びんの秘密」がおすすめ。道徳テーマで親子の会話が弾みます</p>
+        </div>
+      </div>
+      <div class="flex gap-4 items-start">
+        <span class="text-2xl font-black text-amber-600 flex-shrink-0 w-8 text-center">2</span>
+        <div>
+          <h3 class="font-bold">「セッションモードで始める」を押す</h3>
+          <p class="text-sm text-gray-600 mt-1">画面の指示に従うだけ。GMの台本も画面に出ます</p>
+        </div>
+      </div>
+      <div class="flex gap-4 items-start">
+        <span class="text-2xl font-black text-amber-600 flex-shrink-0 w-8 text-center">3</span>
+        <div>
+          <h3 class="font-bold">30分後、感想を話す</h3>
+          <p class="text-sm text-gray-600 mt-1">「自分ならどうする？」と聞くだけで、深い会話が始まります</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* おすすめシナリオ */}
+  <section class="mb-8">
+    <h2 class="text-2xl font-black mb-4">親子プレイにおすすめのシナリオ</h2>
+    <div class="grid gap-3 sm:grid-cols-2">
+      {recommended.map((s: any) => {
+        const sc = getSeriesConfig(s.series);
+        const sCur = curriculum[s.slug];
+        return (
+          <a href={`${import.meta.env.BASE_URL}play/${s.slug}/`}
+             class={`flex gap-3 items-center rounded-xl border-2 ${sc.border} ${sc.bgLight} p-4 hover:shadow-md transition-all no-underline`}>
+            {s.thumbnailUrl && (
+              <img src={`${import.meta.env.BASE_URL}${s.thumbnailUrl.replace(/^\//, '')}`}
+                   alt="" width="56" height="56"
+                   class="rounded-lg object-cover w-14 h-14 flex-shrink-0" loading="lazy" />
+            )}
+            <div class="min-w-0 flex-1">
+              <div class="font-bold text-gray-900 leading-snug">{s.title}</div>
+              <div class="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                <span class={`font-bold ${sc.text}`}>{sc.emoji} {sc.name}</span>
+                {sCur?.grade && <span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">{sCur.grade}</span>}
+              </div>
+              <p class="text-xs text-gray-500 mt-1 line-clamp-1">{s.synopsis.split('\n')[0]}</p>
+            </div>
+            <span class={`${sc.text} flex-shrink-0`}>&rarr;</span>
+          </a>
+        );
+      })}
+    </div>
+  </section>
+
+  {/* お子さんの学年で探す */}
+  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black mb-4">お子さんの学年で探す</h2>
+    <div class="flex flex-wrap gap-2">
+      {gradeEntries.map(([grade, items]) => (
+        <a href={`${import.meta.env.BASE_URL}#search-section`}
+           class="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5 text-sm font-bold text-amber-800 hover:bg-amber-100 transition-colors no-underline"
+           onclick={`sessionStorage.setItem('filterGrade','${grade}');`}>
+          {grade}
+          <span class="text-xs text-amber-600 font-normal">{items.length}本</span>
+        </a>
+      ))}
+    </div>
+    <p class="text-xs text-gray-400 mt-3">タップするとトップページの検索に移動します</p>
+  </section>
+
+  {/* FAQ */}
+  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black mb-4">よくある質問</h2>
+    <div class="space-y-4">
+      <div>
+        <h3 class="font-bold text-gray-800">Q. 2人でも遊べますか？</h3>
+        <p class="text-sm text-gray-600 mt-1">はい。保護者がGM兼プレイヤーを担当すれば2人で遊べます。セッションモードなら進行も簡単です。</p>
+      </div>
+      <div>
+        <h3 class="font-bold text-gray-800">Q. GM（進行役）は難しくないですか？</h3>
+        <p class="text-sm text-gray-600 mt-1">全く難しくありません。セッションモードなら画面の指示に従うだけ。台本も全て画面に表示されます。</p>
+      </div>
+      <div>
+        <h3 class="font-bold text-gray-800">Q. 印刷は必要ですか？</h3>
+        <p class="text-sm text-gray-600 mt-1">不要です。スマホやタブレット1台でブラウザだけで遊べます。紙で遊びたい場合は印刷もできます。</p>
+      </div>
+      <div>
+        <h3 class="font-bold text-gray-800">Q. 本当に無料ですか？</h3>
+        <p class="text-sm text-gray-600 mt-1">はい。全100シナリオ、完全無料です。会員登録も不要です。</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="text-center">
+    <a href={import.meta.env.BASE_URL}
+       class="inline-block bg-amber-500 text-white px-8 py-4 rounded-xl font-black text-lg hover:bg-amber-600 transition-colors no-underline">
+      全シナリオを見る →
+    </a>
+  </div>
+</BaseLayout>

@@ -1,0 +1,177 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { loadAllScenarios } from '../../lib/data';
+import { getSeriesConfig } from '../../lib/series';
+import curriculumData from '../../data/meta/curriculum.json';
+
+const scenarios = loadAllScenarios();
+const curriculum: Record<string, any> = curriculumData;
+
+// 授業向けおすすめ
+const recommended = [
+  'moral-01-broken-vase',
+  'math-01-alibi-amusement',
+  'science-01-rainbow-crystal',
+  'time-travel-01-golden-tearoom',
+  'literature-01-run-melos',
+  'moral-05-broken-trust',
+].map(slug => scenarios.find(s => s.slug === slug)).filter(Boolean);
+
+// 教科別カウント
+const subjectCounts = Object.entries({
+  'time-travel': '歴史（社会科）',
+  'literature': '国語',
+  'math': '算数',
+  'science': '理科',
+  'moral': '道徳',
+  'popculture': '教養（教科横断）',
+}).map(([series, label]) => ({
+  series,
+  label,
+  count: scenarios.filter(s => s.series === series).length,
+  config: getSeriesConfig(series),
+}));
+---
+<BaseLayout
+  title="授業で使う教育マダミス"
+  description="45分授業にぴったり。道徳・総合・教科のまとめに使える教育マダミス。学習指導要領対応、セッションモードで準備ゼロ。全100シナリオ無料。"
+>
+  <nav class="text-sm text-gray-500 mb-6">
+    <a href={import.meta.env.BASE_URL} class="hover:text-gray-700">トップ</a>
+    <span class="mx-1">/</span>
+    <span>授業で使う</span>
+  </nav>
+
+  <header class="bg-blue-50 border-2 border-blue-300 rounded-2xl p-6 sm:p-8 mb-8">
+    <div class="text-4xl mb-3">🏫</div>
+    <h1 class="text-3xl sm:text-4xl font-black text-blue-900">授業で使う教育マダミス</h1>
+    <p class="text-gray-700 mt-3 text-lg leading-relaxed">
+      45分授業にぴったり。道徳・総合・教科のまとめに。<br/>
+      学習指導要領対応、セッションモードで準備ゼロ。
+    </p>
+  </header>
+
+  {/* 授業で使うメリット */}
+  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black mb-4">授業で使うメリット</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
+        <h3 class="font-black text-blue-900">準備ゼロで45分完結</h3>
+        <p class="text-sm text-gray-600 mt-1">セッションモードならPCやタブレット1台で完結。教材作成・印刷不要。画面の指示に従うだけで進行できます。</p>
+      </div>
+      <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
+        <h3 class="font-black text-blue-900">学習指導要領対応</h3>
+        <p class="text-sm text-gray-600 mt-1">各シナリオに対応学年・単元を明記。「小6理科・水溶液の性質」「小5算数・割合」など、授業計画に直結します。</p>
+      </div>
+      <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
+        <h3 class="font-black text-blue-900">「主体的・対話的で深い学び」の実践</h3>
+        <p class="text-sm text-gray-600 mt-1">証拠を集め、仮説を立て、議論する。推理ゲームの構造が、探究学習そのものです。</p>
+      </div>
+      <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
+        <h3 class="font-black text-blue-900">記録が残る</h3>
+        <p class="text-sm text-gray-600 mt-1">教員ダッシュボードで所要時間・投票結果・振り返りを記録。授業研究や次回の改善計画に活用できます。</p>
+      </div>
+    </div>
+  </section>
+
+  {/* 授業パターン */}
+  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black mb-4">授業での使い方パターン</h2>
+    <div class="space-y-4">
+      <div class="bg-gray-50 rounded-lg p-4">
+        <h3 class="font-bold text-gray-800">A. 道徳の授業（45分）</h3>
+        <p class="text-sm text-gray-600 mt-1">「答えのない法廷」シリーズを使用。犯人のいない構造で「自分ならどうする？」を全員で議論。教科書の読み物教材の代替として。</p>
+        <div class="mt-2 text-xs text-blue-600 font-bold">→ おすすめ: moral-01〜15</div>
+      </div>
+      <div class="bg-gray-50 rounded-lg p-4">
+        <h3 class="font-bold text-gray-800">B. 単元まとめ（45分）</h3>
+        <p class="text-sm text-gray-600 mt-1">算数「割合」の単元が終わったら「数字の迷宮」。理科「水溶液」が終わったら「サイエンス捜査班」。習った知識を使って謎を解く体験で定着。</p>
+        <div class="mt-2 text-xs text-blue-600 font-bold">→ 学年・単元で検索してマッチするシナリオを選択</div>
+      </div>
+      <div class="bg-gray-50 rounded-lg p-4">
+        <h3 class="font-bold text-gray-800">C. 学級活動・お楽しみ会（45分）</h3>
+        <p class="text-sm text-gray-600 mt-1">「マンガ教養ミステリー」や「タイムトラベル探偵団」は教科横断的で、イベント的にも使える。4人×8グループで同時進行も可能。</p>
+        <div class="mt-2 text-xs text-blue-600 font-bold">→ おすすめ: popculture-03, time-travel-01</div>
+      </div>
+    </div>
+  </section>
+
+  {/* 教科別 */}
+  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black mb-4">教科で選ぶ</h2>
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {subjectCounts.map(({ series, label, count, config }) => (
+        <a href={`${import.meta.env.BASE_URL}series/${series}/`}
+           class={`flex items-center gap-3 rounded-lg border-2 ${config.border} ${config.bgLight} p-3 hover:shadow-md transition-all no-underline`}>
+          <span class="text-2xl">{config.emoji}</span>
+          <div>
+            <div class={`font-bold ${config.text}`}>{label}</div>
+            <div class="text-xs text-gray-500">{count}シナリオ</div>
+          </div>
+          <span class={`ml-auto ${config.text}`}>&rarr;</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  {/* おすすめシナリオ */}
+  <section class="mb-8">
+    <h2 class="text-2xl font-black mb-4">授業におすすめのシナリオ</h2>
+    <div class="grid gap-3 sm:grid-cols-2">
+      {recommended.map((s: any) => {
+        const sc = getSeriesConfig(s.series);
+        const sCur = curriculum[s.slug];
+        return (
+          <a href={`${import.meta.env.BASE_URL}play/${s.slug}/`}
+             class={`flex gap-3 items-center rounded-xl border-2 ${sc.border} ${sc.bgLight} p-4 hover:shadow-md transition-all no-underline`}>
+            {s.thumbnailUrl && (
+              <img src={`${import.meta.env.BASE_URL}${s.thumbnailUrl.replace(/^\//, '')}`}
+                   alt="" width="56" height="56"
+                   class="rounded-lg object-cover w-14 h-14 flex-shrink-0" loading="lazy" />
+            )}
+            <div class="min-w-0 flex-1">
+              <div class="font-bold text-gray-900 leading-snug">{s.title}</div>
+              <div class="flex items-center gap-2 mt-1 text-xs text-gray-500 flex-wrap">
+                <span class={`font-bold ${sc.text}`}>{sc.emoji} {sc.name}</span>
+                {sCur?.grade && <span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">{sCur.grade}</span>}
+                {sCur?.unit && <span class="text-gray-400">{sCur.unit}</span>}
+              </div>
+            </div>
+            <span class={`${sc.text} flex-shrink-0`}>&rarr;</span>
+          </a>
+        );
+      })}
+    </div>
+  </section>
+
+  {/* 教員向けツール */}
+  <section class="bg-gray-50 rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black mb-4">教員向けツール</h2>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <a href={`${import.meta.env.BASE_URL}dashboard/`}
+         class="flex gap-3 items-center bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all no-underline">
+        <span class="text-2xl">📊</span>
+        <div>
+          <div class="font-bold text-gray-800">教員ダッシュボード</div>
+          <div class="text-xs text-gray-500">セッション履歴・振り返りの一覧</div>
+        </div>
+      </a>
+      <a href={`${import.meta.env.BASE_URL}guide/#teacher`}
+         class="flex gap-3 items-center bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all no-underline">
+        <span class="text-2xl">📘</span>
+        <div>
+          <div class="font-bold text-gray-800">教員向け機能ガイド</div>
+          <div class="text-xs text-gray-500">セッションモード・指導要領対応</div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <div class="text-center">
+    <a href={import.meta.env.BASE_URL}
+       class="inline-block bg-blue-500 text-white px-8 py-4 rounded-xl font-black text-lg hover:bg-blue-600 transition-colors no-underline">
+      全シナリオを見る →
+    </a>
+    <p class="text-sm text-gray-500 mt-3">全100シナリオ、完全無料・登録不要</p>
+  </div>
+</BaseLayout>

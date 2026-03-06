@@ -1,0 +1,151 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { loadAllScenarios } from '../../lib/data';
+import { getSeriesConfig } from '../../lib/series';
+import curriculumData from '../../data/meta/curriculum.json';
+
+const scenarios = loadAllScenarios();
+const curriculum: Record<string, any> = curriculumData;
+
+// GM初心者向けおすすめ（シンプルな構造、テストプレイ済み優先）
+const recommended = [
+  'moral-01-broken-vase',
+  'literature-01-run-melos',
+  'time-travel-01-golden-tearoom',
+  'popculture-03-holmes-deduction',
+].map(slug => scenarios.find(s => s.slug === slug)).filter(Boolean);
+---
+<BaseLayout
+  title="GM初心者ガイド"
+  description="はじめてGM（進行役）をやる方へ。セッションモードなら画面の指示に従うだけ。教育マダミス「ナゾトキ探偵団」の始め方ガイド。"
+>
+  <nav class="text-sm text-gray-500 mb-6">
+    <a href={import.meta.env.BASE_URL} class="hover:text-gray-700">トップ</a>
+    <span class="mx-1">/</span>
+    <span>GM初心者ガイド</span>
+  </nav>
+
+  <header class="bg-green-50 border-2 border-green-300 rounded-2xl p-6 sm:p-8 mb-8">
+    <div class="text-4xl mb-3">🎮</div>
+    <h1 class="text-3xl sm:text-4xl font-black text-green-900">GM初心者ガイド</h1>
+    <p class="text-gray-700 mt-3 text-lg leading-relaxed">
+      はじめてGM（進行役）をやる方へ。<br/>
+      セッションモードなら画面の指示に従うだけ。まずはこの1本から。
+    </p>
+  </header>
+
+  {/* GMとは */}
+  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black mb-4">GM（ゲームマスター）とは？</h2>
+    <div class="prose max-w-none text-gray-700">
+      <p>GMは、ゲームの進行を担当する人です。保護者・教員・年上のきょうだいなど、<strong>誰でもGMになれます</strong>。</p>
+      <p>特別なスキルや経験は必要ありません。やることは3つだけ:</p>
+    </div>
+    <div class="grid gap-3 sm:grid-cols-3 mt-4">
+      <div class="bg-green-50 rounded-lg p-4 text-center">
+        <div class="text-2xl font-black text-green-600 mb-2">1</div>
+        <h3 class="font-bold text-green-900">事件の概要を読む</h3>
+        <p class="text-xs text-gray-600 mt-1">台本がそのまま書いてあるので読み上げるだけ</p>
+      </div>
+      <div class="bg-green-50 rounded-lg p-4 text-center">
+        <div class="text-2xl font-black text-green-600 mb-2">2</div>
+        <h3 class="font-bold text-green-900">証拠カードを配る</h3>
+        <p class="text-xs text-gray-600 mt-1">タイミングはガイドに記載。画面をタップするだけ</p>
+      </div>
+      <div class="bg-green-50 rounded-lg p-4 text-center">
+        <div class="text-2xl font-black text-green-600 mb-2">3</div>
+        <h3 class="font-bold text-green-900">真相を読み上げる</h3>
+        <p class="text-xs text-gray-600 mt-1">投票後に台本どおり読むだけ。アドリブ不要</p>
+      </div>
+    </div>
+  </section>
+
+  {/* セッションモードの使い方 */}
+  <section class="bg-green-50 border-2 border-green-200 rounded-xl p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black text-green-900 mb-4">セッションモードなら、もっと簡単</h2>
+    <div class="prose max-w-none text-gray-700">
+      <p>セッションモードを使えば、<strong>画面の指示に従うだけ</strong>でゲームが進行します。</p>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2 mt-4">
+      <div class="bg-white rounded-lg p-4 border border-green-200">
+        <h3 class="font-bold text-green-800">⏱ タイマー自動管理</h3>
+        <p class="text-sm text-gray-600 mt-1">各フェーズの時間を画面で管理。「あと何分？」の心配なし</p>
+      </div>
+      <div class="bg-white rounded-lg p-4 border border-green-200">
+        <h3 class="font-bold text-green-800">📋 台本が画面に表示</h3>
+        <p class="text-sm text-gray-600 mt-1">読み上げるセリフがそのまま表示。何を言えばいいか迷わない</p>
+      </div>
+      <div class="bg-white rounded-lg p-4 border border-green-200">
+        <h3 class="font-bold text-green-800">🗳️ 投票が画面で完結</h3>
+        <p class="text-sm text-gray-600 mt-1">紙の投票用紙不要。画面上で投票して結果を表示</p>
+      </div>
+      <div class="bg-white rounded-lg p-4 border border-green-200">
+        <h3 class="font-bold text-green-800">🖨 印刷不要</h3>
+        <p class="text-sm text-gray-600 mt-1">カードも全て画面表示。スマホ1台で始められる</p>
+      </div>
+    </div>
+  </section>
+
+  {/* 最初の1本 */}
+  <section class="mb-8">
+    <h2 class="text-2xl font-black mb-2">まずはこの1本から</h2>
+    <p class="text-gray-600 mb-4">初めてのGMにおすすめのシナリオです。構造がシンプルで、進行しやすいものを選びました。</p>
+    <div class="grid gap-3 sm:grid-cols-2">
+      {recommended.map((s: any) => {
+        const sc = getSeriesConfig(s.series);
+        const sCur = curriculum[s.slug];
+        return (
+          <a href={`${import.meta.env.BASE_URL}play/${s.slug}/`}
+             class={`flex gap-3 items-center rounded-xl border-2 ${sc.border} ${sc.bgLight} p-4 hover:shadow-md transition-all no-underline`}>
+            {s.thumbnailUrl && (
+              <img src={`${import.meta.env.BASE_URL}${s.thumbnailUrl.replace(/^\//, '')}`}
+                   alt="" width="56" height="56"
+                   class="rounded-lg object-cover w-14 h-14 flex-shrink-0" loading="lazy" />
+            )}
+            <div class="min-w-0 flex-1">
+              <div class="font-bold text-gray-900 leading-snug">{s.title}</div>
+              <div class="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                <span class={`font-bold ${sc.text}`}>{sc.emoji} {sc.name}</span>
+                {sCur?.grade && <span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">{sCur.grade}</span>}
+              </div>
+              <p class="text-xs text-gray-500 mt-1 line-clamp-1">{s.synopsis.split('\n')[0]}</p>
+            </div>
+            <span class={`${sc.text} flex-shrink-0`}>&rarr;</span>
+          </a>
+        );
+      })}
+    </div>
+  </section>
+
+  {/* 不安解消FAQ */}
+  <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
+    <h2 class="text-2xl font-black mb-4">GM初心者のよくある不安</h2>
+    <div class="space-y-4">
+      <div>
+        <h3 class="font-bold text-gray-800">Q. 推理ゲームをやったことがないのですが…</h3>
+        <p class="text-sm text-gray-600 mt-1">問題ありません。GMは推理する必要がなく、台本どおり進行するだけです。プレイヤーが考えて楽しむゲームなので、GMは「場を回す人」です。</p>
+      </div>
+      <div>
+        <h3 class="font-bold text-gray-800">Q. 子どもが詰まったらどうすればいい？</h3>
+        <p class="text-sm text-gray-600 mt-1">GMガイドに「ヒントの出し方」が書いてあります。基本は「証拠カード○番をもう一度読んでみて」と促すだけでOKです。</p>
+      </div>
+      <div>
+        <h3 class="font-bold text-gray-800">Q. 時間が足りなくなったら？</h3>
+        <p class="text-sm text-gray-600 mt-1">セッションモードのタイマーを目安に、議論フェーズで調整します。時間が短い場合は議論を15分→10分に短縮しても大丈夫です。</p>
+      </div>
+      <div>
+        <h3 class="font-bold text-gray-800">Q. 犯人を当てられなかったら失敗？</h3>
+        <p class="text-sm text-gray-600 mt-1">いいえ。推理の過程が学びです。間違っても、真相発表の瞬間が一番盛り上がります。道徳シリーズはそもそも犯人がいないので、正解・不正解の概念がありません。</p>
+      </div>
+    </div>
+  </section>
+
+  {/* CTA */}
+  <div class="text-center">
+    <a href={import.meta.env.BASE_URL}
+       class="inline-block bg-green-500 text-white px-8 py-4 rounded-xl font-black text-lg hover:bg-green-600 transition-colors no-underline">
+      シナリオを選んで始める →
+    </a>
+    <p class="text-sm text-gray-500 mt-3">全100シナリオ、完全無料・登録不要</p>
+  </div>
+</BaseLayout>
