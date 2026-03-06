@@ -47,8 +47,8 @@ const ogImageUrl = ogImage ? new URL(`${import.meta.env.BASE_URL}${ogImage.repla
 <body class="min-h-screen bg-gray-50 text-gray-900 font-sans antialiased">
   <header class="bg-white border-b border-gray-200 print:hidden">
     <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
-      <a href={import.meta.env.BASE_URL} class="flex items-center gap-2 text-gray-900 hover:text-amber-700 transition-colors no-underline flex-shrink-0">
-        <span class="text-2xl">🔍</span>
+      <a href={import.meta.env.BASE_URL} class="flex items-center gap-2 text-slate-800 hover:text-slate-600 transition-colors no-underline flex-shrink-0">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/></svg>
         <span class="font-black text-lg tracking-tight hidden sm:inline">ナゾトキ探偵団</span>
       </a>
 
@@ -58,28 +58,29 @@ const ogImageUrl = ogImage ? new URL(`${import.meta.env.BASE_URL}${ogImage.repla
         <div class="relative" id="series-dropdown">
           <button
             type="button"
-            class="text-sm text-gray-500 hover:text-amber-600 transition-colors font-bold flex items-center gap-1"
+            class="text-sm text-slate-600 hover:text-slate-800 transition-colors font-bold flex items-center gap-1"
             id="series-dropdown-btn"
           >
-            📚 教科 <span class="text-xs">▼</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>
+            教科 <span class="text-xs">&#9662;</span>
           </button>
           <div id="series-dropdown-menu" class="hidden absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 w-56 py-2">
-            <a href={`${import.meta.env.BASE_URL}series/time-travel/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 no-underline">
+            <a href={`${import.meta.env.BASE_URL}series/time-travel/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 no-underline">
               <span>🕰️</span> タイムトラベル探偵団
             </a>
-            <a href={`${import.meta.env.BASE_URL}series/literature/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 no-underline">
+            <a href={`${import.meta.env.BASE_URL}series/literature/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 no-underline">
               <span>📖</span> 名作文学ミステリー
             </a>
-            <a href={`${import.meta.env.BASE_URL}series/popculture/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 no-underline">
+            <a href={`${import.meta.env.BASE_URL}series/popculture/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 no-underline">
               <span>🎭</span> マンガ教養ミステリー
             </a>
-            <a href={`${import.meta.env.BASE_URL}series/math/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 no-underline">
+            <a href={`${import.meta.env.BASE_URL}series/math/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 no-underline">
               <span>🔢</span> 数字の迷宮
             </a>
-            <a href={`${import.meta.env.BASE_URL}series/science/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 no-underline">
+            <a href={`${import.meta.env.BASE_URL}series/science/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 no-underline">
               <span>🔬</span> サイエンス捜査班
             </a>
-            <a href={`${import.meta.env.BASE_URL}series/moral/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 no-underline">
+            <a href={`${import.meta.env.BASE_URL}series/moral/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 no-underline">
               <span>⚖️</span> 答えのない法廷
             </a>
           </div>
@@ -88,36 +89,47 @@ const ogImageUrl = ogImage ? new URL(`${import.meta.env.BASE_URL}${ogImage.repla
         <div class="relative" id="beginners-dropdown">
           <button
             type="button"
-            class="text-sm text-gray-500 hover:text-amber-600 transition-colors font-bold flex items-center gap-1"
+            class="text-sm text-slate-600 hover:text-slate-800 transition-colors font-bold flex items-center gap-1"
             id="beginners-dropdown-btn"
           >
-            ✨ はじめての方 <span class="text-xs">▼</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z"/></svg>
+            ガイド <span class="text-xs">&#9662;</span>
           </button>
           <div id="beginners-dropdown-menu" class="hidden absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 w-56 py-2">
-            <a href={`${import.meta.env.BASE_URL}for/parents/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 no-underline">
-              <span>🏠</span> 親子ではじめる
+            <a href={`${import.meta.env.BASE_URL}for/parents/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 no-underline">
+              <svg class="w-4 h-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 0 0-1.414 0l-7 7a1 1 0 0 0 1.414 1.414L4 10.414V17a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-6.586l.293.293a1 1 0 0 0 1.414-1.414l-7-7Z"/></svg>
+              親子ではじめる
             </a>
-            <a href={`${import.meta.env.BASE_URL}for/teachers/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 no-underline">
-              <span>🏫</span> 授業で使う
+            <a href={`${import.meta.env.BASE_URL}for/teachers/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 no-underline">
+              <svg class="w-4 h-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.674 2.075a.75.75 0 0 1 .652 0l7.25 3.5A.75.75 0 0 1 17.5 7v.04c-.067.446-.502.75-.948.75H3.448c-.446 0-.881-.304-.948-.75V7a.75.75 0 0 1-.076-1.425l7.25-3.5ZM10 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM3.5 9.5v5.25h1V9.5h-1Zm2 0v5.25h1V9.5h-1Zm3 0v5.25h1V9.5h-1Zm2 0v5.25h1V9.5h-1Zm3 0v5.25h1V9.5h-1Zm2 0v5.25h1V9.5h-1ZM2.25 17.5a.75.75 0 0 1 .75-.75h14a.75.75 0 0 1 0 1.5H3a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd"/></svg>
+              授業で使う
             </a>
-            <a href={`${import.meta.env.BASE_URL}for/beginners/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-green-50 no-underline">
-              <span>🎮</span> GM初心者ガイド
+            <a href={`${import.meta.env.BASE_URL}for/beginners/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 no-underline">
+              <svg class="w-4 h-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2 10a8 8 0 1 1 16 0 8 8 0 0 1-16 0Zm6.39-2.908a.75.75 0 0 1 .766.027l3.5 2.25a.75.75 0 0 1 0 1.262l-3.5 2.25A.75.75 0 0 1 8 12.25v-4.5a.75.75 0 0 1 .39-.658Z" clip-rule="evenodd"/></svg>
+              GM初心者ガイド
             </a>
             <div class="border-t border-gray-100 my-1"></div>
-            <a href={`${import.meta.env.BASE_URL}guide/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 no-underline">
-              <span>📘</span> 遊び方ガイド
+            <a href={`${import.meta.env.BASE_URL}guide/`} class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 no-underline">
+              <svg class="w-4 h-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 16.82A7.462 7.462 0 0 1 15 15.5c.71 0 1.396.098 2.046.282A.75.75 0 0 0 18 15.06V4.94a.75.75 0 0 0-.546-.72A9.006 9.006 0 0 0 15 3.86a9.006 9.006 0 0 0-4.25 1.065v11.895ZM9.25 4.925A9.006 9.006 0 0 0 5 3.86a9.006 9.006 0 0 0-2.454.36A.75.75 0 0 0 2 4.94v10.12a.75.75 0 0 0 .954.72A7.463 7.463 0 0 1 5 15.5c1.579 0 3.042.49 4.25 1.32V4.925Z"/></svg>
+              遊び方ガイド
             </a>
           </div>
         </div>
-        <a href={`${import.meta.env.BASE_URL}challenge/`} class="text-sm text-gray-500 hover:text-amber-600 transition-colors no-underline font-bold">🧩 今日のナゾトキ</a>
-        <a href={`${import.meta.env.BASE_URL}dashboard/`} class="text-sm text-gray-500 hover:text-amber-600 transition-colors no-underline font-bold">📊 ダッシュボード</a>
+        <a href={`${import.meta.env.BASE_URL}challenge/`} class="text-sm text-slate-600 hover:text-slate-800 transition-colors no-underline font-bold flex items-center gap-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"/></svg>
+          ナゾトキ
+        </a>
+        <a href={`${import.meta.env.BASE_URL}dashboard/`} class="text-sm text-slate-600 hover:text-slate-800 transition-colors no-underline font-bold flex items-center gap-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>
+          ダッシュボード
+        </a>
       </div>
 
       {/* === モバイル用ハンバーガー（sm未満） === */}
       <button
         type="button"
         id="mobile-menu-btn"
-        class="ml-auto sm:hidden flex items-center justify-center w-10 h-10 rounded-lg text-gray-500 hover:text-amber-600 hover:bg-gray-100 transition-colors"
+        class="ml-auto sm:hidden flex items-center justify-center w-10 h-10 rounded-lg text-gray-500 hover:text-slate-700 hover:bg-gray-100 transition-colors"
         aria-label="メニューを開く"
         aria-expanded="false"
       >
@@ -136,14 +148,17 @@ const ogImageUrl = ogImage ? new URL(`${import.meta.env.BASE_URL}${ogImage.repla
         {/* はじめての方 */}
         <div class="pb-2">
           <div class="text-xs font-bold text-gray-400 uppercase tracking-wider px-3 py-1">はじめての方</div>
-          <a href={`${import.meta.env.BASE_URL}for/parents/`} class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-amber-50 no-underline">
-            <span class="text-lg">🏠</span> <span class="font-bold text-sm">親子ではじめる</span>
+          <a href={`${import.meta.env.BASE_URL}for/parents/`} class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-slate-50 no-underline">
+            <svg class="w-5 h-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 0 0-1.414 0l-7 7a1 1 0 0 0 1.414 1.414L4 10.414V17a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-6.586l.293.293a1 1 0 0 0 1.414-1.414l-7-7Z"/></svg>
+            <span class="font-bold text-sm">親子ではじめる</span>
           </a>
-          <a href={`${import.meta.env.BASE_URL}for/teachers/`} class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 no-underline">
-            <span class="text-lg">🏫</span> <span class="font-bold text-sm">授業で使う</span>
+          <a href={`${import.meta.env.BASE_URL}for/teachers/`} class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-slate-50 no-underline">
+            <svg class="w-5 h-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.674 2.075a.75.75 0 0 1 .652 0l7.25 3.5A.75.75 0 0 1 17.5 7v.04c-.067.446-.502.75-.948.75H3.448c-.446 0-.881-.304-.948-.75V7a.75.75 0 0 1-.076-1.425l7.25-3.5ZM10 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM3.5 9.5v5.25h1V9.5h-1Zm2 0v5.25h1V9.5h-1Zm3 0v5.25h1V9.5h-1Zm2 0v5.25h1V9.5h-1Zm3 0v5.25h1V9.5h-1Zm2 0v5.25h1V9.5h-1ZM2.25 17.5a.75.75 0 0 1 .75-.75h14a.75.75 0 0 1 0 1.5H3a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd"/></svg>
+            <span class="font-bold text-sm">授業で使う</span>
           </a>
-          <a href={`${import.meta.env.BASE_URL}for/beginners/`} class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-green-50 no-underline">
-            <span class="text-lg">🎮</span> <span class="font-bold text-sm">GM初心者ガイド</span>
+          <a href={`${import.meta.env.BASE_URL}for/beginners/`} class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-slate-50 no-underline">
+            <svg class="w-5 h-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2 10a8 8 0 1 1 16 0 8 8 0 0 1-16 0Zm6.39-2.908a.75.75 0 0 1 .766.027l3.5 2.25a.75.75 0 0 1 0 1.262l-3.5 2.25A.75.75 0 0 1 8 12.25v-4.5a.75.75 0 0 1 .39-.658Z" clip-rule="evenodd"/></svg>
+            <span class="font-bold text-sm">GM初心者ガイド</span>
           </a>
         </div>
 
@@ -153,22 +168,22 @@ const ogImageUrl = ogImage ? new URL(`${import.meta.env.BASE_URL}${ogImage.repla
         <div class="py-2">
           <div class="text-xs font-bold text-gray-400 uppercase tracking-wider px-3 py-1">教科で探す</div>
           <div class="grid grid-cols-2 gap-1">
-            <a href={`${import.meta.env.BASE_URL}series/time-travel/`} class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-amber-50 no-underline">
+            <a href={`${import.meta.env.BASE_URL}series/time-travel/`} class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-slate-50 no-underline">
               <span>🕰️</span> 歴史
             </a>
-            <a href={`${import.meta.env.BASE_URL}series/literature/`} class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-indigo-50 no-underline">
+            <a href={`${import.meta.env.BASE_URL}series/literature/`} class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-slate-50 no-underline">
               <span>📖</span> 国語
             </a>
-            <a href={`${import.meta.env.BASE_URL}series/popculture/`} class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-purple-50 no-underline">
+            <a href={`${import.meta.env.BASE_URL}series/popculture/`} class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-slate-50 no-underline">
               <span>🎭</span> 教養
             </a>
-            <a href={`${import.meta.env.BASE_URL}series/math/`} class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-emerald-50 no-underline">
+            <a href={`${import.meta.env.BASE_URL}series/math/`} class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-slate-50 no-underline">
               <span>🔢</span> 算数
             </a>
-            <a href={`${import.meta.env.BASE_URL}series/science/`} class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-blue-50 no-underline">
+            <a href={`${import.meta.env.BASE_URL}series/science/`} class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-slate-50 no-underline">
               <span>🔬</span> 理科
             </a>
-            <a href={`${import.meta.env.BASE_URL}series/moral/`} class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-orange-50 no-underline">
+            <a href={`${import.meta.env.BASE_URL}series/moral/`} class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-slate-50 no-underline">
               <span>⚖️</span> 道徳
             </a>
           </div>
@@ -178,14 +193,17 @@ const ogImageUrl = ogImage ? new URL(`${import.meta.env.BASE_URL}${ogImage.repla
 
         {/* その他 */}
         <div class="pt-2">
-          <a href={`${import.meta.env.BASE_URL}challenge/`} class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-amber-50 no-underline">
-            <span class="text-lg">🧩</span> <span class="font-bold text-sm">今日のナゾトキ</span>
+          <a href={`${import.meta.env.BASE_URL}challenge/`} class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-slate-50 no-underline">
+            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"/></svg>
+            <span class="font-bold text-sm">今日のナゾトキ</span>
           </a>
-          <a href={`${import.meta.env.BASE_URL}guide/`} class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 no-underline">
-            <span class="text-lg">📘</span> <span class="font-bold text-sm">遊び方ガイド</span>
+          <a href={`${import.meta.env.BASE_URL}guide/`} class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-slate-50 no-underline">
+            <svg class="w-5 h-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 16.82A7.462 7.462 0 0 1 15 15.5c.71 0 1.396.098 2.046.282A.75.75 0 0 0 18 15.06V4.94a.75.75 0 0 0-.546-.72A9.006 9.006 0 0 0 15 3.86a9.006 9.006 0 0 0-4.25 1.065v11.895ZM9.25 4.925A9.006 9.006 0 0 0 5 3.86a9.006 9.006 0 0 0-2.454.36A.75.75 0 0 0 2 4.94v10.12a.75.75 0 0 0 .954.72A7.463 7.463 0 0 1 5 15.5c1.579 0 3.042.49 4.25 1.32V4.925Z"/></svg>
+            <span class="font-bold text-sm">遊び方ガイド</span>
           </a>
-          <a href={`${import.meta.env.BASE_URL}dashboard/`} class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 no-underline">
-            <span class="text-lg">📊</span> <span class="font-bold text-sm">教員ダッシュボード</span>
+          <a href={`${import.meta.env.BASE_URL}dashboard/`} class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-slate-50 no-underline">
+            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>
+            <span class="font-bold text-sm">教員ダッシュボード</span>
           </a>
         </div>
       </nav>
@@ -231,49 +249,58 @@ const ogImageUrl = ogImage ? new URL(`${import.meta.env.BASE_URL}${ogImage.repla
     <slot />
   </main>
 
-  <footer class={`border-t border-gray-200 print:hidden bg-gray-50 ${fullWidth ? '' : 'mt-16'}`}>
-    <div class="max-w-5xl mx-auto px-4 py-8">
-      <div class="grid gap-8 sm:grid-cols-3">
+  <footer class={`border-t border-gray-200 print:hidden bg-slate-50 ${fullWidth ? '' : 'mt-16'}`}>
+    <div class="max-w-5xl mx-auto px-4 py-10">
+      <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
         {/* シリーズ */}
         <div>
-          <h3 class="font-bold text-sm text-gray-700 mb-3">シリーズ</h3>
-          <ul class="space-y-1.5 text-sm text-gray-500">
-            <li><a href={`${import.meta.env.BASE_URL}series/time-travel/`} class="hover:text-gray-700 no-underline">🕰️ タイムトラベル探偵団</a></li>
-            <li><a href={`${import.meta.env.BASE_URL}series/literature/`} class="hover:text-gray-700 no-underline">📖 名作文学ミステリー</a></li>
-            <li><a href={`${import.meta.env.BASE_URL}series/popculture/`} class="hover:text-gray-700 no-underline">🎭 マンガ教養ミステリー</a></li>
-            <li><a href={`${import.meta.env.BASE_URL}series/math/`} class="hover:text-gray-700 no-underline">🔢 数字の迷宮</a></li>
-            <li><a href={`${import.meta.env.BASE_URL}series/science/`} class="hover:text-gray-700 no-underline">🔬 サイエンス捜査班</a></li>
-            <li><a href={`${import.meta.env.BASE_URL}series/moral/`} class="hover:text-gray-700 no-underline">⚖️ 答えのない法廷</a></li>
+          <h3 class="font-bold text-sm text-slate-700 mb-3">シリーズ</h3>
+          <ul class="space-y-1.5 text-sm text-slate-500">
+            <li><a href={`${import.meta.env.BASE_URL}series/time-travel/`} class="hover:text-slate-700 no-underline">タイムトラベル探偵団</a></li>
+            <li><a href={`${import.meta.env.BASE_URL}series/literature/`} class="hover:text-slate-700 no-underline">名作文学ミステリー</a></li>
+            <li><a href={`${import.meta.env.BASE_URL}series/popculture/`} class="hover:text-slate-700 no-underline">マンガ教養ミステリー</a></li>
+            <li><a href={`${import.meta.env.BASE_URL}series/math/`} class="hover:text-slate-700 no-underline">数字の迷宮</a></li>
+            <li><a href={`${import.meta.env.BASE_URL}series/science/`} class="hover:text-slate-700 no-underline">サイエンス捜査班</a></li>
+            <li><a href={`${import.meta.env.BASE_URL}series/moral/`} class="hover:text-slate-700 no-underline">答えのない法廷</a></li>
           </ul>
         </div>
-        {/* ガイド・ツール */}
+        {/* ガイド */}
         <div>
-          <h3 class="font-bold text-sm text-gray-700 mb-3">ガイド・ツール</h3>
-          <ul class="space-y-1.5 text-sm text-gray-500">
-            <li><a href={`${import.meta.env.BASE_URL}for/parents/`} class="hover:text-gray-700 no-underline">🏠 親子ではじめる</a></li>
-            <li><a href={`${import.meta.env.BASE_URL}for/teachers/`} class="hover:text-gray-700 no-underline">🏫 授業で使う</a></li>
-            <li><a href={`${import.meta.env.BASE_URL}for/beginners/`} class="hover:text-gray-700 no-underline">🎮 GM初心者ガイド</a></li>
-            <li><a href={`${import.meta.env.BASE_URL}guide/`} class="hover:text-gray-700 no-underline">📘 遊び方ガイド</a></li>
-            <li><a href={`${import.meta.env.BASE_URL}challenge/`} class="hover:text-gray-700 no-underline">🧩 今日のナゾトキ</a></li>
-            <li><a href={`${import.meta.env.BASE_URL}dashboard/`} class="hover:text-gray-700 no-underline">📊 教員ダッシュボード</a></li>
+          <h3 class="font-bold text-sm text-slate-700 mb-3">ガイド</h3>
+          <ul class="space-y-1.5 text-sm text-slate-500">
+            <li><a href={`${import.meta.env.BASE_URL}for/parents/`} class="hover:text-slate-700 no-underline">親子ではじめる</a></li>
+            <li><a href={`${import.meta.env.BASE_URL}for/teachers/`} class="hover:text-slate-700 no-underline">授業で使う</a></li>
+            <li><a href={`${import.meta.env.BASE_URL}for/beginners/`} class="hover:text-slate-700 no-underline">GM初心者ガイド</a></li>
+            <li><a href={`${import.meta.env.BASE_URL}guide/`} class="hover:text-slate-700 no-underline">遊び方ガイド</a></li>
+            <li><a href={`${import.meta.env.BASE_URL}challenge/`} class="hover:text-slate-700 no-underline">今日のナゾトキ</a></li>
+            <li><a href={`${import.meta.env.BASE_URL}dashboard/`} class="hover:text-slate-700 no-underline">教員ダッシュボード</a></li>
+          </ul>
+        </div>
+        {/* このサイトについて */}
+        <div>
+          <h3 class="font-bold text-sm text-slate-700 mb-3">このサイトについて</h3>
+          <ul class="space-y-1.5 text-sm text-slate-500">
+            <li><a href="#faq-section" class="hover:text-slate-700 no-underline">よくある質問</a></li>
+            <li><a href={`${import.meta.env.BASE_URL}terms/`} class="hover:text-slate-700 no-underline">利用規約</a></li>
+            <li><a href={`${import.meta.env.BASE_URL}privacy/`} class="hover:text-slate-700 no-underline">プライバシーポリシー</a></li>
+            <li><a href="https://x.com/smz_nazotoki" class="hover:text-slate-700 no-underline" target="_blank" rel="noopener">お問い合わせ (X)</a></li>
           </ul>
         </div>
         {/* リンク */}
         <div>
-          <h3 class="font-bold text-sm text-gray-700 mb-3">リンク</h3>
-          <ul class="space-y-1.5 text-sm text-gray-500">
-            <li><a href="https://x.com/smz_nazotoki" class="hover:text-gray-700 no-underline" target="_blank" rel="noopener">X (@smz_nazotoki)</a></li>
-            <li><a href="https://note.com/masa0714" class="hover:text-gray-700 no-underline" target="_blank" rel="noopener">note</a></li>
+          <h3 class="font-bold text-sm text-slate-700 mb-3">外部リンク</h3>
+          <ul class="space-y-1.5 text-sm text-slate-500">
+            <li><a href="https://x.com/smz_nazotoki" class="hover:text-slate-700 no-underline" target="_blank" rel="noopener">X (@smz_nazotoki)</a></li>
+            <li><a href="https://note.com/masa0714" class="hover:text-slate-700 no-underline" target="_blank" rel="noopener">note</a></li>
+            <li><a href="https://smz-nazotoki.booth.pm/" class="hover:text-slate-700 no-underline" target="_blank" rel="noopener">BOOTH</a></li>
           </ul>
         </div>
       </div>
-      <div class="border-t border-gray-200 mt-6 pt-4 text-center text-xs text-gray-400">
+      <div class="border-t border-gray-200 mt-8 pt-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
         <p>ナゾトキ探偵団 &mdash; 現役教員が設計した教育マーダーミステリー</p>
-        <p class="mt-2">
-          <a href="https://x.com/smz_nazotoki" class="hover:text-gray-600 no-underline">お問い合わせ (X)</a>
-        </p>
-        {siteUpdatedAt && <p class="mt-1">最終更新: {siteUpdatedAt}</p>}
+        <p>制作: シミズ マサヒコ</p>
       </div>
+      {siteUpdatedAt && <p class="text-center text-xs text-slate-400 mt-2">最終更新: {siteUpdatedAt}</p>}
     </div>
   </footer>
   <!-- Goatcounter: 無料・Cookie不使用・プライバシーフレンドリー -->

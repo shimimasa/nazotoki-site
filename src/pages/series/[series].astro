@@ -55,7 +55,7 @@ for (const s of byGrade) {
     <span class={config.text}>{config.name}</span>
   </nav>
 
-  <div class={`rounded-xl ${config.bgLight} border-2 ${config.border} p-6 mb-8`}>
+  <div class={`rounded-xl ${config.bgLight} border ${config.border} p-6 mb-8 shadow-sm`}>
     <div class="flex items-center gap-3">
       <span class="text-4xl">{config.emoji}</span>
       <div>
@@ -67,10 +67,10 @@ for (const s of byGrade) {
 
   {/* ソート切り替え */}
   <div class="flex gap-2 mb-6 print:hidden">
-    <button id="sort-volume" data-active="true" class={`px-4 py-2 rounded-lg text-sm font-bold border-2 transition-all ${config.border} ${config.bgLight} ${config.text}`}>
+    <button id="sort-volume" data-active="true" class={`px-4 py-2 rounded-lg text-sm font-bold border transition-all ${config.border} ${config.bgLight} ${config.text}`}>
       Vol.順
     </button>
-    <button id="sort-grade" data-active="false" class={`px-4 py-2 rounded-lg text-sm font-bold border-2 transition-all ${config.border} ${config.bgLight} ${config.text}`}>
+    <button id="sort-grade" data-active="false" class={`px-4 py-2 rounded-lg text-sm font-bold border transition-all ${config.border} ${config.bgLight} ${config.text}`}>
       学年順
     </button>
   </div>

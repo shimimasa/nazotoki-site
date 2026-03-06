@@ -189,7 +189,7 @@ const PERSONA_COLORS: Record<string, { bg: string; border: string; text: string;
           const count = seriesGroups.get(comp.series)?.length || 0;
           return (
             <a href={`${import.meta.env.BASE_URL}series/${comp.series}/`}
-               class={`block rounded-xl border ${config.border} ${config.bgLight} p-5 hover:shadow-lg transition-all no-underline group`}>
+               class={`block rounded-xl border ${config.border} bg-white p-5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all no-underline group`}>
               <div class="flex items-center gap-2 mb-2">
                 <span class="text-2xl">{config.emoji}</span>
                 <h3 class={`text-lg font-bold ${config.text}`}>{config.name}</h3>
@@ -230,7 +230,7 @@ const PERSONA_COLORS: Record<string, { bg: string; border: string; text: string;
         {personas.map((p: any) => {
           const colors = PERSONA_COLORS[p.color] || PERSONA_COLORS.amber;
           return (
-            <div class={`rounded-xl border ${colors.border} ${colors.bgLight} p-5`}>
+            <div class={`rounded-xl border ${colors.border} bg-white p-5 shadow-sm`}>
               <div class="text-3xl mb-2">{p.emoji}</div>
               <h3 class={`text-lg font-bold ${colors.text}`}>{p.title}</h3>
               <p class="text-sm text-slate-600 mt-2 leading-relaxed">{p.description}</p>
@@ -377,14 +377,91 @@ const PERSONA_COLORS: Record<string, { bg: string; border: string; text: string;
   </section>
 
   {/* ============================================
+       よくある質問
+     ============================================ */}
+  <section class="bg-white py-14" id="faq-section">
+    <div class="max-w-5xl mx-auto px-4">
+      <h2 class="text-2xl font-bold text-slate-800 mb-8 text-center">よくある質問</h2>
+      <div class="grid gap-x-8 gap-y-0 sm:grid-cols-2 max-w-4xl mx-auto">
+        <details class="group border-b border-slate-100 py-4" open>
+          <summary class="flex items-center justify-between cursor-pointer list-none font-bold text-slate-800 text-sm leading-relaxed">
+            マーダーミステリーって何ですか？
+            <svg class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform flex-shrink-0 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+          </summary>
+          <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+            参加者がそれぞれ登場人物になりきり、会話と推理で謎を解くゲームです。
+            ナゾトキ探偵団では「犯人探し」ではなく「教科の知識を使った謎解き」を中心にしているため、
+            子どもでも安心して楽しめます。
+          </p>
+        </details>
+        <details class="group border-b border-slate-100 py-4">
+          <summary class="flex items-center justify-between cursor-pointer list-none font-bold text-slate-800 text-sm leading-relaxed">
+            子どもに暴力的な内容はありませんか？
+            <svg class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform flex-shrink-0 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+          </summary>
+          <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+            ありません。全シナリオで暴力・流血・死亡の直接描写を排除しています。
+            「事件」は「謎の失踪」「不思議な現象」などに置き換え、小学生でも安心して遊べる設計です。
+            現役教員が全シナリオを監修しています。
+          </p>
+        </details>
+        <details class="group border-b border-slate-100 py-4">
+          <summary class="flex items-center justify-between cursor-pointer list-none font-bold text-slate-800 text-sm leading-relaxed">
+            準備にどれくらいかかりますか？
+            <svg class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform flex-shrink-0 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+          </summary>
+          <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+            GM（進行役）がGMページで真相を読むのに約10分。
+            あとはプレイヤーにURLを共有するか、キャラクターシートを印刷するだけです。
+            特別な道具や購入は一切不要です。
+          </p>
+        </details>
+        <details class="group border-b border-slate-100 py-4">
+          <summary class="flex items-center justify-between cursor-pointer list-none font-bold text-slate-800 text-sm leading-relaxed">
+            1人でも遊べますか？
+            <svg class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform flex-shrink-0 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+          </summary>
+          <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+            基本は2〜4人＋GM（進行役）で遊ぶゲームです。
+            ただし親子2人でも遊べるバリアントや、教室での集団プレイ（30人対応）にも対応しています。
+            「親子ではじめる」ガイドもご用意しています。
+          </p>
+        </details>
+        <details class="group border-b border-slate-100 py-4">
+          <summary class="flex items-center justify-between cursor-pointer list-none font-bold text-slate-800 text-sm leading-relaxed">
+            授業で使っても大丈夫ですか？
+            <svg class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform flex-shrink-0 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+          </summary>
+          <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+            はい、授業での利用を歓迎します。全シナリオ無料で、学習指導要領に対応した単元情報も掲載しています。
+            45分授業に収まる設計で、教員向けの授業進行ガイドもご用意しています。
+          </p>
+        </details>
+        <details class="group border-b border-slate-100 py-4">
+          <summary class="flex items-center justify-between cursor-pointer list-none font-bold text-slate-800 text-sm leading-relaxed">
+            印刷は必要ですか？
+            <svg class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform flex-shrink-0 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+          </summary>
+          <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+            印刷なしでも遊べます。各プレイヤーにスマホやタブレットがあれば、URLを共有するだけで参加できます。
+            印刷して遊びたい場合は、印刷用ページからワンクリックで出力できます。
+          </p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  {/* ============================================
        今日のナゾトキ
      ============================================ */}
-  <section class="bg-white py-14">
+  <section class="bg-slate-50 py-14">
     <div class="max-w-5xl mx-auto px-4">
       <a href={`${import.meta.env.BASE_URL}challenge/`}
-         class="block rounded-xl border border-slate-200 bg-slate-50 p-6 hover:shadow-lg transition-all no-underline group">
+         class="block rounded-xl border border-slate-200 bg-white p-6 hover:shadow-lg transition-all no-underline group">
         <div class="flex items-center gap-4">
-          <span class="text-4xl flex-shrink-0">🧩</span>
+          <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"/></svg>
+          </div>
           <div class="min-w-0">
             <h2 class="text-lg font-bold text-slate-800 group-hover:text-slate-900">今日のナゾトキ &mdash; 5分思考チャレンジ</h2>
             <p class="text-sm text-slate-600 mt-1">毎日1問、5分で考える力を鍛えよう。道徳・推理・教科接続の全100問</p>

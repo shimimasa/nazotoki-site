@@ -87,6 +87,10 @@ rt { font-size: 0.6em; color: #666; }
   overflow: hidden;
 }
 
+/* ── FAQ アコーディオン ────────────── */
+#faq-section details summary { list-style: none; }
+#faq-section details summary::-webkit-details-marker { display: none; }
+
 /* ── 証拠カード アコーディオン ──────── */
 details.evidence-card summary {
   list-style: none;

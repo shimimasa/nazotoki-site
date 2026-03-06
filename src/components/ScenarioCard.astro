@@ -18,7 +18,7 @@ interface Props {
 const { slug, title, series, volume, difficulty, synopsis, players, time, thumbnailUrl, grade, unit } = Astro.props;
 const config = getSeriesConfig(series);
 ---
-<div class={`rounded-lg border-2 ${config.border} ${config.bgLight} p-4 hover:shadow-md transition-shadow`}>
+<div class={`rounded-xl border ${config.border} bg-white p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all`}>
   <a href={`${import.meta.env.BASE_URL}play/${slug}/`} class="block no-underline">
     <div class={`flex gap-3 ${thumbnailUrl ? 'items-start' : ''}`}>
       {thumbnailUrl && (
@@ -54,8 +54,8 @@ const config = getSeriesConfig(series);
       </div>
     </div>
   </a>
-  <div class="flex gap-3 mt-2 pt-2 border-t border-gray-200 text-xs">
+  <div class="flex gap-3 mt-3 pt-2.5 border-t border-slate-100 text-xs">
     <a href={`${import.meta.env.BASE_URL}play/${slug}/`} class={`font-bold ${config.text} no-underline hover:underline`}>プレイヤー用</a>
-    <a href={`${import.meta.env.BASE_URL}gm/${slug}/`} class="font-bold text-gray-500 no-underline hover:underline hover:text-gray-700">GM用</a>
+    <a href={`${import.meta.env.BASE_URL}gm/${slug}/`} class="font-bold text-slate-400 no-underline hover:underline hover:text-slate-700">GM用</a>
   </div>
 </div>
