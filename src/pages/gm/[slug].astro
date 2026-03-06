@@ -43,6 +43,12 @@ const sameGradeScenarios = cur?.grade
   title={`GM用: ${scenario.title}`}
   description={`${scenario.title} のGM（進行役）向けページ`}
   noIndex={true}
+  breadcrumbs={[
+    { name: 'トップ', url: import.meta.env.BASE_URL },
+    { name: scenario.seriesName, url: `${import.meta.env.BASE_URL}series/${scenario.series}/` },
+    { name: scenario.title, url: `${import.meta.env.BASE_URL}play/${scenario.slug}/` },
+    { name: 'GM用ページ' },
+  ]}
 >
   {/* パンくず */}
   <nav class="text-sm text-gray-500 mb-6 print:hidden">

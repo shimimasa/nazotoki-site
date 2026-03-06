@@ -45,7 +45,7 @@ const seoDesc = cur
   : scenario.synopsis.split('\n')[0];
 const synopsisFirst = scenario.synopsis.split('\n')[0];
 ---
-<BaseLayout title={scenario.title} description={seoDesc} ogImage={scenario.thumbnailUrl}>
+<BaseLayout title={scenario.title} description={seoDesc} ogImage={scenario.thumbnailUrl} breadcrumbs={[{ name: 'トップ', url: import.meta.env.BASE_URL }, { name: scenario.seriesName, url: `${import.meta.env.BASE_URL}series/${scenario.series}/` }, { name: `Vol.${scenario.volume} ${scenario.title}` }]}>
   {/* パンくず */}
   <nav class="text-sm text-gray-500 mb-6 print:hidden">
     <a href={import.meta.env.BASE_URL} class="hover:text-gray-700">トップ</a>

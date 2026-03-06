@@ -1,0 +1,131 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { loadAllScenarios } from '../lib/data';
+import { SERIES_CONFIG } from '../lib/series';
+
+const scenarios = loadAllScenarios();
+const seriesKeys = Object.keys(SERIES_CONFIG);
+---
+<BaseLayout title="サイトマップ" description="ナゾトキ探偵団の全ページ一覧。シナリオ、ガイド、ツールなど、サイト内のすべてのコンテンツへのリンクです。">
+  <nav class="text-sm text-gray-500 mb-6">
+    <a href={import.meta.env.BASE_URL} class="hover:text-gray-700">トップ</a>
+    <span class="mx-1">/</span>
+    <span>サイトマップ</span>
+  </nav>
+
+  <h1 class="text-3xl font-black mb-8">サイトマップ</h1>
+
+  <div class="grid gap-8 lg:grid-cols-2">
+    {/* メインページ */}
+    <section class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+      <h2 class="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
+        メインページ
+      </h2>
+      <ul class="space-y-2 text-sm">
+        <li>
+          <a href={import.meta.env.BASE_URL} class="text-slate-700 hover:text-slate-900 no-underline font-bold">トップページ</a>
+          <span class="text-gray-400 ml-1">- シナリオ検索・一覧</span>
+        </li>
+        <li>
+          <a href={`${import.meta.env.BASE_URL}challenge/`} class="text-slate-700 hover:text-slate-900 no-underline font-bold">今日のナゾトキ</a>
+          <span class="text-gray-400 ml-1">- 5分思考チャレンジ100問</span>
+        </li>
+        <li>
+          <a href={`${import.meta.env.BASE_URL}dashboard/`} class="text-slate-700 hover:text-slate-900 no-underline font-bold">教員ダッシュボード</a>
+          <span class="text-gray-400 ml-1">- セッション履歴・振り返り</span>
+        </li>
+      </ul>
+    </section>
+
+    {/* ガイド */}
+    <section class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+      <h2 class="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 16.82A7.462 7.462 0 0 1 15 15.5c.71 0 1.396.098 2.046.282A.75.75 0 0 0 18 15.06V4.94a.75.75 0 0 0-.546-.72A9.006 9.006 0 0 0 15 3.86a9.006 9.006 0 0 0-4.25 1.065v11.895ZM9.25 4.925A9.006 9.006 0 0 0 5 3.86a9.006 9.006 0 0 0-2.454.36A.75.75 0 0 0 2 4.94v10.12a.75.75 0 0 0 .954.72A7.463 7.463 0 0 1 5 15.5c1.579 0 3.042.49 4.25 1.32V4.925Z"/></svg>
+        ガイド
+      </h2>
+      <ul class="space-y-2 text-sm">
+        <li>
+          <a href={`${import.meta.env.BASE_URL}guide/`} class="text-slate-700 hover:text-slate-900 no-underline font-bold">遊び方ガイド</a>
+          <span class="text-gray-400 ml-1">- 教育マダミスとは・遊び方・教育効果</span>
+        </li>
+        <li>
+          <a href={`${import.meta.env.BASE_URL}for/parents/`} class="text-slate-700 hover:text-slate-900 no-underline font-bold">親子ではじめる</a>
+          <span class="text-gray-400 ml-1">- 保護者向けガイド</span>
+        </li>
+        <li>
+          <a href={`${import.meta.env.BASE_URL}for/teachers/`} class="text-slate-700 hover:text-slate-900 no-underline font-bold">授業で使う</a>
+          <span class="text-gray-400 ml-1">- 教員向けガイド</span>
+        </li>
+        <li>
+          <a href={`${import.meta.env.BASE_URL}for/beginners/`} class="text-slate-700 hover:text-slate-900 no-underline font-bold">GM初心者ガイド</a>
+          <span class="text-gray-400 ml-1">- はじめてのGM向け</span>
+        </li>
+      </ul>
+    </section>
+
+    {/* このサイトについて */}
+    <section class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+      <h2 class="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"/></svg>
+        このサイトについて
+      </h2>
+      <ul class="space-y-2 text-sm">
+        <li>
+          <a href={`${import.meta.env.BASE_URL}terms/`} class="text-slate-700 hover:text-slate-900 no-underline font-bold">利用規約</a>
+        </li>
+        <li>
+          <a href={`${import.meta.env.BASE_URL}privacy/`} class="text-slate-700 hover:text-slate-900 no-underline font-bold">プライバシーポリシー</a>
+        </li>
+        <li>
+          <a href={`${import.meta.env.BASE_URL}contact/`} class="text-slate-700 hover:text-slate-900 no-underline font-bold">お問い合わせ</a>
+        </li>
+      </ul>
+    </section>
+
+    {/* 外部リンク */}
+    <section class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+      <h2 class="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
+        外部リンク
+      </h2>
+      <ul class="space-y-2 text-sm">
+        <li><a href="https://x.com/smz_nazotoki" class="text-slate-700 hover:text-slate-900 no-underline font-bold" target="_blank" rel="noopener">X (@smz_nazotoki)</a></li>
+        <li><a href="https://note.com/masa0714" class="text-slate-700 hover:text-slate-900 no-underline font-bold" target="_blank" rel="noopener">note</a></li>
+        <li><a href="https://smz-nazotoki.booth.pm/" class="text-slate-700 hover:text-slate-900 no-underline font-bold" target="_blank" rel="noopener">BOOTH</a></li>
+      </ul>
+    </section>
+  </div>
+
+  {/* シリーズ別シナリオ一覧 */}
+  <section class="mt-10">
+    <h2 class="text-2xl font-black mb-6">シナリオ一覧（{scenarios.length}本）</h2>
+    {seriesKeys.map(key => {
+      const config = SERIES_CONFIG[key];
+      const seriesScenarios = scenarios.filter(s => s.series === key).sort((a, b) => a.volume - b.volume);
+      if (seriesScenarios.length === 0) return null;
+      return (
+        <div class="mb-8">
+          <h3 class={`text-lg font-black ${config.text} mb-3 flex items-center gap-2`}>
+            <span>{config.emoji}</span>
+            <a href={`${import.meta.env.BASE_URL}series/${key}/`} class={`${config.text} hover:underline no-underline`}>
+              {config.name}
+            </a>
+            <span class="text-sm font-normal text-gray-400">{seriesScenarios.length}本</span>
+          </h3>
+          <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <ul class="divide-y divide-gray-100">
+              {seriesScenarios.map(s => (
+                <li class="px-4 py-2.5 flex items-center gap-3 text-sm hover:bg-gray-50">
+                  <span class="text-gray-400 text-xs w-10 flex-shrink-0">Vol.{s.volume}</span>
+                  <a href={`${import.meta.env.BASE_URL}play/${s.slug}/`} class="text-slate-700 hover:text-slate-900 no-underline font-bold flex-1 min-w-0 truncate">{s.title}</a>
+                  <a href={`${import.meta.env.BASE_URL}gm/${s.slug}/`} class="text-xs text-gray-400 hover:text-gray-600 no-underline flex-shrink-0">GM</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      );
+    })}
+  </section>
+</BaseLayout>

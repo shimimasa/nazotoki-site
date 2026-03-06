@@ -47,7 +47,7 @@ const characterHtml = renderMarkdown(character.fullContent);
   </nav>
 
   {/* キャラヘッダー */}
-  <div class={`rounded-xl ${config.bgLight} border-2 ${config.border} p-6 mb-6`}>
+  <div class={`rounded-xl ${config.bgLight} border ${config.border} p-6 mb-6 shadow-sm`}>
     <div class="flex gap-4 items-center">
       {character.imageUrl && (
         <img
@@ -55,7 +55,7 @@ const characterHtml = renderMarkdown(character.fullContent);
           alt={character.name}
           width="96"
           height="96"
-          class="rounded-full object-cover w-24 h-24 flex-shrink-0 border-2 border-white shadow"
+          class="rounded-full object-cover w-24 h-24 flex-shrink-0 ring-2 ring-white shadow"
         />
       )}
       <div>
