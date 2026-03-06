@@ -40,14 +40,42 @@ const gradeEntries = [...byGrade.entries()].sort((a, b) => {
     <span>親子ではじめる</span>
   </nav>
 
-  <header class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-6 sm:p-8 mb-8">
-    <div class="text-4xl mb-3">🏠</div>
+  <header class="bg-amber-50 border border-amber-200 rounded-2xl p-6 sm:p-8 mb-8 shadow-sm">
+    <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-3">
+      <svg class="w-6 h-6 text-amber-600" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 0 0-1.414 0l-7 7a1 1 0 0 0 1.414 1.414L4 10.414V17a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-6.586l.293.293a1 1 0 0 0 1.414-1.414l-7-7Z"/></svg>
+    </div>
     <h1 class="text-3xl sm:text-4xl font-black text-amber-900">親子ではじめる教育マダミス</h1>
     <p class="text-gray-700 mt-3 text-lg leading-relaxed">
       2人からOK。週末や長期休みに、親子で推理ゲームを楽しもう。<br/>
       GM（進行役）は保護者がやるだけ。台本どおり読めば大丈夫！
     </p>
   </header>
+
+  {/* 安心・安全への取り組み */}
+  <section class="bg-slate-50 rounded-xl border border-slate-200 p-6 mb-8">
+    <h2 class="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+      <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg>
+      安心・安全への取り組み
+    </h2>
+    <ul class="space-y-2 text-sm text-slate-700">
+      <li class="flex items-start gap-2">
+        <svg class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+        <span><strong>暴力・流血の描写なし</strong> &mdash; 全シナリオで暴力・死亡の直接描写を排除。「謎の失踪」「不思議な現象」に置き換えています</span>
+      </li>
+      <li class="flex items-start gap-2">
+        <svg class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+        <span><strong>現役教員が設計</strong> &mdash; 小学校教員が全100シナリオを設計し、学習指導要領に対応しています</span>
+      </li>
+      <li class="flex items-start gap-2">
+        <svg class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+        <span><strong>完全無料・登録不要</strong> &mdash; 課金・広告・アカウント作成は一切ありません</span>
+      </li>
+      <li class="flex items-start gap-2">
+        <svg class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+        <span><strong>個人情報の収集なし</strong> &mdash; お子様の氏名・メールアドレス等の入力は不要です（<a href={`${import.meta.env.BASE_URL}privacy/`} class="text-blue-600 hover:underline">プライバシーポリシー</a>）</span>
+      </li>
+    </ul>
+  </section>
 
   {/* 親子プレイの魅力 */}
   <section class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
@@ -108,7 +136,7 @@ const gradeEntries = [...byGrade.entries()].sort((a, b) => {
         const sCur = curriculum[s.slug];
         return (
           <a href={`${import.meta.env.BASE_URL}play/${s.slug}/`}
-             class={`flex gap-3 items-center rounded-xl border-2 ${sc.border} ${sc.bgLight} p-4 hover:shadow-md transition-all no-underline`}>
+             class={`flex gap-3 items-center rounded-xl border ${sc.border} bg-white p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all no-underline`}>
             {s.thumbnailUrl && (
               <img src={`${import.meta.env.BASE_URL}${s.thumbnailUrl.replace(/^\//, '')}`}
                    alt="" width="56" height="56"
