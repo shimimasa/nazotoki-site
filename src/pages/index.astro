@@ -4,10 +4,12 @@ import { loadAllScenarios } from '../lib/data';
 import { SERIES_CONFIG, getSeriesConfig } from '../lib/series';
 import curriculumData from '../data/meta/curriculum.json';
 import recommendationsData from '../data/meta/recommendations.json';
+import useCasesData from '../data/meta/use-cases.json';
 
 const scenarios = loadAllScenarios();
 const curriculum: Record<string, any> = curriculumData;
 const recommendations: any = recommendationsData;
+const useCases: any[] = useCasesData as any;
 
 // シリーズ別にグループ化
 const seriesGroups = new Map<string, typeof scenarios>();
@@ -68,6 +70,12 @@ const PERSONA_COLORS: Record<string, { bg: string; border: string; text: string;
   blue: { bg: 'bg-blue-500', border: 'border-blue-300', text: 'text-blue-800', bgLight: 'bg-blue-50' },
   green: { bg: 'bg-green-500', border: 'border-green-300', text: 'text-green-800', bgLight: 'bg-green-50' },
 };
+
+const USE_CASE_COLORS: Record<string, string> = {
+  amber: 'bg-amber-100 text-amber-800',
+  blue: 'bg-blue-100 text-blue-800',
+  green: 'bg-green-100 text-green-800',
+};
 ---
 <BaseLayout title="ナゾトキ探偵団" fullWidth ogImage="og/top.png">
 
@@ -87,10 +95,12 @@ const PERSONA_COLORS: Record<string, { bg: string; border: string; text: string;
       </p>
       <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
         <a href="#search-section"
+           data-goatcounter-click="hero-cta-search"
            class="inline-flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-white font-bold px-8 py-3.5 rounded-lg shadow-lg hover:shadow-xl transition-all no-underline">
           シナリオを探す
         </a>
         <a href={`${import.meta.env.BASE_URL}guide/`}
+           data-goatcounter-click="hero-cta-guide"
            class="inline-flex items-center justify-center bg-white/10 hover:bg-white/20 text-white font-bold px-8 py-3.5 rounded-lg border border-white/20 transition-all no-underline">
           遊び方を見る
         </a>
@@ -142,46 +152,59 @@ const PERSONA_COLORS: Record<string, { bg: string; border: string; text: string;
       <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {[
           {
-            src: 'screenshots/session-progress.png',
+            id: 'session-progress',
             alt: 'セッション進行画面',
             caption: 'ブラウザだけで進行できる',
             description: 'タイマー・台本・証拠配布が画面1つで完結。印刷不要',
             gradient: 'from-slate-700 to-slate-800',
             icon: '🎮',
+            hasImage: false,
           },
           {
-            src: 'screenshots/evidence-cards.png',
+            id: 'evidence-cards',
             alt: '証拠カード画面',
             caption: '証拠を見ながら考える',
             description: 'タップで証拠を開封。教科の知識がヒントになる設計',
             gradient: 'from-amber-600 to-amber-700',
             icon: '🔍',
+            hasImage: false,
           },
           {
-            src: 'screenshots/character-sheet.png',
+            id: 'character-sheet',
             alt: 'キャラクターシート',
             caption: '自分だけの秘密情報',
             description: '各プレイヤーのスマホに個別の情報を表示',
             gradient: 'from-indigo-600 to-indigo-700',
             icon: '👤',
+            hasImage: false,
           },
           {
-            src: 'screenshots/voting-result.png',
+            id: 'voting-result',
             alt: '投票・振り返り画面',
             caption: '最後はみんなで推理をまとめる',
             description: '投票→真相発表→振り返りまで画面で完結',
             gradient: 'from-emerald-600 to-emerald-700',
             icon: '🗳️',
+            hasImage: false,
           },
         ].map(item => (
           <div class="group">
-            <div class={`aspect-[4/3] rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center overflow-hidden shadow-sm`}>
-              {/* 実スクリーンショットがある場合は下のimgタグを有効化し、divを削除 */}
-              {/* <img src={`${import.meta.env.BASE_URL}${item.src}`} alt={item.alt} class="w-full h-full object-cover" loading="lazy" /> */}
-              <div class="text-center text-white/90 px-4">
-                <span class="text-3xl block mb-2">{item.icon}</span>
-                <span class="text-sm font-bold">{item.alt}</span>
-              </div>
+            <div class={`aspect-[4/3] rounded-xl overflow-hidden shadow-sm ${item.hasImage ? '' : `bg-gradient-to-br ${item.gradient} flex items-center justify-center`}`}>
+              {item.hasImage ? (
+                <img
+                  src={`${import.meta.env.BASE_URL}screenshots/${item.id}.png`}
+                  alt={item.alt}
+                  width="800"
+                  height="600"
+                  class="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div class="text-center text-white/90 px-4">
+                  <span class="text-3xl block mb-2">{item.icon}</span>
+                  <span class="text-sm font-bold">{item.alt}</span>
+                </div>
+              )}
             </div>
             <h3 class="font-bold text-slate-800 text-sm mt-3">{item.caption}</h3>
             <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">{item.description}</p>
@@ -308,57 +331,39 @@ const PERSONA_COLORS: Record<string, { bg: string; border: string; text: string;
       <h2 class="text-2xl font-bold text-slate-800 mb-2">活用イメージ</h2>
       <p class="text-sm text-slate-500 mb-8">家庭から教室まで、さまざまな場面でご利用いただけます</p>
       <div class="grid gap-5 sm:grid-cols-3">
-        {[
-          {
-            label: '家庭',
-            labelColor: 'bg-amber-100 text-amber-800',
-            scene: '週末の親子プレイ',
-            time: '30〜40分',
-            target: '小3〜小6の親子',
-            comment: '「週末の親子の会話が増えた。子どもが自分から "次はどのシナリオ?" と聞いてくる」',
-            icon: '🏠',
-          },
-          {
-            label: '教室',
-            labelColor: 'bg-blue-100 text-blue-800',
-            scene: '道徳の授業のまとめ',
-            time: '45分（1コマ）',
-            target: '小学4〜6年生・学級全体',
-            comment: '「ふだん発言しない子が、自分から意見を言い始めた」',
-            icon: '🏫',
-          },
-          {
-            label: '学童・放課後',
-            labelColor: 'bg-green-100 text-green-800',
-            scene: '放課後の思考力プログラム',
-            time: '40分',
-            target: '小3〜中1・少人数グループ',
-            comment: '「ゲームなのに、終わった後に "もっと考えたい" と言う子がいた」',
-            icon: '📚',
-          },
-        ].map(item => (
-          <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="flex items-center gap-2 mb-3">
-              <span class="text-xl">{item.icon}</span>
-              <span class={`text-xs font-bold px-2 py-0.5 rounded-full ${item.labelColor}`}>{item.label}</span>
+        {useCases.map(item => {
+          const labelColor = USE_CASE_COLORS[item.labelColor] || USE_CASE_COLORS.amber;
+          return (
+            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div class="flex items-center gap-2 mb-3">
+                <span class="text-xl">{item.icon}</span>
+                <span class={`text-xs font-bold px-2 py-0.5 rounded-full ${labelColor}`}>{item.label}</span>
+                {item.verified ? (
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">実施済み</span>
+                ) : null}
+              </div>
+              <h3 class="font-bold text-slate-800">{item.scene}</h3>
+              <dl class="mt-3 space-y-1.5 text-sm">
+                <div class="flex gap-2">
+                  <dt class="text-slate-400 w-16 flex-shrink-0">所要時間</dt>
+                  <dd class="text-slate-700">{item.time}</dd>
+                </div>
+                <div class="flex gap-2">
+                  <dt class="text-slate-400 w-16 flex-shrink-0">対象</dt>
+                  <dd class="text-slate-700">{item.target}</dd>
+                </div>
+              </dl>
+              <blockquote class="mt-4 text-sm text-slate-600 italic leading-relaxed border-l-2 border-slate-200 pl-3">
+                「{item.comment}」
+              </blockquote>
+              {item.verified ? (
+                <p class="text-[10px] text-slate-400 mt-2">{item.verifiedLabel}</p>
+              ) : (
+                <p class="text-[10px] text-slate-400 mt-2">※ 想定活用例です</p>
+              )}
             </div>
-            <h3 class="font-bold text-slate-800">{item.scene}</h3>
-            <dl class="mt-3 space-y-1.5 text-sm">
-              <div class="flex gap-2">
-                <dt class="text-slate-400 w-16 flex-shrink-0">所要時間</dt>
-                <dd class="text-slate-700">{item.time}</dd>
-              </div>
-              <div class="flex gap-2">
-                <dt class="text-slate-400 w-16 flex-shrink-0">対象</dt>
-                <dd class="text-slate-700">{item.target}</dd>
-              </div>
-            </dl>
-            <blockquote class="mt-4 text-sm text-slate-600 italic leading-relaxed border-l-2 border-slate-200 pl-3">
-              {item.comment}
-            </blockquote>
-            <p class="text-[10px] text-slate-400 mt-2">※ 想定活用例です</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   </section>
@@ -560,6 +565,7 @@ const PERSONA_COLORS: Record<string, { bg: string; border: string; text: string;
   <section class="bg-slate-50 py-14">
     <div class="max-w-5xl mx-auto px-4">
       <a href={`${import.meta.env.BASE_URL}challenge/`}
+         data-goatcounter-click="top-challenge-banner"
          class="block rounded-xl border border-slate-200 bg-white p-6 hover:shadow-lg transition-all no-underline group">
         <div class="flex items-center gap-4">
           <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
@@ -584,6 +590,7 @@ const PERSONA_COLORS: Record<string, { bg: string; border: string; text: string;
       <p class="mt-3 text-slate-400">全{scenarios.length}シナリオ、すべて無料でご利用いただけます</p>
       <div class="mt-8">
         <a href="#search-section"
+           data-goatcounter-click="footer-cta-search"
            class="inline-flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-white font-bold px-8 py-3.5 rounded-lg shadow-lg hover:shadow-xl transition-all no-underline">
           無料でシナリオを見る
         </a>

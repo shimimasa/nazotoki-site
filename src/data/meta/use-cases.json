@@ -1,0 +1,36 @@
+[
+  {
+    "id": "family-weekend",
+    "label": "家庭",
+    "labelColor": "amber",
+    "scene": "週末の親子プレイ",
+    "time": "30〜40分",
+    "target": "小3〜小6の親子",
+    "comment": "週末の親子の会話が増えた。子どもが自分から「次はどのシナリオ？」と聞いてくる",
+    "icon": "🏠",
+    "verified": false
+  },
+  {
+    "id": "classroom-moral",
+    "label": "教室",
+    "labelColor": "blue",
+    "scene": "道徳の授業のまとめ",
+    "time": "45分（1コマ）",
+    "target": "小学4〜6年生・学級全体",
+    "comment": "ふだん発言しない子が、自分から意見を言い始めた",
+    "icon": "🏫",
+    "verified": true,
+    "verifiedLabel": "テストプレイ実施済み（37名・2回）"
+  },
+  {
+    "id": "afterschool-thinking",
+    "label": "学童・放課後",
+    "labelColor": "green",
+    "scene": "放課後の思考力プログラム",
+    "time": "40分",
+    "target": "小3〜中1・少人数グループ",
+    "comment": "ゲームなのに、終わった後に「もっと考えたい」と言う子がいた",
+    "icon": "📚",
+    "verified": false
+  }
+]
