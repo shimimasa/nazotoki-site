@@ -96,7 +96,7 @@ const PERSONA_COLORS: Record<string, { bg: string; border: string; text: string;
         </a>
       </div>
       <p class="mt-6 text-sm text-slate-400">
-        保護者・教員の方も安心してご利用いただけます
+        現役教員が設計。家庭でも授業でも使えます
       </p>
     </div>
   </section>
@@ -133,20 +133,60 @@ const PERSONA_COLORS: Record<string, { bg: string; border: string; text: string;
   </section>
 
   {/* ============================================
-       ナゾトキ探偵団とは？
+       画面で見るナゾトキ探偵団
      ============================================ */}
   <section class="bg-slate-50 py-14">
     <div class="max-w-5xl mx-auto px-4">
-      <h2 class="text-2xl font-bold text-slate-800 mb-4">ナゾトキ探偵団とは？</h2>
-      <div class="max-w-3xl text-slate-700 leading-relaxed space-y-3">
-        <p>
-          「ナゾトキ探偵団」は、<strong>教科の知識を使って謎を解く</strong>教育マーダーミステリーシリーズです。
-          歴史・国語・算数・理科・道徳の5教科をカバーし、遊びながら教科の理解を深められます。
-        </p>
-        <p>
-          すべてのシナリオは<strong>完全無料</strong>。ご家庭での親子プレイから、学校の授業まで幅広くお使いいただけます。
-          現役教員が設計し、学習指導要領に対応しています。
-        </p>
+      <h2 class="text-2xl font-bold text-slate-800 mb-2">画面で見るナゾトキ探偵団</h2>
+      <p class="text-sm text-slate-500 mb-8">ブラウザだけで、シナリオ選択から振り返りまで完結します</p>
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          {
+            src: 'screenshots/session-progress.png',
+            alt: 'セッション進行画面',
+            caption: 'ブラウザだけで進行できる',
+            description: 'タイマー・台本・証拠配布が画面1つで完結。印刷不要',
+            gradient: 'from-slate-700 to-slate-800',
+            icon: '🎮',
+          },
+          {
+            src: 'screenshots/evidence-cards.png',
+            alt: '証拠カード画面',
+            caption: '証拠を見ながら考える',
+            description: 'タップで証拠を開封。教科の知識がヒントになる設計',
+            gradient: 'from-amber-600 to-amber-700',
+            icon: '🔍',
+          },
+          {
+            src: 'screenshots/character-sheet.png',
+            alt: 'キャラクターシート',
+            caption: '自分だけの秘密情報',
+            description: '各プレイヤーのスマホに個別の情報を表示',
+            gradient: 'from-indigo-600 to-indigo-700',
+            icon: '👤',
+          },
+          {
+            src: 'screenshots/voting-result.png',
+            alt: '投票・振り返り画面',
+            caption: '最後はみんなで推理をまとめる',
+            description: '投票→真相発表→振り返りまで画面で完結',
+            gradient: 'from-emerald-600 to-emerald-700',
+            icon: '🗳️',
+          },
+        ].map(item => (
+          <div class="group">
+            <div class={`aspect-[4/3] rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center overflow-hidden shadow-sm`}>
+              {/* 実スクリーンショットがある場合は下のimgタグを有効化し、divを削除 */}
+              {/* <img src={`${import.meta.env.BASE_URL}${item.src}`} alt={item.alt} class="w-full h-full object-cover" loading="lazy" /> */}
+              <div class="text-center text-white/90 px-4">
+                <span class="text-3xl block mb-2">{item.icon}</span>
+                <span class="text-sm font-bold">{item.alt}</span>
+              </div>
+            </div>
+            <h3 class="font-bold text-slate-800 text-sm mt-3">{item.caption}</h3>
+            <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">{item.description}</p>
+          </div>
+        ))}
       </div>
     </div>
   </section>
@@ -261,6 +301,69 @@ const PERSONA_COLORS: Record<string, { bg: string; border: string; text: string;
   </section>
 
   {/* ============================================
+       活用イメージ
+     ============================================ */}
+  <section class="bg-white py-14">
+    <div class="max-w-5xl mx-auto px-4">
+      <h2 class="text-2xl font-bold text-slate-800 mb-2">活用イメージ</h2>
+      <p class="text-sm text-slate-500 mb-8">家庭から教室まで、さまざまな場面でご利用いただけます</p>
+      <div class="grid gap-5 sm:grid-cols-3">
+        {[
+          {
+            label: '家庭',
+            labelColor: 'bg-amber-100 text-amber-800',
+            scene: '週末の親子プレイ',
+            time: '30〜40分',
+            target: '小3〜小6の親子',
+            comment: '「週末の親子の会話が増えた。子どもが自分から "次はどのシナリオ?" と聞いてくる」',
+            icon: '🏠',
+          },
+          {
+            label: '教室',
+            labelColor: 'bg-blue-100 text-blue-800',
+            scene: '道徳の授業のまとめ',
+            time: '45分（1コマ）',
+            target: '小学4〜6年生・学級全体',
+            comment: '「ふだん発言しない子が、自分から意見を言い始めた」',
+            icon: '🏫',
+          },
+          {
+            label: '学童・放課後',
+            labelColor: 'bg-green-100 text-green-800',
+            scene: '放課後の思考力プログラム',
+            time: '40分',
+            target: '小3〜中1・少人数グループ',
+            comment: '「ゲームなのに、終わった後に "もっと考えたい" と言う子がいた」',
+            icon: '📚',
+          },
+        ].map(item => (
+          <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-xl">{item.icon}</span>
+              <span class={`text-xs font-bold px-2 py-0.5 rounded-full ${item.labelColor}`}>{item.label}</span>
+            </div>
+            <h3 class="font-bold text-slate-800">{item.scene}</h3>
+            <dl class="mt-3 space-y-1.5 text-sm">
+              <div class="flex gap-2">
+                <dt class="text-slate-400 w-16 flex-shrink-0">所要時間</dt>
+                <dd class="text-slate-700">{item.time}</dd>
+              </div>
+              <div class="flex gap-2">
+                <dt class="text-slate-400 w-16 flex-shrink-0">対象</dt>
+                <dd class="text-slate-700">{item.target}</dd>
+              </div>
+            </dl>
+            <blockquote class="mt-4 text-sm text-slate-600 italic leading-relaxed border-l-2 border-slate-200 pl-3">
+              {item.comment}
+            </blockquote>
+            <p class="text-[10px] text-slate-400 mt-2">※ 想定活用例です</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {/* ============================================
        シナリオ検索
      ============================================ */}
   <section class="bg-slate-50 py-14" id="search-section">
@@ -367,7 +470,7 @@ const PERSONA_COLORS: Record<string, { bg: string; border: string; text: string;
       </div>
       <blockquote class="max-w-2xl mx-auto text-center">
         <p class="text-lg text-slate-300 italic leading-relaxed">
-          「ふだん発言しない子が、自分から意見を言い始めた」
+          「正解のない問いに、全員が本気で考えていた」
         </p>
         <cite class="block mt-3 text-sm text-slate-500 not-italic">
           &mdash; 小学校でのテストプレイより（37名参加・2回実施）
