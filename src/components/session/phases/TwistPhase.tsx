@@ -3,11 +3,12 @@ import type { EvidenceCardData } from '../types';
 
 interface TwistPhaseProps {
   evidence5: EvidenceCardData;
+  onRevealed?: () => void;
 }
 
 type TwistState = 'locked' | 'countdown' | 'revealed';
 
-export default function TwistPhase({ evidence5 }: TwistPhaseProps) {
+export default function TwistPhase({ evidence5, onRevealed }: TwistPhaseProps) {
   const [state, setState] = useState<TwistState>('locked');
   const [count, setCount] = useState(3);
   const [cardVisible, setCardVisible] = useState(false);
@@ -16,12 +17,13 @@ export default function TwistPhase({ evidence5 }: TwistPhaseProps) {
     if (state !== 'countdown') return;
     if (count <= 0) {
       setState('revealed');
+      onRevealed?.();
       setTimeout(() => setCardVisible(true), 100);
       return;
     }
     const id = setTimeout(() => setCount((c) => c - 1), 1000);
     return () => clearTimeout(id);
-  }, [state, count]);
+  }, [state, count, onRevealed]);
 
   const handleReveal = () => {
     setCount(3);

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'preact/hooks';
+import { useState, useCallback, useEffect } from 'preact/hooks';
 import type { SessionScenarioData } from './types';
 import { PHASE_CONFIG } from './types';
 import Timer from './Timer';
@@ -51,6 +51,33 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   const [timerExpiredOverlay, setTimerExpiredOverlay] = useState(false);
   const [gmPanelOpen, setGmPanelOpen] = useState(false);
   const [isProjectorMode, setIsProjectorMode] = useState(false);
+  const [discoveredCards, setDiscoveredCards] = useState<Set<number>>(new Set());
+  const [twistRevealed, setTwistRevealed] = useState(false);
+  const [gmMemo, setGmMemo] = useState('');
+
+  // Load GM memo from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`nazotoki-gm-memo-${data.slug}`);
+      if (saved) setGmMemo(saved);
+    } catch { /* ignore */ }
+  }, [data.slug]);
+
+  // Save GM memo to localStorage on change
+  const handleGmMemoChange = useCallback((value: string) => {
+    setGmMemo(value);
+    try {
+      localStorage.setItem(`nazotoki-gm-memo-${data.slug}`, value);
+    } catch { /* ignore */ }
+  }, [data.slug]);
+
+  const handleDiscoverCard = useCallback((num: number) => {
+    setDiscoveredCards((prev) => new Set(prev).add(num));
+  }, []);
+
+  const handleTwistRevealed = useCallback(() => {
+    setTwistRevealed(true);
+  }, []);
 
   const currentPhase = PHASE_CONFIG[currentStep];
 
@@ -249,11 +276,16 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
           <ExplorePhase
             evidenceCards={data.evidenceCards}
             characters={data.playableCharacters}
+            discoveredCards={discoveredCards}
+            onDiscoverCard={handleDiscoverCard}
           />
         );
       case 'twist':
         return data.evidence5 ? (
-          <TwistPhase evidence5={data.evidence5} />
+          <TwistPhase
+            evidence5={data.evidence5}
+            onRevealed={handleTwistRevealed}
+          />
         ) : null;
       case 'discuss':
         return (
@@ -324,6 +356,8 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
               setCompleted(false);
               setGmPanelOpen(false);
               setIsProjectorMode(false);
+              setDiscoveredCards(new Set());
+              setTwistRevealed(false);
             }}
             class="bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-bold hover:bg-gray-300 transition-colors"
           >
@@ -441,6 +475,19 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
           isLastPhase={isLastStep}
           onComplete={handleComplete}
           saving={saving}
+          scenarioTitle={data.title}
+          startedAt={startedAt}
+          completed={completed}
+          discoveredCards={discoveredCards}
+          evidenceCards={data.evidenceCards}
+          evidence5={data.evidence5}
+          twistRevealed={twistRevealed}
+          votes={votes}
+          voteReasons={voteReasons}
+          characters={data.playableCharacters}
+          gmMemo={gmMemo}
+          onGmMemoChange={handleGmMemoChange}
+          truthHtml={data.truthHtml}
         />
       )}
 

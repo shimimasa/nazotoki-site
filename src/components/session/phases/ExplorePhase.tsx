@@ -5,13 +5,16 @@ import EvidenceViewer from '../EvidenceViewer';
 interface ExplorePhaseProps {
   evidenceCards: EvidenceCardData[];
   characters: CharacterData[];
+  discoveredCards: Set<number>;
+  onDiscoverCard: (num: number) => void;
 }
 
 export default function ExplorePhase({
   evidenceCards,
   characters,
+  discoveredCards,
+  onDiscoverCard,
 }: ExplorePhaseProps) {
-  const [discoveredCards, setDiscoveredCards] = useState<Set<number>>(new Set());
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
   const [justDiscovered, setJustDiscovered] = useState<number | null>(null);
   const [showQR, setShowQR] = useState(false);
@@ -26,12 +29,12 @@ export default function ExplorePhase({
     setSelectedCard(num);
 
     if (isNew) {
-      setDiscoveredCards((prev) => new Set(prev).add(num));
+      onDiscoverCard(num);
       setJustDiscovered(num);
     } else {
       setJustDiscovered(null);
     }
-  }, [discoveredCards]);
+  }, [discoveredCards, onDiscoverCard]);
 
   const handleCloseViewer = useCallback(() => {
     setSelectedCard(null);
