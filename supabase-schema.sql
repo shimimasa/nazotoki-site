@@ -54,3 +54,43 @@ create policy "Allow anon select votes" on votes for select to anon using (true)
 
 create policy "Allow anon insert reflections" on reflections for insert to anon with check (true);
 create policy "Allow anon select reflections" on reflections for select to anon using (true);
+
+-- 4. GM Memos table (one memo per scenario, upserted)
+create table if not exists gm_memos (
+  id uuid primary key default gen_random_uuid(),
+  scenario_slug text not null unique,
+  memo_text text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_gm_memos_slug on gm_memos(scenario_slug);
+
+alter table gm_memos enable row level security;
+create policy "Allow anon insert gm_memos" on gm_memos for insert to anon with check (true);
+create policy "Allow anon select gm_memos" on gm_memos for select to anon using (true);
+create policy "Allow anon update gm_memos" on gm_memos for update to anon using (true);
+
+-- 5. Session Logs table (comprehensive per-session record)
+create table if not exists session_logs (
+  id uuid primary key default gen_random_uuid(),
+  scenario_slug text not null,
+  start_time timestamptz,
+  end_time timestamptz,
+  duration integer, -- seconds
+  phase_durations jsonb,
+  vote_results jsonb,
+  vote_reasons jsonb,
+  discovered_evidence jsonb,
+  twist_revealed boolean not null default false,
+  correct_players jsonb,
+  gm_memo text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_session_logs_slug on session_logs(scenario_slug);
+create index if not exists idx_session_logs_created on session_logs(created_at desc);
+
+alter table session_logs enable row level security;
+create policy "Allow anon insert session_logs" on session_logs for insert to anon with check (true);
+create policy "Allow anon select session_logs" on session_logs for select to anon using (true);

@@ -67,6 +67,54 @@ export async function saveReflections(reflections: ReflectionRecord[]) {
   await supabase.from('reflections').insert(reflections);
 }
 
+// --- GM Memo functions ---
+
+export async function saveGmMemo(slug: string, memoText: string) {
+  if (!supabase) return;
+  const { error } = await supabase.from('gm_memos').upsert(
+    {
+      scenario_slug: slug,
+      memo_text: memoText,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'scenario_slug' },
+  );
+  if (error) console.error('Failed to save GM memo:', error);
+}
+
+export async function loadGmMemo(slug: string): Promise<string | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('gm_memos')
+    .select('memo_text')
+    .eq('scenario_slug', slug)
+    .single();
+  if (error || !data) return null;
+  return data.memo_text;
+}
+
+// --- Session Log functions ---
+
+export interface SessionLogRecord {
+  scenario_slug: string;
+  start_time: string | null;
+  end_time: string;
+  duration: number | null;
+  phase_durations: Record<string, number>;
+  vote_results: Record<string, string>;
+  vote_reasons: Record<string, string>;
+  discovered_evidence: number[];
+  twist_revealed: boolean;
+  correct_players: string[] | null;
+  gm_memo: string;
+}
+
+export async function saveSessionLog(log: SessionLogRecord) {
+  if (!supabase) return;
+  const { error } = await supabase.from('session_logs').insert(log);
+  if (error) console.error('Failed to save session log:', error);
+}
+
 // --- Dashboard query functions ---
 
 export interface SessionRow {

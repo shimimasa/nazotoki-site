@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'preact/hooks';
+import { useState, useCallback, useEffect, useRef } from 'preact/hooks';
 import type { SessionScenarioData } from './types';
 import { PHASE_CONFIG } from './types';
 import Timer from './Timer';
@@ -17,6 +17,9 @@ import {
   completeSession,
   saveVotes,
   saveReflections,
+  saveGmMemo,
+  loadGmMemo,
+  saveSessionLog,
 } from '../../lib/supabase';
 
 interface SessionWizardProps {
@@ -54,21 +57,37 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   const [discoveredCards, setDiscoveredCards] = useState<Set<number>>(new Set());
   const [twistRevealed, setTwistRevealed] = useState(false);
   const [gmMemo, setGmMemo] = useState('');
+  const memoSaveTimer = useRef<number | null>(null);
 
-  // Load GM memo from localStorage on mount
+  // Load GM memo: Supabase first, localStorage fallback
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(`nazotoki-gm-memo-${data.slug}`);
-      if (saved) setGmMemo(saved);
-    } catch { /* ignore */ }
+    let cancelled = false;
+    (async () => {
+      const cloudMemo = await loadGmMemo(data.slug);
+      if (!cancelled && cloudMemo !== null) {
+        setGmMemo(cloudMemo);
+        return;
+      }
+      if (!cancelled) {
+        try {
+          const local = localStorage.getItem(`nazotoki-gm-memo-${data.slug}`);
+          if (local) setGmMemo(local);
+        } catch { /* ignore */ }
+      }
+    })();
+    return () => { cancelled = true; };
   }, [data.slug]);
 
-  // Save GM memo to localStorage on change
+  // Save GM memo: localStorage immediate + Supabase debounced
   const handleGmMemoChange = useCallback((value: string) => {
     setGmMemo(value);
     try {
       localStorage.setItem(`nazotoki-gm-memo-${data.slug}`, value);
     } catch { /* ignore */ }
+    if (memoSaveTimer.current) clearTimeout(memoSaveTimer.current);
+    memoSaveTimer.current = window.setTimeout(() => {
+      saveGmMemo(data.slug, value);
+    }, 2000);
   }, [data.slug]);
 
   const handleDiscoverCard = useCallback((num: number) => {
@@ -249,9 +268,52 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
       await saveReflections(reflectionRecords);
     }
 
+    // Save comprehensive session log
+    const culpritText = data.truthHtml.replace(/<[^>]+>/g, '');
+    const culpritMatch = culpritText.match(/\u72AF\u4EBA[:：]\s*(.+?)(?:\*|（|$|\n)/);
+    const culpritName = culpritMatch
+      ? culpritMatch[1].replace(/\*+/g, '').trim() || null
+      : null;
+
+    const correctPlayers = culpritName
+      ? Object.entries(votes)
+          .filter(([, suspectId]) => {
+            const suspect = data.playableCharacters.find((c) => c.id === suspectId);
+            return suspect && (
+              suspect.name.includes(culpritName) ||
+              culpritName.includes(suspect.name)
+            );
+          })
+          .map(([voterId]) => {
+            const voter = data.playableCharacters.find((c) => c.id === voterId);
+            return voter?.name || voterId;
+          })
+      : null;
+
+    await saveSessionLog({
+      scenario_slug: data.slug,
+      start_time: startedAt?.toISOString() || null,
+      end_time: new Date().toISOString(),
+      duration: startedAt
+        ? Math.round((Date.now() - startedAt.getTime()) / 1000)
+        : null,
+      phase_durations: phaseDurations,
+      vote_results: votes,
+      vote_reasons: voteReasons,
+      discovered_evidence: Array.from(discoveredCards),
+      twist_revealed: twistRevealed,
+      correct_players: correctPlayers,
+      gm_memo: gmMemo,
+    });
+
+    // Final GM memo cloud save
+    await saveGmMemo(data.slug, gmMemo);
+
     setSaving(false);
     setCompleted(true);
-  }, [sessionId, votes, reflections, stepStartTimes, data.playableCharacters]);
+  }, [sessionId, votes, voteReasons, reflections, stepStartTimes, startedAt,
+    data.playableCharacters, data.slug, data.truthHtml,
+    discoveredCards, twistRevealed, gmMemo]);
 
   // Render phase content
   const renderPhaseContent = () => {
@@ -488,6 +550,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
           gmMemo={gmMemo}
           onGmMemoChange={handleGmMemoChange}
           truthHtml={data.truthHtml}
+          stepStartTimes={stepStartTimes}
         />
       )}
 

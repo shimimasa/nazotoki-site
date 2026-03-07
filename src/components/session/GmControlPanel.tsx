@@ -34,6 +34,7 @@ interface GmControlPanelProps {
   gmMemo: string;
   onGmMemoChange: (value: string) => void;
   truthHtml: string;
+  stepStartTimes: number[];
 }
 
 function extractCulprit(truthHtml: string): string | null {
@@ -84,6 +85,7 @@ export default function GmControlPanel({
   gmMemo,
   onGmMemoChange,
   truthHtml,
+  stepStartTimes,
 }: GmControlPanelProps) {
   const [tab, setTab] = useState<PanelTab>('control');
 
@@ -203,6 +205,8 @@ export default function GmControlPanel({
               hasVotes={hasVotes}
               gmMemo={gmMemo}
               onGmMemoChange={onGmMemoChange}
+              stepStartTimes={stepStartTimes}
+              skipTwist={skipTwist}
             />
           )}
         </div>
@@ -448,6 +452,8 @@ interface DashboardTabProps {
   hasVotes: boolean;
   gmMemo: string;
   onGmMemoChange: (value: string) => void;
+  stepStartTimes: number[];
+  skipTwist: boolean;
 }
 
 function DashboardTab({
@@ -470,7 +476,34 @@ function DashboardTab({
   hasVotes,
   gmMemo,
   onGmMemoChange,
+  stepStartTimes,
+  skipTwist,
 }: DashboardTabProps) {
+  // Calculate phase durations from stepStartTimes
+  const phaseDurations = useMemo(() => {
+    const durations: { key: string; label: string; icon: string; seconds: number }[] = [];
+    const phases = skipTwist
+      ? PHASE_CONFIG.filter((p) => p.key !== 'twist')
+      : [...PHASE_CONFIG];
+
+    for (const phase of phases) {
+      if (phase.key === 'prep') continue;
+      const idx = PHASE_CONFIG.findIndex((p) => p.key === phase.key);
+      if (!stepStartTimes[idx]) continue;
+
+      // Find next started phase
+      let endTime = Date.now();
+      for (let j = idx + 1; j < PHASE_CONFIG.length; j++) {
+        if (stepStartTimes[j]) {
+          endTime = stepStartTimes[j];
+          break;
+        }
+      }
+      const seconds = Math.round((endTime - stepStartTimes[idx]) / 1000);
+      durations.push({ key: phase.key, label: phase.label, icon: phase.icon, seconds });
+    }
+    return durations;
+  }, [stepStartTimes, skipTwist]);
   return (
     <div class="p-4 space-y-4">
       {/* Session info */}
@@ -606,9 +639,61 @@ function DashboardTab({
           placeholder={'\u5B50\u3069\u3082\u306E\u767A\u8A00\u3001\u6C17\u3065\u304D\u3001\u6539\u5584\u70B9\u306A\u3069\u2026'}
         />
         <p class="text-xs text-gray-400 mt-1 px-1">
-          {'\u81EA\u52D5\u4FDD\u5B58\u3055\u308C\u307E\u3059\uFF08\u30D6\u30E9\u30A6\u30B6\u5185\u4FDD\u5B58\uFF09'}
+          {'\u81EA\u52D5\u4FDD\u5B58\uFF08\u30D6\u30E9\u30A6\u30B6 + \u30AF\u30E9\u30A6\u30C9\uFF09'}
         </p>
       </section>
+
+      {/* Class analysis */}
+      {phaseDurations.length > 0 && (
+        <section>
+          <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            {'\uD83D\uDCCA'} {'\u6388\u696D\u5206\u6790'}
+          </h4>
+          <div class="bg-gray-50 rounded-lg p-3 space-y-2">
+            {/* Phase durations */}
+            {phaseDurations.map((pd) => {
+              const m = Math.floor(pd.seconds / 60);
+              const s = pd.seconds % 60;
+              return (
+                <div key={pd.key} class="flex items-center justify-between text-sm">
+                  <span class="text-gray-600">
+                    {pd.icon} {pd.label}
+                  </span>
+                  <span class="font-mono font-bold text-gray-900">
+                    {m}{'\u5206'}{s > 0 ? `${s.toString().padStart(2, '0')}\u79D2` : ''}
+                  </span>
+                </div>
+              );
+            })}
+
+            <div class="border-t border-gray-200 pt-2 mt-2 space-y-1.5">
+              {/* Evidence discovery rate */}
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-600">{'\u8A3C\u62E0\u767A\u898B\u7387'}</span>
+                <span class="font-bold text-gray-900">
+                  {discoveredCards.size} / {evidenceCards.length}
+                </span>
+              </div>
+
+              {/* Correct count */}
+              {culpritName && hasVotes && (
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-gray-600">{'\u6B63\u89E3\u8005'}</span>
+                  <span class="font-bold text-gray-900">
+                    {Object.entries(votes).filter(([, suspectId]) => {
+                      const suspect = characters.find((c) => c.id === suspectId);
+                      return suspect && (
+                        suspect.name.includes(culpritName) ||
+                        culpritName.includes(suspect.name)
+                      );
+                    }).length} / {Object.keys(votes).length}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Session summary (shown when votes exist or completed) */}
       {(hasVotes || completed) && (
