@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'preact/hooks';
+import { useEffect, useCallback, useRef } from 'preact/hooks';
 
 interface TimerProps {
   seconds: number;
@@ -6,6 +6,7 @@ interface TimerProps {
   onTick: () => void;
   onToggle: () => void;
   onReset: (seconds: number) => void;
+  onExpired?: () => void;
   defaultSeconds: number;
 }
 
@@ -15,8 +16,23 @@ export default function Timer({
   onTick,
   onToggle,
   onReset,
+  onExpired,
   defaultSeconds,
 }: TimerProps) {
+  const firedRef = useRef(false);
+
+  useEffect(() => {
+    // Reset fired flag when timer resets
+    if (seconds > 0) firedRef.current = false;
+  }, [seconds]);
+
+  useEffect(() => {
+    if (seconds === 0 && !firedRef.current && onExpired && defaultSeconds > 0) {
+      firedRef.current = true;
+      onExpired();
+    }
+  }, [seconds, onExpired, defaultSeconds]);
+
   useEffect(() => {
     if (!running || seconds <= 0) return;
     const id = setInterval(onTick, 1000);
@@ -41,8 +57,18 @@ export default function Timer({
 
   if (defaultSeconds === 0) return null;
 
+  const isUrgent = !isOvertime && seconds > 0 && seconds <= 60;
+
   return (
-    <div class="flex items-center gap-3 select-none">
+    <div
+      class={`flex items-center gap-3 select-none rounded-xl px-3 py-1 transition-colors duration-500 ${
+        isOvertime
+          ? 'bg-red-100'
+          : isUrgent
+            ? 'bg-red-50 ring-2 ring-red-300 animate-pulse'
+            : ''
+      }`}
+    >
       <button
         onClick={onToggle}
         class="w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-xl transition-colors"
@@ -55,9 +81,11 @@ export default function Timer({
         class={`font-mono font-black tabular-nums text-center ${
           isOvertime
             ? 'text-red-600 animate-pulse'
-            : seconds <= 60
-              ? 'text-amber-600'
-              : 'text-gray-900'
+            : isUrgent
+              ? 'text-red-600'
+              : seconds <= 120
+                ? 'text-amber-600'
+                : 'text-gray-900'
         }`}
         style="font-size: clamp(2rem, 6vw, 4rem)"
       >

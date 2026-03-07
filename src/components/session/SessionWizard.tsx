@@ -3,6 +3,7 @@ import type { SessionScenarioData } from './types';
 import { PHASE_CONFIG } from './types';
 import Timer from './Timer';
 import PhaseProgress from './PhaseProgress';
+import PhaseTransition, { getPhaseColor } from './PhaseTransition';
 import PrepPhase from './phases/PrepPhase';
 import IntroPhase from './phases/IntroPhase';
 import ExplorePhase from './phases/ExplorePhase';
@@ -43,6 +44,9 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   const [stepStartTimes, setStepStartTimes] = useState<number[]>([]);
   const [completed, setCompleted] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
+  const [transitionTarget, setTransitionTarget] = useState<number | null>(null);
+  const [timerExpiredOverlay, setTimerExpiredOverlay] = useState(false);
 
   const currentPhase = PHASE_CONFIG[currentStep];
 
@@ -53,7 +57,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
     return steps;
   }, [skipTwist]);
 
-  const goToStep = useCallback(
+  const applyStep = useCallback(
     (step: number) => {
       setCurrentStep(step);
       const config = PHASE_CONFIG[step];
@@ -67,6 +71,27 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
     },
     [],
   );
+
+  const goToStep = useCallback(
+    (step: number) => {
+      // Skip transition for prep phase
+      if (step === 0) {
+        applyStep(step);
+        return;
+      }
+      setTransitionTarget(step);
+      setTransitioning(true);
+    },
+    [applyStep],
+  );
+
+  const handleTransitionComplete = useCallback(() => {
+    if (transitionTarget !== null) {
+      applyStep(transitionTarget);
+    }
+    setTransitioning(false);
+    setTransitionTarget(null);
+  }, [transitionTarget, applyStep]);
 
   const handleStart = useCallback(async () => {
     const now = new Date();
@@ -112,6 +137,11 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
 
   const handleTimerReset = useCallback((seconds: number) => {
     setTimerSeconds(seconds);
+  }, []);
+
+  const handleTimerExpired = useCallback(() => {
+    setTimerExpiredOverlay(true);
+    setTimeout(() => setTimerExpiredOverlay(false), 3000);
   }, []);
 
   const handleVote = useCallback((voterId: string, suspectId: string) => {
@@ -296,6 +326,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
               onTick={handleTimerTick}
               onToggle={handleTimerToggle}
               onReset={handleTimerReset}
+              onExpired={handleTimerExpired}
               defaultSeconds={currentPhase?.defaultSeconds || 0}
             />
           </div>
@@ -342,6 +373,26 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
               次へ →
             </button>
           )}
+        </div>
+      )}
+
+      {/* Phase transition interstitial */}
+      {transitioning && transitionTarget !== null && (
+        <PhaseTransition
+          icon={PHASE_CONFIG[transitionTarget].icon}
+          label={PHASE_CONFIG[transitionTarget].label}
+          color={getPhaseColor(PHASE_CONFIG[transitionTarget].key)}
+          onComplete={handleTransitionComplete}
+        />
+      )}
+
+      {/* Timer expired overlay */}
+      {timerExpiredOverlay && (
+        <div class="fixed inset-0 z-40 flex items-center justify-center bg-black/60 animate-pulse">
+          <div class="text-center">
+            <div class="text-7xl mb-4">{'\u23F0'}</div>
+            <div class="text-4xl font-black text-white">時間です！</div>
+          </div>
         </div>
       )}
     </div>

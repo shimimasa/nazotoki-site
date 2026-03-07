@@ -22,18 +22,18 @@ export default function ExplorePhase({
     });
   };
 
-  const revealAll = () => {
-    setRevealedCards(new Set(evidenceCards.map((c) => c.number)));
-  };
+  const discoveredCount = revealedCards.size;
+  const totalCards = evidenceCards.length;
+  const allDiscovered = discoveredCount === totalCards;
 
   return (
     <div class="space-y-6">
-      {/* キャラクターシート配布 */}
+      {/* Character sheet distribution */}
       <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
         <div class="flex items-center justify-between">
           <div>
             <p class="font-bold text-purple-900">
-              👥 キャラクターシートを配布
+              {'\uD83D\uDC65'} キャラクターシートを配布
             </p>
             <p class="text-sm text-purple-700 mt-1">
               各プレイヤーに担当キャラのシートを渡してください
@@ -67,16 +67,19 @@ export default function ExplorePhase({
         )}
       </div>
 
-      {/* 証拠カード */}
+      {/* Evidence cards */}
       <div>
         <div class="flex items-center justify-between mb-3">
-          <h3 class="text-xl font-black">🔍 証拠カード</h3>
-          <button
-            onClick={revealAll}
-            class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-bold transition-colors"
-          >
-            全て表示
-          </button>
+          <h3 class="text-xl font-black">{'\uD83D\uDD0D'} 証拠カード</h3>
+          <div class={`px-3 py-1.5 rounded-lg text-sm font-bold ${
+            allDiscovered
+              ? 'bg-green-100 text-green-800'
+              : 'bg-amber-100 text-amber-800'
+          }`}>
+            {allDiscovered
+              ? '\u2705 全ての証拠を発見！'
+              : `\uD83D\uDD0D ${discoveredCount} / ${totalCards} 発見`}
+          </div>
         </div>
 
         <div class="grid gap-3 sm:grid-cols-2">
@@ -85,22 +88,33 @@ export default function ExplorePhase({
             return (
               <div
                 key={card.number}
-                class="bg-white rounded-xl border border-gray-200 overflow-hidden"
+                class={`rounded-xl border-2 overflow-hidden transition-all ${
+                  revealed
+                    ? 'bg-white border-emerald-300'
+                    : 'bg-gray-50 border-gray-300 hover:border-amber-400'
+                }`}
               >
                 <button
                   onClick={() => toggleCard(card.number)}
-                  class="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+                  class={`w-full px-4 py-3 flex items-center justify-between text-left transition-colors ${
+                    revealed ? 'bg-emerald-50' : 'hover:bg-amber-50'
+                  }`}
                 >
-                  <span class="font-bold">
+                  <span class="font-bold flex items-center gap-2">
+                    {revealed ? (
+                      <span class="text-emerald-600">{'\u2705'}</span>
+                    ) : (
+                      <span class="text-amber-500">{'\uD83D\uDD0D'}</span>
+                    )}
                     証拠{card.number}: {card.title}
                   </span>
                   <span class="text-gray-400 text-lg">
-                    {revealed ? '▲' : '▼'}
+                    {revealed ? '\u25B2' : '\u25BC'}
                   </span>
                 </button>
                 {revealed && (
                   <div
-                    class="px-4 pb-4 prose prose-sm max-w-none border-t border-gray-100 pt-3"
+                    class="px-4 pb-4 prose prose-sm max-w-none border-t border-emerald-100 pt-3"
                     dangerouslySetInnerHTML={{ __html: card.contentHtml }}
                   />
                 )}
