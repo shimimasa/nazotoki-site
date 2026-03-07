@@ -20,6 +20,13 @@ import {
   saveGmMemo,
   loadGmMemo,
   saveSessionLog,
+  getCurrentTeacher,
+  fetchClasses,
+  saveStudentSessionLogs,
+  fetchStudents,
+  type TeacherProfile,
+  type ClassRow,
+  type StudentRow,
 } from '../../lib/supabase';
 
 interface SessionWizardProps {
@@ -58,6 +65,32 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   const [twistRevealed, setTwistRevealed] = useState(false);
   const [gmMemo, setGmMemo] = useState('');
   const memoSaveTimer = useRef<number | null>(null);
+
+  // Teacher / Class / Student state
+  const [currentTeacher, setCurrentTeacher] = useState<TeacherProfile | null>(null);
+  const [teacherClasses, setTeacherClasses] = useState<ClassRow[]>([]);
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
+  const [classStudents, setClassStudents] = useState<StudentRow[]>([]);
+
+  // Load teacher profile and classes
+  useEffect(() => {
+    getCurrentTeacher().then((t) => {
+      setCurrentTeacher(t);
+      if (t) {
+        setTeacherName(t.display_name);
+        fetchClasses(t.id).then(setTeacherClasses);
+      }
+    });
+  }, []);
+
+  // Load students when class is selected
+  useEffect(() => {
+    if (selectedClassId) {
+      fetchStudents(selectedClassId).then(setClassStudents);
+    } else {
+      setClassStudents([]);
+    }
+  }, [selectedClassId]);
 
   // Load GM memo: Supabase first, localStorage fallback
   useEffect(() => {
@@ -290,7 +323,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
           })
       : null;
 
-    await saveSessionLog({
+    const sessionLogId = await saveSessionLog({
       scenario_slug: data.slug,
       scenario_title: data.title,
       start_time: startedAt?.toISOString() || null,
@@ -305,7 +338,39 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
       twist_revealed: twistRevealed,
       correct_players: correctPlayers,
       gm_memo: gmMemo,
+      teacher_id: currentTeacher?.id || null,
+      class_id: selectedClassId || null,
     });
+
+    // Save student session logs if class with students is selected
+    if (sessionLogId && selectedClassId && classStudents.length > 0) {
+      const studentLogs = classStudents.map((student) => {
+        // Try to match student to a voter by name
+        const matchedVoter = Object.entries(votes).find(([voterId]) => {
+          const char = data.playableCharacters.find((c) => c.id === voterId);
+          return char?.name === student.student_name;
+        });
+        const votedFor = matchedVoter
+          ? data.playableCharacters.find((c) => c.id === matchedVoter[1])?.name || matchedVoter[1]
+          : null;
+        const reason = matchedVoter ? voteReasons[matchedVoter[0]] || null : null;
+        const isCorrect = matchedVoter && correctPlayers
+          ? correctPlayers.some((cp) => {
+              const voter = data.playableCharacters.find((c) => c.id === matchedVoter[0]);
+              return voter?.name === cp;
+            })
+          : null;
+
+        return {
+          session_log_id: sessionLogId,
+          student_id: student.id,
+          voted_for: votedFor || undefined,
+          vote_reason: reason || undefined,
+          is_correct: isCorrect ?? undefined,
+        };
+      });
+      await saveStudentSessionLogs(studentLogs);
+    }
 
     // Final GM memo cloud save
     await saveGmMemo(data.slug, gmMemo);
@@ -314,7 +379,8 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
     setCompleted(true);
   }, [sessionId, votes, voteReasons, reflections, stepStartTimes, startedAt,
     data.playableCharacters, data.slug, data.truthHtml,
-    discoveredCards, twistRevealed, gmMemo]);
+    discoveredCards, twistRevealed, gmMemo,
+    currentTeacher, selectedClassId, classStudents]);
 
   // Render phase content
   const renderPhaseContent = () => {
@@ -330,6 +396,9 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
             onPlayerCount={setPlayerCount}
             onEnvironment={setEnvironment}
             onStart={handleStart}
+            classes={teacherClasses}
+            selectedClassId={selectedClassId}
+            onClassSelect={setSelectedClassId}
           />
         );
       case 'intro':

@@ -1,4 +1,5 @@
 import type { SessionScenarioData } from '../types';
+import type { ClassRow } from '../../../lib/supabase';
 
 interface PrepPhaseProps {
   data: SessionScenarioData;
@@ -9,6 +10,9 @@ interface PrepPhaseProps {
   onPlayerCount: (v: number) => void;
   onEnvironment: (v: 'classroom' | 'dayservice' | 'home') => void;
   onStart: () => void;
+  classes?: ClassRow[];
+  selectedClassId?: string | null;
+  onClassSelect?: (classId: string | null) => void;
 }
 
 export default function PrepPhase({
@@ -20,6 +24,9 @@ export default function PrepPhase({
   onPlayerCount,
   onEnvironment,
   onStart,
+  classes,
+  selectedClassId,
+  onClassSelect,
 }: PrepPhaseProps) {
   const canStart = teacherName.trim().length > 0 && playerCount > 0;
 
@@ -78,6 +85,27 @@ export default function PrepPhase({
           />
           <span class="text-sm text-gray-500 ml-2">人</span>
         </div>
+
+        {classes && classes.length > 0 && onClassSelect && (
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-1">
+              クラス（任意）
+            </label>
+            <select
+              value={selectedClassId || ''}
+              onChange={(e) => onClassSelect((e.target as HTMLSelectElement).value || null)}
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
+            >
+              <option value="">クラスを選択しない</option>
+              {classes.map((cls) => (
+                <option key={cls.id} value={cls.id}>
+                  {cls.class_name}{cls.grade_label ? ` (${cls.grade_label})` : ''}
+                </option>
+              ))}
+            </select>
+            <p class="text-xs text-gray-400 mt-1">クラスを選ぶと授業履歴がクラス単位で管理されます</p>
+          </div>
+        )}
 
         <div>
           <label class="block text-sm font-bold text-gray-700 mb-2">

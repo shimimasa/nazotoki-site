@@ -6,6 +6,241 @@ const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY as string | undefin
 export const supabase =
   supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
+// --- Auth & Teacher Profile ---
+
+export interface TeacherProfile {
+  id: string;
+  auth_user_id: string;
+  display_name: string;
+  created_at: string;
+}
+
+export async function signUp(email: string, password: string, displayName: string): Promise<{ teacher: TeacherProfile | null; error: string | null }> {
+  if (!supabase) return { teacher: null, error: 'Supabase not configured' };
+  const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
+  if (authError || !authData.user) return { teacher: null, error: authError?.message || 'Sign up failed' };
+
+  const { data: teacher, error: profileError } = await supabase
+    .from('teachers')
+    .insert({ auth_user_id: authData.user.id, display_name: displayName })
+    .select()
+    .single();
+  if (profileError) return { teacher: null, error: profileError.message };
+  return { teacher, error: null };
+}
+
+export async function signIn(email: string, password: string): Promise<{ error: string | null }> {
+  if (!supabase) return { error: 'Supabase not configured' };
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  return { error: error?.message || null };
+}
+
+export async function signOut(): Promise<void> {
+  if (!supabase) return;
+  await supabase.auth.signOut();
+}
+
+export async function getCurrentTeacher(): Promise<TeacherProfile | null> {
+  if (!supabase) return null;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data } = await supabase
+    .from('teachers')
+    .select('*')
+    .eq('auth_user_id', user.id)
+    .single();
+  return data || null;
+}
+
+export function onAuthStateChange(callback: (teacher: TeacherProfile | null) => void) {
+  if (!supabase) return { unsubscribe: () => {} };
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
+    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      const teacher = await getCurrentTeacher();
+      callback(teacher);
+    } else if (event === 'SIGNED_OUT') {
+      callback(null);
+    }
+  });
+  return { unsubscribe: () => subscription.unsubscribe() };
+}
+
+// --- Class CRUD ---
+
+export interface ClassRow {
+  id: string;
+  teacher_id: string;
+  class_name: string;
+  grade_label: string | null;
+  description: string | null;
+  created_at: string;
+}
+
+export interface ClassWithStats extends ClassRow {
+  session_count: number;
+  student_count: number;
+}
+
+export async function fetchClasses(teacherId: string): Promise<ClassWithStats[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('classes')
+    .select('*')
+    .eq('teacher_id', teacherId)
+    .order('created_at', { ascending: false });
+  if (error || !data) return [];
+
+  // Get session counts and student counts
+  const classIds = data.map((c: ClassRow) => c.id);
+  const [sessionRes, studentRes] = await Promise.all([
+    supabase.from('session_logs').select('class_id').in('class_id', classIds),
+    supabase.from('students').select('class_id').in('class_id', classIds),
+  ]);
+
+  const sessionCounts: Record<string, number> = {};
+  const studentCounts: Record<string, number> = {};
+  (sessionRes.data || []).forEach((r: { class_id: string }) => {
+    sessionCounts[r.class_id] = (sessionCounts[r.class_id] || 0) + 1;
+  });
+  (studentRes.data || []).forEach((r: { class_id: string }) => {
+    studentCounts[r.class_id] = (studentCounts[r.class_id] || 0) + 1;
+  });
+
+  return data.map((c: ClassRow) => ({
+    ...c,
+    session_count: sessionCounts[c.id] || 0,
+    student_count: studentCounts[c.id] || 0,
+  }));
+}
+
+export async function createClass(teacherId: string, className: string, gradeLabel: string, description: string): Promise<ClassRow | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('classes')
+    .insert({
+      teacher_id: teacherId,
+      class_name: className,
+      grade_label: gradeLabel || null,
+      description: description || null,
+    })
+    .select()
+    .single();
+  if (error) { console.error('Failed to create class:', error); return null; }
+  return data;
+}
+
+export async function updateClass(classId: string, updates: { class_name?: string; grade_label?: string; description?: string }): Promise<boolean> {
+  if (!supabase) return false;
+  const { error } = await supabase.from('classes').update(updates).eq('id', classId);
+  if (error) { console.error('Failed to update class:', error); return false; }
+  return true;
+}
+
+export async function deleteClass(classId: string): Promise<boolean> {
+  if (!supabase) return false;
+  const { error } = await supabase.from('classes').delete().eq('id', classId);
+  if (error) { console.error('Failed to delete class:', error); return false; }
+  return true;
+}
+
+// --- Student CRUD ---
+
+export interface StudentRow {
+  id: string;
+  class_id: string;
+  student_name: string;
+  created_at: string;
+}
+
+export async function fetchStudents(classId: string): Promise<StudentRow[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('students')
+    .select('*')
+    .eq('class_id', classId)
+    .order('created_at', { ascending: true });
+  if (error) { console.error('Failed to fetch students:', error); return []; }
+  return data || [];
+}
+
+export async function addStudent(classId: string, studentName: string): Promise<StudentRow | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('students')
+    .insert({ class_id: classId, student_name: studentName })
+    .select()
+    .single();
+  if (error) { console.error('Failed to add student:', error); return null; }
+  return data;
+}
+
+export async function addStudentsBulk(classId: string, names: string[]): Promise<StudentRow[]> {
+  if (!supabase || names.length === 0) return [];
+  const rows = names.map((n) => ({ class_id: classId, student_name: n }));
+  const { data, error } = await supabase.from('students').insert(rows).select();
+  if (error) { console.error('Failed to bulk add students:', error); return []; }
+  return data || [];
+}
+
+export async function deleteStudent(studentId: string): Promise<boolean> {
+  if (!supabase) return false;
+  const { error } = await supabase.from('students').delete().eq('id', studentId);
+  if (error) { console.error('Failed to delete student:', error); return false; }
+  return true;
+}
+
+// --- Student Session Logs ---
+
+export interface StudentSessionLogRow {
+  id: string;
+  session_log_id: string;
+  student_id: string;
+  voted_for: string | null;
+  vote_reason: string | null;
+  is_correct: boolean | null;
+  created_at: string;
+}
+
+export interface StudentSessionLogInsert {
+  session_log_id: string;
+  student_id: string;
+  voted_for?: string;
+  vote_reason?: string;
+  is_correct?: boolean;
+}
+
+export async function saveStudentSessionLogs(logs: StudentSessionLogInsert[]): Promise<boolean> {
+  if (!supabase || logs.length === 0) return false;
+  const { error } = await supabase.from('student_session_logs').insert(logs);
+  if (error) { console.error('Failed to save student session logs:', error); return false; }
+  return true;
+}
+
+export async function fetchStudentSessionLogs(sessionLogId: string): Promise<StudentSessionLogRow[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('student_session_logs')
+    .select('*')
+    .eq('session_log_id', sessionLogId)
+    .order('created_at', { ascending: true });
+  if (error) return [];
+  return data || [];
+}
+
+export async function fetchStudentHistory(studentId: string): Promise<(StudentSessionLogRow & { session_log: SessionLogRow })[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('student_session_logs')
+    .select('*, session_log:session_logs(*)')
+    .eq('student_id', studentId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('Failed to fetch student history:', error); return []; }
+  return (data || []).map((row: any) => ({
+    ...row,
+    session_log: row.session_log as SessionLogRow,
+  }));
+}
+
 export interface SessionRecord {
   teacher_name: string;
   slug: string;
@@ -108,12 +343,15 @@ export interface SessionLogRecord {
   twist_revealed: boolean;
   correct_players: string[] | null;
   gm_memo: string;
+  teacher_id?: string | null;
+  class_id?: string | null;
 }
 
-export async function saveSessionLog(log: SessionLogRecord) {
-  if (!supabase) return;
-  const { error } = await supabase.from('session_logs').insert(log);
-  if (error) console.error('Failed to save session log:', error);
+export async function saveSessionLog(log: SessionLogRecord): Promise<string | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase.from('session_logs').insert(log).select('id').single();
+  if (error) { console.error('Failed to save session log:', error); return null; }
+  return data?.id || null;
 }
 
 // --- Session Logs query functions ---
@@ -132,19 +370,36 @@ export interface SessionLogRow {
   twist_revealed: boolean;
   correct_players: string[] | null;
   gm_memo: string | null;
+  teacher_id: string | null;
+  class_id: string | null;
   created_at: string;
 }
 
-export async function fetchSessionLogs(): Promise<SessionLogRow[]> {
+export async function fetchSessionLogs(teacherId?: string | null): Promise<SessionLogRow[]> {
   if (!supabase) return [];
-  const { data, error } = await supabase
+  let query = supabase
     .from('session_logs')
     .select('*')
     .order('created_at', { ascending: false });
+  if (teacherId) {
+    query = query.eq('teacher_id', teacherId);
+  }
+  const { data, error } = await query;
   if (error) {
     console.error('Failed to fetch session logs:', error);
     return [];
   }
+  return data || [];
+}
+
+export async function fetchSessionLogsByClass(classId: string): Promise<SessionLogRow[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('session_logs')
+    .select('*')
+    .eq('class_id', classId)
+    .order('created_at', { ascending: false });
+  if (error) return [];
   return data || [];
 }
 

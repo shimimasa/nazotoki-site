@@ -1,10 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import TeacherWorkspace from '../components/workspace/TeacherWorkspace';
+import TeacherAuthGate from '../components/workspace/TeacherAuthGate';
 ---
 <BaseLayout
   title="Teacher Workspace"
-  description="授業履歴の管理・振り返り・PDF出力"
+  description="授業履歴の管理・クラス管理・生徒ログ"
   noIndex={true}
 >
   <nav class="text-sm text-gray-500 mb-6">
@@ -15,8 +15,8 @@ import TeacherWorkspace from '../components/workspace/TeacherWorkspace';
 
   <div class="mb-6">
     <h1 class="text-3xl font-black">📋 Teacher Workspace</h1>
-    <p class="text-gray-500 mt-2">授業履歴の確認・振り返り・PDF出力ができます</p>
+    <p class="text-gray-500 mt-2">授業履歴・クラス管理・生徒参加ログ</p>
   </div>
 
-  <TeacherWorkspace client:load />
+  <TeacherAuthGate client:load />
 </BaseLayout>

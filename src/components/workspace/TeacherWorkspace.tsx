@@ -1,22 +1,40 @@
 import { useState, useEffect } from 'preact/hooks';
 import {
   fetchSessionLogs,
+  fetchClasses,
   type SessionLogRow,
+  type ClassWithStats,
 } from '../../lib/supabase';
 import SessionHistoryList from './SessionHistoryList';
 import SessionLogDetail from './SessionLogDetail';
+import ClassList from './ClassList';
+import ClassDetail from './ClassDetail';
 
-export default function TeacherWorkspace() {
+type WorkspaceTab = 'history' | 'classes';
+
+interface Props {
+  teacherId: string;
+  teacherName: string;
+}
+
+export default function TeacherWorkspace({ teacherId, teacherName }: Props) {
+  const [tab, setTab] = useState<WorkspaceTab>('history');
   const [logs, setLogs] = useState<SessionLogRow[]>([]);
+  const [classes, setClasses] = useState<ClassWithStats[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchSessionLogs().then((data) => {
-      setLogs(data);
+    Promise.all([
+      fetchSessionLogs(teacherId),
+      fetchClasses(teacherId),
+    ]).then(([l, c]) => {
+      setLogs(l);
+      setClasses(c);
       setLoading(false);
     });
-  }, []);
+  }, [teacherId]);
 
   if (loading) {
     return (
@@ -28,29 +46,83 @@ export default function TeacherWorkspace() {
     );
   }
 
-  if (selectedId) {
-    const log = logs.find((l) => l.id === selectedId);
+  // Session log detail view
+  if (selectedLogId) {
+    const log = logs.find((l) => l.id === selectedLogId);
     return (
       <SessionLogDetail
-        logId={selectedId}
+        logId={selectedLogId}
         cachedLog={log || null}
-        onBack={() => setSelectedId(null)}
+        onBack={() => setSelectedLogId(null)}
       />
     );
+  }
+
+  // Class detail view
+  if (selectedClassId) {
+    const cls = classes.find((c) => c.id === selectedClassId);
+    if (cls) {
+      return (
+        <ClassDetail
+          classId={selectedClassId}
+          classData={cls}
+          onBack={() => {
+            setSelectedClassId(null);
+            // Refresh classes when returning
+            fetchClasses(teacherId).then(setClasses);
+          }}
+        />
+      );
+    }
   }
 
   return (
     <div>
       {/* Stats */}
-      <StatsBar logs={logs} />
+      <StatsBar logs={logs} classCount={classes.length} />
 
-      <h2 class="text-xl font-black mb-4">授業履歴</h2>
-      <SessionHistoryList logs={logs} onSelect={setSelectedId} />
+      {/* Tabs */}
+      <div class="flex border-b border-gray-200 mb-6">
+        <button
+          onClick={() => setTab('history')}
+          class={`flex-1 py-3 text-sm font-bold transition-colors ${
+            tab === 'history'
+              ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50'
+              : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          📋 授業履歴 ({logs.length})
+        </button>
+        <button
+          onClick={() => setTab('classes')}
+          class={`flex-1 py-3 text-sm font-bold transition-colors ${
+            tab === 'classes'
+              ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50'
+              : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          🏫 クラス ({classes.length})
+        </button>
+      </div>
+
+      {/* Content */}
+      {tab === 'history' ? (
+        <SessionHistoryList logs={logs} onSelect={setSelectedLogId} />
+      ) : (
+        <ClassList
+          teacherId={teacherId}
+          onSelectClass={(id) => {
+            setSelectedClassId(id);
+            // Refresh classes data
+            fetchClasses(teacherId).then(setClasses);
+          }}
+        />
+      )}
     </div>
   );
 }
 
-function StatsBar({ logs }: { logs: SessionLogRow[] }) {
+function StatsBar({ logs, classCount }: { logs: SessionLogRow[]; classCount: number }) {
   const completed = logs.filter((l) => l.duration != null);
   const totalTime = completed.reduce((sum, l) => sum + (l.duration || 0), 0);
   const avgTime = completed.length > 0 ? Math.round(totalTime / completed.length) : 0;
@@ -61,9 +133,9 @@ function StatsBar({ logs }: { logs: SessionLogRow[] }) {
 
   const stats = [
     { label: '総授業数', value: String(logs.length) },
+    { label: 'クラス数', value: String(classCount) },
     { label: 'シナリオ数', value: String(uniqueSlugs) },
     { label: '平均授業時間', value: avgTime > 0 ? `${avgMin}:${String(avgSec).padStart(2, '0')}` : '--' },
-    { label: '総授業時間', value: totalTime > 0 ? `${Math.floor(totalTime / 60)}分` : '--' },
   ];
 
   return (
