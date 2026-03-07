@@ -1,13 +1,21 @@
 /**
- * Split HTML string into sections by <hr> tags.
- * Each section is a chunk of HTML between <hr> boundaries.
- * If splitting fails or produces <= 1 section, returns the full HTML as a single-element array.
+ * Split HTML string into sections by structural boundaries.
+ * Split points: <hr>, <h3>, <h4>, <table>, <blockquote>
+ * <hr> is removed; other elements are kept as the start of their section.
+ * If splitting produces <= 1 section, returns the full HTML as a single-element array.
  */
-export function splitHtmlByHr(html: string): string[] {
+export function splitHtml(html: string): string[] {
   if (!html || !html.trim()) return [];
 
-  // Split on <hr>, <hr/>, <hr /> variants
-  const parts = html.split(/<hr\s*\/?>/i).map((s) => s.trim()).filter(Boolean);
+  const SENTINEL = '\x00SPLIT\x00';
+
+  const marked = html
+    // Replace <hr> variants with sentinel (hr itself is removed)
+    .replace(/<hr\s*\/?>/gi, SENTINEL)
+    // Insert sentinel before block-level elements (element is kept in next section)
+    .replace(/(?=<(?:h[34]|table|blockquote)[\s>])/gi, SENTINEL);
+
+  const parts = marked.split(SENTINEL).map((s) => s.trim()).filter(Boolean);
 
   if (parts.length <= 1) return [html];
   return parts;

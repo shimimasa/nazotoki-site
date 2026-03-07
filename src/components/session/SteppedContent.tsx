@@ -1,17 +1,20 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
-import { splitHtmlByHr, extractHeading } from './splitHtml';
+import { splitHtml, extractHeading } from './splitHtml';
 
 interface SteppedContentProps {
   html: string;
   /** Show all sections at once without stepping */
   showAll?: boolean;
+  /** Callback when all sections have been revealed */
+  onComplete?: () => void;
 }
 
 export default function SteppedContent({
   html,
   showAll = false,
+  onComplete,
 }: SteppedContentProps) {
-  const sections = splitHtmlByHr(html);
+  const sections = splitHtml(html);
   const [visibleCount, setVisibleCount] = useState(1);
   const [animating, setAnimating] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -26,12 +29,16 @@ export default function SteppedContent({
 
   const handleNext = () => {
     if (allVisible) return;
+    const nextCount = visibleCount + 1;
     setAnimating(true);
-    setVisibleCount((c) => c + 1);
+    setVisibleCount(nextCount);
     setTimeout(() => {
       setAnimating(false);
       bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, 50);
+    if (nextCount >= total && onComplete) {
+      setTimeout(onComplete, 300);
+    }
   };
 
   // If only 1 section, just render it
@@ -88,18 +95,25 @@ export default function SteppedContent({
         {!allVisible ? (
           <button
             onClick={handleNext}
-            class="px-5 py-2.5 bg-indigo-500 text-white rounded-xl font-bold hover:bg-indigo-600 transition-colors flex items-center gap-2"
+            class="px-5 py-2.5 bg-indigo-500 text-white rounded-xl font-bold hover:bg-indigo-600 transition-colors"
           >
-            <span>
-              {nextHeading ? `${nextHeading} \u25B6` : '\u25B6 \u6B21\u3078'}
-            </span>
+            {'\u25B6 \u6B21\u3078'}
           </button>
         ) : (
           <span class="text-xs text-green-600 font-bold">
-            {'\u2705'} {'\u5168\u3066\u8AAD\u307F\u4E0A\u3052\u307E\u3057\u305F'}
+            {'\u2705 \u5168\u3066\u8AAD\u307F\u4E0A\u3052\u307E\u3057\u305F'}
           </span>
         )}
       </div>
+
+      {/* Next section preview hint */}
+      {nextHeading && (
+        <div class="text-center">
+          <span class="text-xs text-gray-400">
+            {'\u6B21: '}{nextHeading}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
