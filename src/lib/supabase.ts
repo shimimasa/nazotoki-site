@@ -304,25 +304,78 @@ export async function saveReflections(reflections: ReflectionRecord[]) {
 
 // --- GM Memo functions ---
 
-export async function saveGmMemo(slug: string, memoText: string) {
+export async function saveGmMemo(slug: string, memoText: string, teacherId?: string | null) {
   if (!supabase) return;
-  const { error } = await supabase.from('gm_memos').upsert(
-    {
-      scenario_slug: slug,
-      memo_text: memoText,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'scenario_slug' },
-  );
-  if (error) console.error('Failed to save GM memo:', error);
+
+  if (teacherId) {
+    // Teacher-aware save: check if exists, then insert or update
+    const { data: existing } = await supabase
+      .from('gm_memos')
+      .select('id')
+      .eq('scenario_slug', slug)
+      .eq('teacher_id', teacherId)
+      .single();
+
+    if (existing) {
+      const { error } = await supabase
+        .from('gm_memos')
+        .update({ memo_text: memoText, updated_at: new Date().toISOString() })
+        .eq('id', existing.id);
+      if (error) console.error('Failed to update GM memo:', error);
+    } else {
+      const { error } = await supabase
+        .from('gm_memos')
+        .insert({
+          scenario_slug: slug,
+          memo_text: memoText,
+          teacher_id: teacherId,
+          updated_at: new Date().toISOString(),
+        });
+      if (error) console.error('Failed to insert GM memo:', error);
+    }
+  } else {
+    // Legacy: upsert without teacher_id (backward compat)
+    const { error } = await supabase.from('gm_memos').upsert(
+      {
+        scenario_slug: slug,
+        memo_text: memoText,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'scenario_slug' },
+    );
+    if (error) console.error('Failed to save GM memo:', error);
+  }
 }
 
-export async function loadGmMemo(slug: string): Promise<string | null> {
+export async function loadGmMemo(slug: string, teacherId?: string | null): Promise<string | null> {
   if (!supabase) return null;
+
+  if (teacherId) {
+    // Try teacher-specific memo first
+    const { data } = await supabase
+      .from('gm_memos')
+      .select('memo_text')
+      .eq('scenario_slug', slug)
+      .eq('teacher_id', teacherId)
+      .single();
+    if (data) return data.memo_text;
+
+    // Fall back to legacy memo (teacher_id IS NULL)
+    const { data: legacy } = await supabase
+      .from('gm_memos')
+      .select('memo_text')
+      .eq('scenario_slug', slug)
+      .is('teacher_id', null)
+      .single();
+    return legacy?.memo_text || null;
+  }
+
+  // No teacher: legacy behavior
   const { data, error } = await supabase
     .from('gm_memos')
     .select('memo_text')
     .eq('scenario_slug', slug)
+    .is('teacher_id', null)
     .single();
   if (error || !data) return null;
   return data.memo_text;

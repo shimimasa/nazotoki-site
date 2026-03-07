@@ -96,7 +96,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const cloudMemo = await loadGmMemo(data.slug);
+      const cloudMemo = await loadGmMemo(data.slug, currentTeacher?.id);
       if (!cancelled && cloudMemo !== null) {
         setGmMemo(cloudMemo);
         return;
@@ -109,7 +109,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
       }
     })();
     return () => { cancelled = true; };
-  }, [data.slug]);
+  }, [data.slug, currentTeacher]);
 
   // Save GM memo: localStorage immediate + Supabase debounced
   const handleGmMemoChange = useCallback((value: string) => {
@@ -119,9 +119,9 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
     } catch { /* ignore */ }
     if (memoSaveTimer.current) clearTimeout(memoSaveTimer.current);
     memoSaveTimer.current = window.setTimeout(() => {
-      saveGmMemo(data.slug, value);
+      saveGmMemo(data.slug, value, currentTeacher?.id);
     }, 2000);
-  }, [data.slug]);
+  }, [data.slug, currentTeacher]);
 
   const handleDiscoverCard = useCallback((num: number) => {
     setDiscoveredCards((prev) => new Set(prev).add(num));
@@ -373,7 +373,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
     }
 
     // Final GM memo cloud save
-    await saveGmMemo(data.slug, gmMemo);
+    await saveGmMemo(data.slug, gmMemo, currentTeacher?.id);
 
     setSaving(false);
     setCompleted(true);
