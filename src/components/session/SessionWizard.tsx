@@ -262,6 +262,9 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
             characters={data.playableCharacters}
             votes={votes}
             onVote={handleVote}
+            evidenceCards={data.evidenceCards}
+            evidence5={data.evidence5}
+            gmGuideHtml={data.gmGuideHtml}
           />
         );
       case 'truth':
