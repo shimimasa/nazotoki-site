@@ -7,6 +7,8 @@ interface VotePhaseProps {
   characters: CharacterData[];
   votes: Record<string, string>;
   onVote: (voterId: string, suspectId: string) => void;
+  voteReasons: Record<string, string>;
+  onVoteReason: (voterId: string, reason: string) => void;
   evidenceCards: EvidenceCardData[];
   evidence5: EvidenceCardData | null;
   gmGuideHtml: string;
@@ -42,6 +44,8 @@ export default function VotePhase({
   characters,
   votes,
   onVote,
+  voteReasons,
+  onVoteReason,
   evidenceCards,
   evidence5,
   gmGuideHtml,
@@ -49,6 +53,7 @@ export default function VotePhase({
   const [stage, setStage] = useState<VoteStage>('prepare');
   const [currentVoterIdx, setCurrentVoterIdx] = useState(0);
   const [selectedSuspect, setSelectedSuspect] = useState<string | null>(null);
+  const [currentReason, setCurrentReason] = useState('');
   const [selectedEvidence, setSelectedEvidence] = useState<number | null>(null);
   const [revealAnim, setRevealAnim] = useState(false);
 
@@ -74,7 +79,11 @@ export default function VotePhase({
   const handleConfirmVote = () => {
     if (!currentVoter || !selectedSuspect) return;
     onVote(currentVoter.id, selectedSuspect);
+    if (currentReason.trim()) {
+      onVoteReason(currentVoter.id, currentReason.trim());
+    }
     setSelectedSuspect(null);
+    setCurrentReason('');
 
     if (currentVoterIdx < characters.length - 1) {
       setCurrentVoterIdx((i) => i + 1);
@@ -242,6 +251,22 @@ export default function VotePhase({
             })}
           </div>
         </div>
+
+        {/* Vote reason (optional) */}
+        {selectedSuspect && (
+          <div>
+            <label class="text-sm font-bold text-gray-600 block mb-1">
+              {'\u7406\u7531\uFF08\u4EFB\u610F\uFF09'}
+            </label>
+            <input
+              type="text"
+              value={currentReason}
+              onInput={(e) => setCurrentReason((e.target as HTMLInputElement).value)}
+              placeholder={'\u306A\u305C\u305D\u306E\u4EBA\u7269\u3060\u3068\u601D\u3063\u305F\uFF1F'}
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400"
+            />
+          </div>
+        )}
 
         {/* Confirm vote button */}
         <button

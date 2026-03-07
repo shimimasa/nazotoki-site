@@ -38,6 +38,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const [votes, setVotes] = useState<Record<string, string>>({});
+  const [voteReasons, setVoteReasons] = useState<Record<string, string>>({});
   const [reflections, setReflections] = useState<string[]>(['']);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [startedAt, setStartedAt] = useState<Date | null>(null);
@@ -146,6 +147,10 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
 
   const handleVote = useCallback((voterId: string, suspectId: string) => {
     setVotes((prev) => ({ ...prev, [voterId]: suspectId }));
+  }, []);
+
+  const handleVoteReason = useCallback((voterId: string, reason: string) => {
+    setVoteReasons((prev) => ({ ...prev, [voterId]: reason }));
   }, []);
 
   const handleReflectionChange = useCallback(
@@ -262,6 +267,8 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
             characters={data.playableCharacters}
             votes={votes}
             onVote={handleVote}
+            voteReasons={voteReasons}
+            onVoteReason={handleVoteReason}
             evidenceCards={data.evidenceCards}
             evidence5={data.evidence5}
             gmGuideHtml={data.gmGuideHtml}
@@ -278,6 +285,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
             onAddReflection={handleAddReflection}
             onRemoveReflection={handleRemoveReflection}
             votes={votes}
+            voteReasons={voteReasons}
             characters={data.playableCharacters}
           />
         );
@@ -305,6 +313,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
             onClick={() => {
               setCurrentStep(0);
               setVotes({});
+              setVoteReasons({});
               setReflections(['']);
               setSessionId(null);
               setStartedAt(null);
