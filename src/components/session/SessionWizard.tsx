@@ -292,6 +292,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
 
     await saveSessionLog({
       scenario_slug: data.slug,
+      scenario_title: data.title,
       start_time: startedAt?.toISOString() || null,
       end_time: new Date().toISOString(),
       duration: startedAt

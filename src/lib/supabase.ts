@@ -97,6 +97,7 @@ export async function loadGmMemo(slug: string): Promise<string | null> {
 
 export interface SessionLogRecord {
   scenario_slug: string;
+  scenario_title: string;
   start_time: string | null;
   end_time: string;
   duration: number | null;
@@ -113,6 +114,54 @@ export async function saveSessionLog(log: SessionLogRecord) {
   if (!supabase) return;
   const { error } = await supabase.from('session_logs').insert(log);
   if (error) console.error('Failed to save session log:', error);
+}
+
+// --- Session Logs query functions ---
+
+export interface SessionLogRow {
+  id: string;
+  scenario_slug: string;
+  scenario_title: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  duration: number | null;
+  phase_durations: Record<string, number> | null;
+  vote_results: Record<string, string> | null;
+  vote_reasons: Record<string, string> | null;
+  discovered_evidence: number[] | null;
+  twist_revealed: boolean;
+  correct_players: string[] | null;
+  gm_memo: string | null;
+  created_at: string;
+}
+
+export async function fetchSessionLogs(): Promise<SessionLogRow[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('session_logs')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('Failed to fetch session logs:', error);
+    return [];
+  }
+  return data || [];
+}
+
+export async function fetchSessionLogById(
+  id: string,
+): Promise<SessionLogRow | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('session_logs')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error) {
+    console.error('Failed to fetch session log:', error);
+    return null;
+  }
+  return data;
 }
 
 // --- Dashboard query functions ---

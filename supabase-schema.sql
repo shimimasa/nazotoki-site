@@ -75,6 +75,7 @@ create policy "Allow anon update gm_memos" on gm_memos for update to anon using 
 create table if not exists session_logs (
   id uuid primary key default gen_random_uuid(),
   scenario_slug text not null,
+  scenario_title text,
   start_time timestamptz,
   end_time timestamptz,
   duration integer, -- seconds
