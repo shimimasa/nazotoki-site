@@ -4,6 +4,7 @@ import { PHASE_CONFIG } from './types';
 import Timer from './Timer';
 import PhaseProgress from './PhaseProgress';
 import PhaseTransition, { getPhaseColor } from './PhaseTransition';
+import GmControlPanel from './GmControlPanel';
 import PrepPhase from './phases/PrepPhase';
 import IntroPhase from './phases/IntroPhase';
 import ExplorePhase from './phases/ExplorePhase';
@@ -48,6 +49,8 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   const [transitioning, setTransitioning] = useState(false);
   const [transitionTarget, setTransitionTarget] = useState<number | null>(null);
   const [timerExpiredOverlay, setTimerExpiredOverlay] = useState(false);
+  const [gmPanelOpen, setGmPanelOpen] = useState(false);
+  const [isProjectorMode, setIsProjectorMode] = useState(false);
 
   const currentPhase = PHASE_CONFIG[currentStep];
 
@@ -319,6 +322,8 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
               setStartedAt(null);
               setStepStartTimes([]);
               setCompleted(false);
+              setGmPanelOpen(false);
+              setIsProjectorMode(false);
             }}
             class="bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-bold hover:bg-gray-300 transition-colors"
           >
@@ -335,28 +340,47 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   const isLastStep = currentIndex === effectiveSteps.length - 1;
 
   return (
-    <div class="space-y-4">
-      {/* ヘッダー: フェーズ進捗 + タイマー */}
+    <div class={`space-y-4 ${isProjectorMode ? 'text-lg leading-relaxed' : ''}`}>
+      {/* ヘッダー: フェーズ進捗 + タイマー + GM/投影ボタン */}
       {currentStep > 0 && (
         <div class="sticky top-0 z-10 bg-gray-50 -mx-4 px-4 py-3 border-b border-gray-200">
-          <div class="flex items-center justify-between gap-4">
+          <div class="flex items-center justify-between gap-2">
             <PhaseProgress currentStep={currentStep} skipTwist={skipTwist} />
-            <Timer
-              seconds={timerSeconds}
-              running={timerRunning}
-              onTick={handleTimerTick}
-              onToggle={handleTimerToggle}
-              onReset={handleTimerReset}
-              onExpired={handleTimerExpired}
-              defaultSeconds={currentPhase?.defaultSeconds || 0}
-            />
+            <div class="flex items-center gap-2">
+              <Timer
+                seconds={timerSeconds}
+                running={timerRunning}
+                onTick={handleTimerTick}
+                onToggle={handleTimerToggle}
+                onReset={handleTimerReset}
+                onExpired={handleTimerExpired}
+                defaultSeconds={currentPhase?.defaultSeconds || 0}
+              />
+              <button
+                onClick={() => setIsProjectorMode((v) => !v)}
+                class={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-sm transition-colors ${
+                  isProjectorMode
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                }`}
+                title={isProjectorMode ? '\u6295\u5F71\u30E2\u30FC\u30C9 ON' : '\u6295\u5F71\u30E2\u30FC\u30C9 OFF'}
+              >
+                {'\uD83D\uDCFD\uFE0F'}
+              </button>
+              <button
+                onClick={() => setGmPanelOpen(true)}
+                class="shrink-0 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-black hover:bg-indigo-700 transition-colors flex items-center gap-1"
+              >
+                {'\uD83C\uDFAE'} GM
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* フェーズタイトル */}
       {currentStep > 0 && (
-        <h2 class="text-2xl font-black">
+        <h2 class={`font-black ${isProjectorMode ? 'text-4xl' : 'text-2xl'}`}>
           {currentPhase?.icon} {currentPhase?.label}
         </h2>
       )}
@@ -364,14 +388,14 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
       {/* フェーズ内容 */}
       {renderPhaseContent()}
 
-      {/* ナビゲーション */}
-      {!isFirstStep && (
+      {/* ナビゲーション（投影モードでは非表示 → GMパネルから操作） */}
+      {!isFirstStep && !isProjectorMode && (
         <div class="flex items-center justify-between pt-4 border-t border-gray-200">
           <button
             onClick={handlePrev}
             class="px-4 py-2.5 bg-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-300 transition-colors"
           >
-            ← 前へ
+            {'\u2190'} {'\u524D\u3078'}
           </button>
 
           {isLastStep ? (
@@ -384,17 +408,40 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
                   : 'bg-green-600 text-white hover:bg-green-700'
               }`}
             >
-              {saving ? '保存中...' : '✓ セッション完了'}
+              {saving ? '\u4FDD\u5B58\u4E2D...' : '\u2713 \u30BB\u30C3\u30B7\u30E7\u30F3\u5B8C\u4E86'}
             </button>
           ) : (
             <button
               onClick={handleNext}
               class="px-6 py-2.5 bg-amber-500 text-white rounded-lg font-bold hover:bg-amber-600 transition-colors"
             >
-              次へ →
+              {'\u6B21\u3078'} {'\u2192'}
             </button>
           )}
         </div>
+      )}
+
+      {/* GM Control Panel */}
+      {gmPanelOpen && currentStep > 0 && (
+        <GmControlPanel
+          currentStep={currentStep}
+          skipTwist={skipTwist}
+          onGoToStep={goToStep}
+          onNext={handleNext}
+          onPrev={handlePrev}
+          timerSeconds={timerSeconds}
+          timerRunning={timerRunning}
+          onTimerToggle={handleTimerToggle}
+          onTimerReset={handleTimerReset}
+          timerDefaultSeconds={currentPhase?.defaultSeconds || 0}
+          isProjectorMode={isProjectorMode}
+          onToggleProjector={() => setIsProjectorMode((v) => !v)}
+          onClose={() => setGmPanelOpen(false)}
+          isFirstPhase={currentIndex === 0}
+          isLastPhase={isLastStep}
+          onComplete={handleComplete}
+          saving={saving}
+        />
       )}
 
       {/* Phase transition interstitial */}
