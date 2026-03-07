@@ -248,7 +248,14 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
           <TwistPhase evidence5={data.evidence5} />
         ) : null;
       case 'discuss':
-        return <DiscussPhase gmGuideHtml={data.gmGuideHtml} discussionHtml={data.discussionHtml} />;
+        return (
+          <DiscussPhase
+            gmGuideHtml={data.gmGuideHtml}
+            discussionHtml={data.discussionHtml}
+            evidenceCards={data.evidenceCards}
+            evidence5={data.evidence5}
+          />
+        );
       case 'vote':
         return (
           <VotePhase

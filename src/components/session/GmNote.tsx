@@ -4,12 +4,14 @@ interface GmNoteProps {
   children: preact.ComponentChildren;
   label?: string;
   defaultOpen?: boolean;
+  closedText?: string;
 }
 
 export default function GmNote({
   children,
   label = 'GM',
   defaultOpen = false,
+  closedText,
 }: GmNoteProps) {
   const [open, setOpen] = useState(defaultOpen);
 
@@ -23,7 +25,7 @@ export default function GmNote({
           {label}
         </span>
         <span class="flex-1 text-sm font-bold text-indigo-900">
-          {open ? '\u25B2 閉じる' : '\u25BC 進行ヒントを見る'}
+          {open ? '\u25B2 \u9589\u3058\u308B' : `\u25BC ${closedText || '\u9032\u884C\u30D2\u30F3\u30C8\u3092\u898B\u308B'}`}
         </span>
       </button>
       {open && (
