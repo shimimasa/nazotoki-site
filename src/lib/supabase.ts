@@ -40,6 +40,12 @@ export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
 }
 
+export async function resetPasswordForEmail(email: string): Promise<{ error: string | null }> {
+  if (!supabase) return { error: 'Supabase not configured' };
+  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  return { error: error?.message || null };
+}
+
 export async function getCurrentTeacher(): Promise<TeacherProfile | null> {
   if (!supabase) return null;
   const { data: { user } } = await supabase.auth.getUser();
@@ -241,67 +247,6 @@ export async function fetchStudentHistory(studentId: string): Promise<(StudentSe
   }));
 }
 
-export interface SessionRecord {
-  teacher_name: string;
-  slug: string;
-  scenario_title: string;
-  environment: 'classroom' | 'dayservice' | 'home';
-  player_count: number;
-  started_at: string;
-  completed_at?: string;
-  phase_durations?: Record<string, number>;
-}
-
-export interface VoteRecord {
-  session_id: string;
-  voter_name: string;
-  suspect_name: string;
-  is_correct: boolean;
-}
-
-export interface ReflectionRecord {
-  session_id: string;
-  content: string;
-}
-
-export async function createSession(data: SessionRecord) {
-  if (!supabase) return null;
-  const { data: row, error } = await supabase
-    .from('sessions')
-    .insert(data)
-    .select('id')
-    .single();
-  if (error) {
-    console.error('Failed to create session:', error);
-    return null;
-  }
-  return row.id as string;
-}
-
-export async function completeSession(
-  sessionId: string,
-  phaseDurations: Record<string, number>,
-) {
-  if (!supabase) return;
-  await supabase
-    .from('sessions')
-    .update({
-      completed_at: new Date().toISOString(),
-      phase_durations: phaseDurations,
-    })
-    .eq('id', sessionId);
-}
-
-export async function saveVotes(votes: VoteRecord[]) {
-  if (!supabase || votes.length === 0) return;
-  await supabase.from('votes').insert(votes);
-}
-
-export async function saveReflections(reflections: ReflectionRecord[]) {
-  if (!supabase || reflections.length === 0) return;
-  await supabase.from('reflections').insert(reflections);
-}
-
 // --- GM Memo functions ---
 
 export async function saveGmMemo(slug: string, memoText: string, teacherId?: string | null) {
@@ -396,6 +341,10 @@ export interface SessionLogRecord {
   twist_revealed: boolean;
   correct_players: string[] | null;
   gm_memo: string;
+  reflections?: string[] | null;
+  environment?: string | null;
+  player_count?: number | null;
+  teacher_name?: string | null;
   teacher_id?: string | null;
   class_id?: string | null;
 }
@@ -423,6 +372,10 @@ export interface SessionLogRow {
   twist_revealed: boolean;
   correct_players: string[] | null;
   gm_memo: string | null;
+  reflections: string[] | null;
+  environment: string | null;
+  player_count: number | null;
+  teacher_name: string | null;
   teacher_id: string | null;
   class_id: string | null;
   created_at: string;
@@ -472,60 +425,28 @@ export async function fetchSessionLogById(
   return data;
 }
 
-// --- Dashboard query functions ---
+// --- Orphaned Session Logs (teacher_id IS NULL) ---
 
-export interface SessionRow {
-  id: string;
-  teacher_name: string;
-  slug: string;
-  scenario_title: string;
-  environment: string;
-  player_count: number;
-  started_at: string;
-  completed_at: string | null;
-  phase_durations: Record<string, number> | null;
-  created_at: string;
-}
-
-export interface VoteRow {
-  id: string;
-  session_id: string;
-  voter_name: string;
-  suspect_name: string;
-  is_correct: boolean;
-}
-
-export interface ReflectionRow {
-  id: string;
-  session_id: string;
-  content: string;
-  created_at: string;
-}
-
-export async function fetchSessions(): Promise<SessionRow[]> {
+export async function fetchOrphanedLogs(): Promise<SessionLogRow[]> {
   if (!supabase) return [];
   const { data, error } = await supabase
-    .from('sessions')
+    .from('session_logs')
     .select('*')
-    .order('started_at', { ascending: false });
-  if (error) {
-    console.error('Failed to fetch sessions:', error);
-    return [];
-  }
+    .is('teacher_id', null)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('Failed to fetch orphaned logs:', error); return []; }
   return data || [];
 }
 
-export async function fetchSessionDetail(sessionId: string) {
-  if (!supabase) return null;
-  const [sessionRes, votesRes, reflectionsRes] = await Promise.all([
-    supabase.from('sessions').select('*').eq('id', sessionId).single(),
-    supabase.from('votes').select('*').eq('session_id', sessionId),
-    supabase.from('reflections').select('*').eq('session_id', sessionId),
-  ]);
-  if (sessionRes.error) return null;
-  return {
-    session: sessionRes.data as SessionRow,
-    votes: (votesRes.data || []) as VoteRow[],
-    reflections: (reflectionsRes.data || []) as ReflectionRow[],
-  };
+export async function claimOrphanedLogs(logIds: string[], teacherId: string): Promise<number> {
+  if (!supabase || logIds.length === 0) return 0;
+  const { data, error } = await supabase
+    .from('session_logs')
+    .update({ teacher_id: teacherId })
+    .in('id', logIds)
+    .is('teacher_id', null)
+    .select('id');
+  if (error) { console.error('Failed to claim orphaned logs:', error); return 0; }
+  return data?.length || 0;
 }
+

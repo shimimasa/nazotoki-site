@@ -9,6 +9,7 @@ import SessionHistoryList from './SessionHistoryList';
 import SessionLogDetail from './SessionLogDetail';
 import ClassList from './ClassList';
 import ClassDetail from './ClassDetail';
+import OrphanedLogsBanner from './OrphanedLogsBanner';
 
 type WorkspaceTab = 'history' | 'classes';
 
@@ -76,8 +77,15 @@ export default function TeacherWorkspace({ teacherId, teacherName }: Props) {
     }
   }
 
+  const refreshLogs = () => {
+    fetchSessionLogs(teacherId).then(setLogs);
+  };
+
   return (
     <div>
+      {/* Orphaned logs adoption banner */}
+      <OrphanedLogsBanner teacherId={teacherId} onClaimed={refreshLogs} />
+
       {/* Stats */}
       <StatsBar logs={logs} classCount={classes.length} />
 

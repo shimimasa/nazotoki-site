@@ -13,10 +13,6 @@ import DiscussPhase from './phases/DiscussPhase';
 import VotePhase from './phases/VotePhase';
 import TruthPhase from './phases/TruthPhase';
 import {
-  createSession,
-  completeSession,
-  saveVotes,
-  saveReflections,
   saveGmMemo,
   loadGmMemo,
   saveSessionLog,
@@ -51,7 +47,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   const [votes, setVotes] = useState<Record<string, string>>({});
   const [voteReasons, setVoteReasons] = useState<Record<string, string>>({});
   const [reflections, setReflections] = useState<string[]>(['']);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [savedLogId, setSavedLogId] = useState<string | null>(null);
   const [startedAt, setStartedAt] = useState<Date | null>(null);
   const [stepStartTimes, setStepStartTimes] = useState<number[]>([]);
   const [completed, setCompleted] = useState(false);
@@ -176,23 +172,10 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
     setTransitionTarget(null);
   }, [transitionTarget, applyStep]);
 
-  const handleStart = useCallback(async () => {
-    const now = new Date();
-    setStartedAt(now);
-
-    // Create Supabase session
-    const id = await createSession({
-      teacher_name: teacherName,
-      slug: data.slug,
-      scenario_title: data.title,
-      environment,
-      player_count: playerCount,
-      started_at: now.toISOString(),
-    });
-    setSessionId(id);
-
+  const handleStart = useCallback(() => {
+    setStartedAt(new Date());
     goToStep(1); // Skip to intro
-  }, [teacherName, data.slug, data.title, environment, playerCount, goToStep]);
+  }, [goToStep]);
 
   const handleNext = useCallback(() => {
     const effectiveSteps = getEffectiveSteps();
@@ -269,39 +252,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
       }
     }
 
-    if (sessionId) {
-      await completeSession(sessionId, phaseDurations);
-
-      // Save votes
-      const voteRecords = Object.entries(votes).map(
-        ([voterId, suspectId]) => {
-          const voterChar = data.playableCharacters.find(
-            (c) => c.id === voterId,
-          );
-          const suspectChar = data.playableCharacters.find(
-            (c) => c.id === suspectId,
-          );
-          return {
-            session_id: sessionId,
-            voter_name: voterChar?.name || voterId,
-            suspect_name: suspectChar?.name || suspectId,
-            is_correct: false, // Could be determined from truth data
-          };
-        },
-      );
-      await saveVotes(voteRecords);
-
-      // Save reflections
-      const reflectionRecords = reflections
-        .filter((r) => r.trim().length > 0)
-        .map((content) => ({
-          session_id: sessionId,
-          content,
-        }));
-      await saveReflections(reflectionRecords);
-    }
-
-    // Save comprehensive session log
+    // Determine correct players
     const culpritText = data.truthHtml.replace(/<[^>]+>/g, '');
     const culpritMatch = culpritText.match(/\u72AF\u4EBA[:：]\s*(.+?)(?:\*|（|$|\n)/);
     const culpritName = culpritMatch
@@ -323,6 +274,10 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
           })
       : null;
 
+    // Collect reflections (non-empty only)
+    const validReflections = reflections.filter((r) => r.trim().length > 0);
+
+    // Save all data to session_logs (single source of truth)
     const sessionLogId = await saveSessionLog({
       scenario_slug: data.slug,
       scenario_title: data.title,
@@ -338,9 +293,14 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
       twist_revealed: twistRevealed,
       correct_players: correctPlayers,
       gm_memo: gmMemo,
+      reflections: validReflections.length > 0 ? validReflections : null,
+      environment,
+      player_count: playerCount,
+      teacher_name: teacherName || null,
       teacher_id: currentTeacher?.id || null,
       class_id: selectedClassId || null,
     });
+    setSavedLogId(sessionLogId);
 
     // Save student session logs if class with students is selected
     if (sessionLogId && selectedClassId && classStudents.length > 0) {
@@ -377,9 +337,9 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
 
     setSaving(false);
     setCompleted(true);
-  }, [sessionId, votes, voteReasons, reflections, stepStartTimes, startedAt,
+  }, [votes, voteReasons, reflections, stepStartTimes, startedAt,
     data.playableCharacters, data.slug, data.truthHtml,
-    discoveredCards, twistRevealed, gmMemo,
+    discoveredCards, twistRevealed, gmMemo, environment, playerCount, teacherName,
     currentTeacher, selectedClassId, classStudents]);
 
   // Render phase content
@@ -467,7 +427,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
         <div class="text-6xl">🎉</div>
         <h2 class="text-3xl font-black">セッション完了！</h2>
         <p class="text-gray-600">
-          お疲れ様でした。データは{sessionId ? '記録されました' : 'ローカルに保存されました'}。
+          お疲れ様でした。データは{savedLogId ? '記録されました' : 'ローカルに保存されました'}。
         </p>
         <div class="flex flex-wrap gap-3 justify-center">
           <a
@@ -482,7 +442,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
               setVotes({});
               setVoteReasons({});
               setReflections(['']);
-              setSessionId(null);
+              setSavedLogId(null);
               setStartedAt(null);
               setStepStartTimes([]);
               setCompleted(false);

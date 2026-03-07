@@ -94,6 +94,15 @@ export default function SessionLogDetail({ logId, cachedLog, onBack }: Props) {
           {totalDuration > 0 && (
             <span>授業時間: {formatMinSec(totalDuration)}</span>
           )}
+          {log.environment && (
+            <span>環境: {log.environment === 'classroom' ? '教室' : log.environment === 'dayservice' ? '放課後' : '家庭'}</span>
+          )}
+          {log.player_count && (
+            <span>参加人数: {log.player_count}人</span>
+          )}
+          {log.teacher_name && (
+            <span>教員: {log.teacher_name}</span>
+          )}
         </div>
       </div>
 
@@ -197,6 +206,20 @@ export default function SessionLogDetail({ logId, cachedLog, onBack }: Props) {
               反転証拠 公開済み
             </p>
           )}
+        </div>
+      )}
+
+      {/* Reflections */}
+      {log.reflections && log.reflections.length > 0 && (
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+          <h3 class="font-bold text-lg mb-4">振り返り</h3>
+          <div class="space-y-2">
+            {log.reflections.map((text, i) => (
+              <div key={i} class="bg-blue-50 rounded-lg px-4 py-3 border border-blue-100">
+                <p class="text-gray-800">{text}</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

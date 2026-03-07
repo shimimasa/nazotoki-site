@@ -187,6 +187,9 @@ export function exportSessionPDF(log: SessionLogRow) {
   <h2>基本情報</h2>
   <table class="meta-table">
     <tr><th>シナリオ</th><td>${escapeHtml(title)}</td></tr>
+    ${log.teacher_name ? `<tr><th>教員</th><td>${escapeHtml(log.teacher_name)}</td></tr>` : ''}
+    ${log.environment ? `<tr><th>環境</th><td>${log.environment === 'classroom' ? '教室' : log.environment === 'dayservice' ? '放課後' : '家庭'}</td></tr>` : ''}
+    ${log.player_count ? `<tr><th>参加人数</th><td>${log.player_count}人</td></tr>` : ''}
     ${log.start_time ? `<tr><th>開始時間</th><td>${formatDate(log.start_time)}</td></tr>` : ''}
     ${log.end_time ? `<tr><th>終了時間</th><td>${formatDate(log.end_time)}</td></tr>` : ''}
     ${log.duration != null ? `<tr><th>授業時間</th><td>${formatMinSec(log.duration)}</td></tr>` : ''}
@@ -195,6 +198,10 @@ export function exportSessionPDF(log: SessionLogRow) {
   ${phaseDurationsHtml}
   ${votesHtml}
   ${evidenceHtml}
+  ${log.reflections && log.reflections.length > 0 ? `
+    <h2>振り返り</h2>
+    ${log.reflections.map((r) => `<div class="memo" style="margin-bottom:8px;">${escapeHtml(r)}</div>`).join('')}
+  ` : ''}
   ${memoHtml}
 
   <div class="footer">
