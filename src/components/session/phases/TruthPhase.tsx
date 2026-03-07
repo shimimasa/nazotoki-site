@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
+import type { CharacterData } from '../types';
 import SteppedContent from '../SteppedContent';
 import GmNote from '../GmNote';
 
@@ -10,9 +11,11 @@ interface TruthPhaseProps {
   onReflectionChange: (index: number, value: string) => void;
   onAddReflection: () => void;
   onRemoveReflection: (index: number) => void;
+  votes: Record<string, string>;
+  characters: CharacterData[];
 }
 
-type TruthStage = 'solution' | 'learning' | 'reflection';
+type TruthStage = 'votes' | 'solution' | 'learning' | 'reflection';
 
 export default function TruthPhase({
   solutionHtml,
@@ -22,74 +25,191 @@ export default function TruthPhase({
   onReflectionChange,
   onAddReflection,
   onRemoveReflection,
+  votes,
+  characters,
 }: TruthPhaseProps) {
+  const hasVotes = Object.keys(votes).length > 0;
+  const [stage, setStage] = useState<TruthStage>(hasVotes ? 'votes' : 'solution');
   const [showTruth, setShowTruth] = useState(false);
-  const [stage, setStage] = useState<TruthStage>('solution');
   const [solutionDone, setSolutionDone] = useState(false);
+  const [voteRevealAnim, setVoteRevealAnim] = useState(false);
 
-  // Reset on html change
   useEffect(() => {
-    setStage('solution');
+    setStage(hasVotes ? 'votes' : 'solution');
     setSolutionDone(false);
-  }, [solutionHtml]);
+  }, [solutionHtml, hasVotes]);
+
+  // Trigger vote bar animation
+  useEffect(() => {
+    if (stage === 'votes') {
+      const t = setTimeout(() => setVoteRevealAnim(true), 200);
+      return () => clearTimeout(t);
+    }
+  }, [stage]);
+
+  const stageOrder: TruthStage[] = ['votes', 'solution', 'learning', 'reflection'];
+  const stageIdx = stageOrder.indexOf(stage);
 
   return (
     <div class="space-y-6">
-      {/* ── Stage 1: Solution ── */}
-      <GmNote>
-        <p class="text-sm text-indigo-800">
-          {'\u89E3\u6C7A\u7DE8\u3092\u5C11\u3057\u305A\u3064\u8AAD\u307F\u4E0A\u3052\u3066\u304F\u3060\u3055\u3044\u3002'}
-          {'\u300C\u6B21\u3078\u300D\u30DC\u30BF\u30F3\u3067\u7D9A\u304D\u304C\u8868\u793A\u3055\u308C\u307E\u3059\u3002'}
-        </p>
-      </GmNote>
-
-      <div class="bg-white rounded-xl border-2 border-amber-300 p-6 sm:p-8">
-        <SteppedContent
-          html={solutionHtml}
-          onComplete={() => setSolutionDone(true)}
-        />
+      {/* Progress indicator */}
+      <div class="flex gap-1">
+        {[
+          { key: 'votes', label: '\uD83D\uDCCA \u6295\u7968', show: hasVotes },
+          { key: 'solution', label: '\uD83C\uDFAC \u771F\u76F8', show: true },
+          { key: 'learning', label: '\uD83D\uDCDD \u5B66\u3073', show: true },
+          { key: 'reflection', label: '\uD83D\uDCAD \u632F\u308A\u8FD4\u308A', show: true },
+        ].filter(s => s.show).map((s, i) => {
+          const thisIdx = stageOrder.indexOf(s.key as TruthStage);
+          const isCurrent = s.key === stage;
+          const isPast = thisIdx < stageIdx;
+          return (
+            <div
+              key={s.key}
+              class={`flex-1 py-1.5 text-center text-xs font-bold rounded-lg transition-all ${
+                isCurrent
+                  ? 'bg-amber-500 text-white'
+                  : isPast
+                    ? 'bg-amber-100 text-amber-700'
+                    : 'bg-gray-100 text-gray-400'
+              }`}
+            >
+              {s.label}
+            </div>
+          );
+        })}
       </div>
 
-      {/* GM truth (collapsible, always available) */}
-      <div class="rounded-xl border border-gray-200 overflow-hidden bg-white">
-        <button
-          onClick={() => setShowTruth(!showTruth)}
-          class="w-full px-4 py-2.5 flex items-center gap-2 text-left hover:bg-gray-50 transition-colors"
-        >
-          <span class="px-2 py-0.5 bg-gray-600 text-white text-xs font-black rounded">
-            GM
-          </span>
-          <span class="flex-1 text-sm font-bold text-gray-700">
-            {showTruth ? '\u25B2 \u4E8B\u4EF6\u306E\u771F\u76F8\u3092\u9589\u3058\u308B' : '\u25BC \u4E8B\u4EF6\u306E\u771F\u76F8\uFF08\u78BA\u8A8D\u7528\uFF09'}
-          </span>
-        </button>
-        {showTruth && (
-          <div
-            class="px-4 pb-4 prose max-w-none border-t border-gray-100 pt-3"
-            dangerouslySetInnerHTML={{ __html: truthHtml }}
-          />
-        )}
-      </div>
+      {/* ── Stage 1: Vote Results Review ── */}
+      {stage === 'votes' && hasVotes && (
+        <>
+          <div class="bg-white rounded-xl border-2 border-red-200 p-6">
+            <h3 class="text-lg font-black text-center mb-5">
+              {'\uD83D\uDCCA \u307F\u3093\u306A\u306E\u63A8\u7406\u7D50\u679C'}
+            </h3>
 
-      {/* ── Gate: Solution → Learning ── */}
-      {solutionDone && stage === 'solution' && (
-        <div class="text-center py-2">
-          <button
-            onClick={() => setStage('learning')}
-            class="px-6 py-3 bg-green-600 text-white rounded-xl font-black text-lg hover:bg-green-700 transition-colors shadow-lg animate-pulse"
-          >
-            {'\uD83D\uDCDD \u5B66\u3073\u3092\u898B\u308B'}
-          </button>
+            {/* Vote bars */}
+            <div class="space-y-3 mb-5">
+              {characters.map((c) => {
+                const voteCount = Object.values(votes).filter(
+                  (v) => v === c.id,
+                ).length;
+                return (
+                  <div key={c.id} class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                      <span class="font-black text-red-700 text-sm">
+                        {c.name.charAt(0)}
+                      </span>
+                    </div>
+                    <span class="font-bold text-sm w-16 shrink-0">{c.name}</span>
+                    <div class="flex-1 bg-gray-100 rounded-full h-7 overflow-hidden">
+                      <div
+                        class="h-full bg-red-500 rounded-full transition-all duration-1000 ease-out flex items-center justify-end pr-2"
+                        style={{
+                          width: voteRevealAnim
+                            ? `${Math.max((voteCount / characters.length) * 100, voteCount > 0 ? 15 : 0)}%`
+                            : '0%',
+                        }}
+                      >
+                        {voteCount > 0 && (
+                          <span class="text-xs font-bold text-white">
+                            {voteCount}{'\u7968'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {voteCount === 0 && (
+                      <span class="text-xs text-gray-400">0{'\u7968'}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Who voted for whom */}
+            <div class="pt-4 border-t border-gray-200 space-y-1.5">
+              {characters.map((voter) => {
+                const suspect = characters.find((c) => c.id === votes[voter.id]);
+                return suspect ? (
+                  <div key={voter.id} class="text-sm text-gray-600 flex items-center gap-2">
+                    <span class="font-bold">{voter.name}</span>
+                    <span class="text-gray-300">{'\u2192'}</span>
+                    <span class="font-bold text-red-700">{suspect.name}</span>
+                  </div>
+                ) : null;
+              })}
+            </div>
+          </div>
+
+          <div class="text-center">
+            <p class="text-sm text-gray-500 mb-3">
+              {'\u307F\u3093\u306A\u306E\u63A8\u7406\u306F\u5408\u3063\u3066\u3044\u305F\u306E\u304B\uFF1F \u771F\u76F8\u3092\u898B\u3066\u307F\u307E\u3057\u3087\u3046\uFF01'}
+            </p>
+            <button
+              onClick={() => setStage('solution')}
+              class="px-8 py-4 bg-amber-600 text-white rounded-xl text-lg font-black hover:bg-amber-700 transition-colors shadow-lg animate-pulse"
+            >
+              {'\uD83C\uDFAC \u771F\u76F8\u3092\u898B\u308B'}
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* ── Stage 2: Solution (Event Reconstruction) ── */}
+      {stageIdx >= stageOrder.indexOf('solution') && (
+        <div class={stage === 'votes' ? 'hidden' : ''}>
+          <GmNote>
+            <p class="text-sm text-indigo-800">
+              {'\u89E3\u6C7A\u7DE8\u3092\u5C11\u3057\u305A\u3064\u8AAD\u307F\u4E0A\u3052\u3066\u304F\u3060\u3055\u3044\u3002'}
+              {'\u300C\u6B21\u3078\u300D\u30DC\u30BF\u30F3\u3067\u7D9A\u304D\u304C\u8868\u793A\u3055\u308C\u307E\u3059\u3002'}
+            </p>
+          </GmNote>
+
+          <div class="bg-white rounded-xl border-2 border-amber-300 p-6 sm:p-8 mt-4">
+            <SteppedContent
+              html={solutionHtml}
+              onComplete={() => setSolutionDone(true)}
+            />
+          </div>
+
+          {/* GM truth reference */}
+          <div class="rounded-xl border border-gray-200 overflow-hidden bg-white mt-4">
+            <button
+              onClick={() => setShowTruth(!showTruth)}
+              class="w-full px-4 py-2.5 flex items-center gap-2 text-left hover:bg-gray-50 transition-colors"
+            >
+              <span class="px-2 py-0.5 bg-gray-600 text-white text-xs font-black rounded">
+                GM
+              </span>
+              <span class="flex-1 text-sm font-bold text-gray-700">
+                {showTruth ? '\u25B2 \u4E8B\u4EF6\u306E\u771F\u76F8\u3092\u9589\u3058\u308B' : '\u25BC \u4E8B\u4EF6\u306E\u771F\u76F8\uFF08\u78BA\u8A8D\u7528\uFF09'}
+              </span>
+            </button>
+            {showTruth && (
+              <div
+                class="px-4 pb-4 prose max-w-none border-t border-gray-100 pt-3"
+                dangerouslySetInnerHTML={{ __html: truthHtml }}
+              />
+            )}
+          </div>
+
+          {/* Gate: Solution → Learning */}
+          {solutionDone && stage === 'solution' && (
+            <div class="text-center py-2 mt-4">
+              <button
+                onClick={() => setStage('learning')}
+                class="px-6 py-3 bg-green-600 text-white rounded-xl font-black text-lg hover:bg-green-700 transition-colors shadow-lg animate-pulse"
+              >
+                {'\uD83D\uDCDD \u5B66\u3073\u3092\u898B\u308B'}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
-      {/* ── Stage 2: Learning ── */}
+      {/* ── Stage 3: Learning ── */}
       {(stage === 'learning' || stage === 'reflection') && (
-        <div class={`transition-all duration-500 ${
-          stage === 'learning' || stage === 'reflection'
-            ? 'opacity-100 translate-y-0'
-            : 'opacity-0 translate-y-4'
-        }`}>
+        <div>
           {learningGoalsHtml ? (
             <div class="bg-green-50 rounded-xl border border-green-200 p-6">
               <h3 class="text-lg font-black text-green-900 mb-3">
@@ -108,7 +228,7 @@ export default function TruthPhase({
         </div>
       )}
 
-      {/* ── Gate: Learning → Reflection ── */}
+      {/* Gate: Learning → Reflection */}
       {stage === 'learning' && (
         <div class="text-center py-2">
           <button
@@ -120,9 +240,9 @@ export default function TruthPhase({
         </div>
       )}
 
-      {/* ── Stage 3: Reflection ── */}
+      {/* ── Stage 4: Reflection ── */}
       {stage === 'reflection' && (
-        <div class="bg-white rounded-xl border border-gray-200 p-6 transition-all duration-500">
+        <div class="bg-white rounded-xl border border-gray-200 p-6">
           <h3 class="text-lg font-black mb-3">
             {'\uD83D\uDCAD \u632F\u308A\u8FD4\u308A'}
           </h3>

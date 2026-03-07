@@ -277,6 +277,8 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
             onReflectionChange={handleReflectionChange}
             onAddReflection={handleAddReflection}
             onRemoveReflection={handleRemoveReflection}
+            votes={votes}
+            characters={data.playableCharacters}
           />
         );
       default:
