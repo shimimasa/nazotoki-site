@@ -40,7 +40,8 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    const fromAddress = import.meta.env.INVITE_EMAIL_FROM || 'onboarding@resend.dev';
+    const envFrom = import.meta.env.INVITE_EMAIL_FROM || '';
+    const fromAddress = envFrom.includes('@') ? envFrom : 'onboarding@resend.dev';
     const expiresLabel = expiresAt
       ? new Date(expiresAt).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })
       : '7日間';
