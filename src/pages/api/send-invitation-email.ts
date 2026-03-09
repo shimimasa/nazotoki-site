@@ -40,7 +40,7 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    const fromAddress = import.meta.env.INVITE_EMAIL_FROM || 'noreply@nazotoki.gamanavi.com';
+    const fromAddress = import.meta.env.INVITE_EMAIL_FROM || 'ナゾトキ探偵団 <onboarding@resend.dev>';
     const expiresLabel = expiresAt
       ? new Date(expiresAt).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })
       : '7日間';
@@ -57,8 +57,9 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (sendError) {
       console.error('Resend error:', sendError);
+      const detail = sendError.message || JSON.stringify(sendError);
       return new Response(
-        JSON.stringify({ ok: false, error: 'メール送信に失敗しました' }),
+        JSON.stringify({ ok: false, error: `メール送信に失敗しました: ${detail}` }),
         { status: 500, headers: corsHeaders },
       );
     }
