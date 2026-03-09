@@ -56,10 +56,10 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
     if (sendError) {
-      console.error('Resend error:', sendError);
+      console.error('Resend error:', sendError, 'from:', fromAddress);
       const detail = sendError.message || JSON.stringify(sendError);
       return new Response(
-        JSON.stringify({ ok: false, error: `メール送信に失敗しました: ${detail}` }),
+        JSON.stringify({ ok: false, error: `メール送信に失敗しました: ${detail}`, debug: { from: fromAddress } }),
         { status: 500, headers: corsHeaders },
       );
     }
