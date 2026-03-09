@@ -1,4 +1,5 @@
 -- Phase 12: Teacher Account, Class Management, Student Logs
+-- STATUS: APPLIED — This migration has been applied. See supabase-schema.sql for canonical schema.
 -- Run this in Supabase SQL Editor AFTER the existing schema
 
 -- 1. Teachers profile table (linked to Supabase Auth)

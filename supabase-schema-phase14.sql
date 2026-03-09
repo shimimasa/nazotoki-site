@@ -1,4 +1,5 @@
 -- Phase 14: Legacy table cleanup — seal API access + backfill data
+-- STATUS: APPLIED — Policies removed, data backfilled. Tables dropped in Phase 15.
 -- Run this in Supabase SQL Editor AFTER Phase 13 schema is applied.
 -- Safe to run multiple times (idempotent throughout).
 

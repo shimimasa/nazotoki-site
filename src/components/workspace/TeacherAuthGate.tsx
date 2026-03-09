@@ -107,7 +107,7 @@ export default function TeacherAuthGate() {
             ログアウト
           </button>
         </div>
-        <TeacherWorkspace teacherId={teacher.id} teacherName={teacher.display_name} />
+        <TeacherWorkspace teacherId={teacher.id} teacherName={teacher.display_name} schoolId={teacher.school_id} role={teacher.role} />
       </div>
     );
   }

@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useMemo } from 'preact/hooks';
 import {
   fetchSessionLogById,
   type SessionLogRow,
 } from '../../lib/supabase';
 import { exportSessionPDF } from './exportSessionPDF';
+import { computeSessionMetrics } from '../../lib/session-analytics';
+import { computeSessionInsights } from '../../lib/session-insights';
 
 const PHASE_LABELS: Record<string, string> = {
   intro: '導入',
@@ -230,6 +232,52 @@ export default function SessionLogDetail({ logId, cachedLog, onBack }: Props) {
           <div class="bg-amber-50 rounded-lg p-4 border border-amber-200">
             <p class="text-gray-800 whitespace-pre-wrap">{log.gm_memo}</p>
           </div>
+        </div>
+      )}
+
+      {/* Session Insights */}
+      <SessionInsightsCard log={log} />
+    </div>
+  );
+}
+
+function SessionInsightsCard({ log }: { log: SessionLogRow }) {
+  const insights = useMemo(() => {
+    const metrics = computeSessionMetrics(log);
+    return computeSessionInsights(metrics);
+  }, [log]);
+
+  if (insights.observations.length === 0 && insights.suggestions.length === 0) {
+    return null;
+  }
+
+  return (
+    <div class="bg-white rounded-xl p-6 border border-gray-200">
+      <h3 class="font-bold text-lg mb-4">授業所見</h3>
+      {insights.observations.length > 0 && (
+        <div class="mb-4">
+          <div class="text-xs font-bold text-blue-600 mb-2">所見</div>
+          <ul class="space-y-1.5">
+            {insights.observations.map((ins, i) => (
+              <li key={i} class="text-sm text-gray-700 flex items-start gap-2">
+                <span class="text-blue-400 mt-0.5 shrink-0">-</span>
+                {ins.text}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {insights.suggestions.length > 0 && (
+        <div>
+          <div class="text-xs font-bold text-amber-600 mb-2">次回への提案</div>
+          <ul class="space-y-1.5">
+            {insights.suggestions.map((ins, i) => (
+              <li key={i} class="text-sm text-gray-700 flex items-start gap-2">
+                <span class="text-amber-400 mt-0.5 shrink-0">-</span>
+                {ins.text}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 -- Phase 12.1: RLS hardening + gm_memos teacher separation
+-- STATUS: APPLIED — This migration has been applied. See supabase-schema.sql for canonical schema.
 -- Run this in Supabase SQL Editor AFTER Phase 12 schema is applied.
 -- Safe to run multiple times (IF NOT EXISTS / DROP IF EXISTS used throughout).
 

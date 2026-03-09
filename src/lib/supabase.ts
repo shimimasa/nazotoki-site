@@ -8,11 +8,42 @@ export const supabase =
 
 // --- Auth & Teacher Profile ---
 
+export type TeacherRole = 'teacher' | 'admin';
+
 export interface TeacherProfile {
   id: string;
   auth_user_id: string;
   display_name: string;
+  school_id: string | null;
+  role: TeacherRole;
   created_at: string;
+}
+
+// --- School ---
+
+export type SchoolType = 'elementary' | 'junior_high' | 'high' | 'combined' | 'special_needs' | 'other';
+
+export interface SchoolRow {
+  id: string;
+  name: string;
+  school_type: SchoolType | null;
+  address: string | null;
+  principal_name: string | null;
+  phone_number: string | null;
+  website_url: string | null;
+  contact_email: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SchoolProfileUpdate {
+  name?: string;
+  school_type?: SchoolType | null;
+  address?: string | null;
+  principal_name?: string | null;
+  phone_number?: string | null;
+  website_url?: string | null;
+  contact_email?: string | null;
 }
 
 export async function signUp(email: string, password: string, displayName: string): Promise<{ teacher: TeacherProfile | null; error: string | null }> {
@@ -55,7 +86,9 @@ export async function getCurrentTeacher(): Promise<TeacherProfile | null> {
     .select('*')
     .eq('auth_user_id', user.id)
     .single();
-  return data || null;
+  if (!data) return null;
+  // Ensure role fallback for pre-migration data
+  return { ...data, role: data.role || 'teacher' };
 }
 
 export function onAuthStateChange(callback: (teacher: TeacherProfile | null) => void) {
@@ -119,16 +152,18 @@ export async function fetchClasses(teacherId: string): Promise<ClassWithStats[]>
   }));
 }
 
-export async function createClass(teacherId: string, className: string, gradeLabel: string, description: string): Promise<ClassRow | null> {
+export async function createClass(teacherId: string, className: string, gradeLabel: string, description: string, schoolId?: string | null): Promise<ClassRow | null> {
   if (!supabase) return null;
+  const row: Record<string, unknown> = {
+    teacher_id: teacherId,
+    class_name: className,
+    grade_label: gradeLabel || null,
+    description: description || null,
+  };
+  if (schoolId) row.school_id = schoolId;
   const { data, error } = await supabase
     .from('classes')
-    .insert({
-      teacher_id: teacherId,
-      class_name: className,
-      grade_label: gradeLabel || null,
-      description: description || null,
-    })
+    .insert(row)
     .select()
     .single();
   if (error) { console.error('Failed to create class:', error); return null; }
@@ -448,5 +483,494 @@ export async function claimOrphanedLogs(logIds: string[], teacherId: string): Pr
     .select('id');
   if (error) { console.error('Failed to claim orphaned logs:', error); return 0; }
   return data?.length || 0;
+}
+
+// --- Analytics: bulk fetch for teacher-wide student analysis ---
+
+export interface StudentWithClass {
+  id: string;
+  student_name: string;
+  class_id: string;
+  class_name: string;
+}
+
+export async function fetchAllStudentsForTeacher(classIds: string[]): Promise<StudentWithClass[]> {
+  if (!supabase || classIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from('students')
+    .select('id, student_name, class_id, classes(class_name)')
+    .in('class_id', classIds)
+    .order('student_name');
+  if (error) { console.error('Failed to fetch all students:', error); return []; }
+  return (data || []).map((row: any) => ({
+    id: row.id,
+    student_name: row.student_name,
+    class_id: row.class_id,
+    class_name: row.classes?.class_name || '',
+  }));
+}
+
+export interface StudentLogSummary {
+  student_id: string;
+  is_correct: boolean | null;
+  vote_reason: string | null;
+  created_at: string;
+}
+
+export async function fetchStudentLogSummaries(studentIds: string[]): Promise<StudentLogSummary[]> {
+  if (!supabase || studentIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from('student_session_logs')
+    .select('student_id, is_correct, vote_reason, created_at')
+    .in('student_id', studentIds);
+  if (error) { console.error('Failed to fetch student log summaries:', error); return []; }
+  return data || [];
+}
+
+// --- Monthly Reports (optional persistence) ---
+
+export interface MonthlyReportRow {
+  id: string;
+  teacher_id: string;
+  year: number;
+  month: number;
+  summary_json: Record<string, unknown>;
+  insights_json: Record<string, unknown>;
+  generated_at: string;
+  created_at: string;
+}
+
+export async function fetchMonthlyReports(teacherId: string): Promise<MonthlyReportRow[]> {
+  if (!supabase) return [];
+  try {
+    const { data, error } = await supabase
+      .from('monthly_reports')
+      .select('*')
+      .eq('teacher_id', teacherId)
+      .order('year', { ascending: false })
+      .order('month', { ascending: false });
+    if (error) {
+      // Table may not exist yet — graceful fallback
+      if (error.code === '42P01' || error.message?.includes('does not exist')) return [];
+      console.error('Failed to fetch monthly reports:', error);
+      return [];
+    }
+    return data || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function saveMonthlyReport(
+  teacherId: string,
+  year: number,
+  month: number,
+  summaryJson: Record<string, unknown>,
+  insightsJson: Record<string, unknown>,
+): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase
+      .from('monthly_reports')
+      .upsert(
+        {
+          teacher_id: teacherId,
+          year,
+          month,
+          summary_json: summaryJson,
+          insights_json: insightsJson,
+          generated_at: new Date().toISOString(),
+        },
+        { onConflict: 'teacher_id,year,month' },
+      );
+    if (error) {
+      if (error.code === '42P01' || error.message?.includes('does not exist')) return false;
+      console.error('Failed to save monthly report:', error);
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// --- School functions ---
+
+export async function fetchSchool(schoolId: string): Promise<SchoolRow | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('schools')
+    .select('*')
+    .eq('id', schoolId)
+    .single();
+  if (error) { console.error('Failed to fetch school:', error); return null; }
+  return data;
+}
+
+export async function createSchool(name: string): Promise<SchoolRow | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('schools')
+    .insert({ name })
+    .select()
+    .single();
+  if (error) { console.error('Failed to create school:', error); return null; }
+  return data;
+}
+
+export async function updateSchoolName(schoolId: string, name: string): Promise<boolean> {
+  if (!supabase) return false;
+  const { error } = await supabase
+    .from('schools')
+    .update({ name, updated_at: new Date().toISOString() })
+    .eq('id', schoolId);
+  if (error) { console.error('Failed to update school:', error); return false; }
+  return true;
+}
+
+/** Update school profile fields (admin only at UI level) */
+export async function updateSchoolProfile(schoolId: string, updates: SchoolProfileUpdate): Promise<boolean> {
+  if (!supabase) return false;
+  const { error } = await supabase
+    .from('schools')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', schoolId);
+  if (error) { console.error('Failed to update school profile:', error); return false; }
+  return true;
+}
+
+/** Assign a school to the current teacher (for initial setup) */
+export async function assignTeacherSchool(teacherId: string, schoolId: string): Promise<boolean> {
+  if (!supabase) return false;
+  const { error } = await supabase
+    .from('teachers')
+    .update({ school_id: schoolId })
+    .eq('id', teacherId);
+  if (error) { console.error('Failed to assign school:', error); return false; }
+  return true;
+}
+
+/** Create a school and assign it to the teacher in one step */
+export async function ensureTeacherSchool(teacherId: string, teacherName: string): Promise<string | null> {
+  if (!supabase) return null;
+  // Check if teacher already has a school
+  const { data: teacher } = await supabase
+    .from('teachers')
+    .select('school_id')
+    .eq('id', teacherId)
+    .single();
+  if (teacher?.school_id) return teacher.school_id;
+
+  // Create a new school
+  const school = await createSchool(`${teacherName}の学校`);
+  if (!school) return null;
+
+  // Assign to teacher
+  const ok = await assignTeacherSchool(teacherId, school.id);
+  if (!ok) return null;
+
+  return school.id;
+}
+
+// --- School-scoped fetch functions ---
+
+/** Fetch all classes belonging to a school */
+export async function fetchSchoolClasses(schoolId: string): Promise<ClassWithStats[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('classes')
+    .select('*')
+    .eq('school_id', schoolId)
+    .order('created_at', { ascending: false });
+  if (error || !data) return [];
+
+  const classIds = data.map((c: ClassRow) => c.id);
+  if (classIds.length === 0) return data.map((c: ClassRow) => ({ ...c, session_count: 0, student_count: 0 }));
+
+  const [sessionRes, studentRes] = await Promise.all([
+    supabase.from('session_logs').select('class_id').in('class_id', classIds),
+    supabase.from('students').select('class_id').in('class_id', classIds),
+  ]);
+
+  const sessionCounts: Record<string, number> = {};
+  const studentCounts: Record<string, number> = {};
+  (sessionRes.data || []).forEach((r: { class_id: string }) => {
+    sessionCounts[r.class_id] = (sessionCounts[r.class_id] || 0) + 1;
+  });
+  (studentRes.data || []).forEach((r: { class_id: string }) => {
+    studentCounts[r.class_id] = (studentCounts[r.class_id] || 0) + 1;
+  });
+
+  return data.map((c: ClassRow) => ({
+    ...c,
+    session_count: sessionCounts[c.id] || 0,
+    student_count: studentCounts[c.id] || 0,
+  }));
+}
+
+/** Fetch all session logs for classes belonging to a school */
+export async function fetchSchoolSessionLogs(schoolId: string): Promise<SessionLogRow[]> {
+  if (!supabase) return [];
+  // Get all class IDs for this school
+  const { data: classData } = await supabase
+    .from('classes')
+    .select('id')
+    .eq('school_id', schoolId);
+  if (!classData || classData.length === 0) return [];
+
+  const classIds = classData.map((c: { id: string }) => c.id);
+  const { data, error } = await supabase
+    .from('session_logs')
+    .select('*')
+    .in('class_id', classIds)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('Failed to fetch school session logs:', error); return []; }
+  return data || [];
+}
+
+/** Fetch all students for classes belonging to a school */
+export async function fetchSchoolStudents(schoolId: string): Promise<StudentWithClass[]> {
+  if (!supabase) return [];
+  const { data: classData } = await supabase
+    .from('classes')
+    .select('id')
+    .eq('school_id', schoolId);
+  if (!classData || classData.length === 0) return [];
+
+  const classIds = classData.map((c: { id: string }) => c.id);
+  return fetchAllStudentsForTeacher(classIds);
+}
+
+// --- Admin: School teacher management ---
+
+export interface SchoolTeacher {
+  id: string;
+  display_name: string;
+  role: TeacherRole;
+  created_at: string;
+}
+
+/** Fetch teachers in the same school (admin only — requires admin_teachers_select RLS) */
+export async function fetchSchoolTeachers(schoolId: string): Promise<SchoolTeacher[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('teachers')
+    .select('id, display_name, role, created_at')
+    .eq('school_id', schoolId)
+    .order('created_at', { ascending: true });
+  if (error) { console.error('Failed to fetch school teachers:', error); return []; }
+  return (data || []).map((t: any) => ({
+    ...t,
+    role: t.role || 'teacher',
+  }));
+}
+
+/** Update a teacher's role via secure RPC (admin only) */
+export async function updateTeacherRole(
+  targetTeacherId: string,
+  newRole: TeacherRole,
+): Promise<{ ok: boolean; error?: string }> {
+  if (!supabase) return { ok: false, error: 'Supabase not configured' };
+  const { data, error } = await supabase.rpc('update_teacher_role', {
+    target_teacher_id: targetTeacherId,
+    new_role: newRole,
+  });
+  if (error) return { ok: false, error: error.message };
+  const result = data as string;
+  if (result === 'ok') return { ok: true };
+  return { ok: false, error: result };
+}
+
+// --- Admin: Role Change Audit Logs ---
+
+export interface RoleChangeLog {
+  id: string;
+  school_id: string;
+  actor_teacher_id: string;
+  target_teacher_id: string;
+  action: string;
+  before_role: string;
+  after_role: string;
+  created_at: string;
+}
+
+/** Fetch role change audit logs for a school (admin only — requires admin_role_change_logs_select RLS) */
+export async function fetchRoleChangeLogs(schoolId: string, limit = 20): Promise<RoleChangeLog[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('role_change_logs')
+    .select('*')
+    .eq('school_id', schoolId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) {
+    // Table may not exist yet — graceful fallback
+    if (error.code === '42P01' || error.message?.includes('does not exist')) return [];
+    console.error('Failed to fetch role change logs:', error);
+    return [];
+  }
+  return data || [];
+}
+
+/** Paginated fetch of role change audit logs with filters (admin only) */
+export interface RoleChangeLogQuery {
+  schoolId: string;
+  page?: number;
+  pageSize?: number;
+  actorTeacherId?: string;
+  targetTeacherId?: string;
+  roleChange?: 'promoted' | 'demoted';
+}
+
+export interface PaginatedRoleChangeLogs {
+  items: RoleChangeLog[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
+export async function fetchRoleChangeLogsPaginated(params: RoleChangeLogQuery): Promise<PaginatedRoleChangeLogs> {
+  const empty: PaginatedRoleChangeLogs = { items: [], totalCount: 0, page: 1, pageSize: 20 };
+  if (!supabase) return empty;
+
+  const page = params.page || 1;
+  const pageSize = params.pageSize || 20;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = supabase
+    .from('role_change_logs')
+    .select('*', { count: 'exact' })
+    .eq('school_id', params.schoolId)
+    .order('created_at', { ascending: false })
+    .range(from, to);
+
+  if (params.actorTeacherId) {
+    query = query.eq('actor_teacher_id', params.actorTeacherId);
+  }
+  if (params.targetTeacherId) {
+    query = query.eq('target_teacher_id', params.targetTeacherId);
+  }
+  if (params.roleChange === 'promoted') {
+    query = query.eq('before_role', 'teacher').eq('after_role', 'admin');
+  } else if (params.roleChange === 'demoted') {
+    query = query.eq('before_role', 'admin').eq('after_role', 'teacher');
+  }
+
+  const { data, error, count } = await query;
+  if (error) {
+    if (error.code === '42P01' || error.message?.includes('does not exist')) return empty;
+    console.error('Failed to fetch paginated role change logs:', error);
+    return empty;
+  }
+  return {
+    items: data || [],
+    totalCount: count ?? 0,
+    page,
+    pageSize,
+  };
+}
+
+// --- Admin: Teacher Invitations ---
+
+export interface TeacherInvitationRow {
+  id: string;
+  school_id: string;
+  invited_by_teacher_id: string;
+  invite_email: string | null;
+  token: string;
+  role: string;
+  expires_at: string;
+  used_at: string | null;
+  used_by_teacher_id: string | null;
+  created_at: string;
+}
+
+export interface InvitationPreview {
+  valid: boolean;
+  error?: string;
+  school_name?: string;
+  expires_at?: string;
+}
+
+export interface InvitationConsumeResult {
+  ok: boolean;
+  error?: string;
+  status?: 'joined' | 'already_member';
+}
+
+/** Fetch invitations for a school (admin only) */
+export async function fetchTeacherInvitations(schoolId: string): Promise<TeacherInvitationRow[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('teacher_invitations')
+    .select('*')
+    .eq('school_id', schoolId)
+    .order('created_at', { ascending: false })
+    .limit(20);
+  if (error) {
+    if (error.code === '42P01' || error.message?.includes('does not exist')) return [];
+    console.error('Failed to fetch invitations:', error);
+    return [];
+  }
+  return data || [];
+}
+
+/** Create a teacher invitation via RPC (admin only) */
+export async function createTeacherInvitation(
+  inviteEmail?: string | null,
+): Promise<{ ok: boolean; token?: string; expiresAt?: string; error?: string }> {
+  if (!supabase) return { ok: false, error: 'Supabase not configured' };
+  const { data, error } = await supabase.rpc('create_teacher_invitation', {
+    invite_email: inviteEmail || null,
+  });
+  if (error) return { ok: false, error: error.message };
+  const result = data as Record<string, unknown>;
+  if (result.error) return { ok: false, error: result.error as string };
+  return {
+    ok: true,
+    token: result.token as string,
+    expiresAt: result.expires_at as string,
+  };
+}
+
+/** Preview an invitation (minimal info, no admin required) */
+export async function previewTeacherInvitation(token: string): Promise<InvitationPreview> {
+  if (!supabase) return { valid: false, error: 'Supabase not configured' };
+  const { data, error } = await supabase.rpc('preview_teacher_invitation', {
+    invite_token: token,
+  });
+  if (error) return { valid: false, error: error.message };
+  return data as InvitationPreview;
+}
+
+/** Consume an invitation (authenticated user accepts) */
+export async function consumeTeacherInvitation(token: string): Promise<InvitationConsumeResult> {
+  if (!supabase) return { ok: false, error: 'Supabase not configured' };
+  const { data, error } = await supabase.rpc('consume_teacher_invitation', {
+    invite_token: token,
+  });
+  if (error) return { ok: false, error: error.message };
+  return data as InvitationConsumeResult;
+}
+
+/** Send invitation email via server API (client-side helper) */
+export async function sendInvitationEmail(params: {
+  email: string;
+  inviteLink: string;
+  schoolName: string;
+  expiresAt: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch('/api/send-invitation-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    });
+    const data = await res.json();
+    return data;
+  } catch {
+    return { ok: false, error: 'メール送信リクエストに失敗しました' };
+  }
 }
 

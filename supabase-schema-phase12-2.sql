@@ -1,4 +1,5 @@
 -- Phase 12.2: Auth UX support + legacy table RLS hardening + orphaned log claim
+-- STATUS: APPLIED & SUPERSEDED — Legacy table policies (sections 2-5) removed in Phase 14, tables dropped in Phase 15.
 -- Run this in Supabase SQL Editor AFTER Phase 12.1 schema is applied.
 -- Safe to run multiple times (DROP IF EXISTS used throughout).
 

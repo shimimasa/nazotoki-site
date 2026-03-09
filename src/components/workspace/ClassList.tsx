@@ -9,9 +9,10 @@ import {
 interface Props {
   teacherId: string;
   onSelectClass: (classId: string) => void;
+  schoolId?: string | null;
 }
 
-export default function ClassList({ teacherId, onSelectClass }: Props) {
+export default function ClassList({ teacherId, onSelectClass, schoolId }: Props) {
   const [classes, setClasses] = useState<ClassWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -32,7 +33,7 @@ export default function ClassList({ teacherId, onSelectClass }: Props) {
     e.preventDefault();
     if (!className.trim()) return;
     setCreating(true);
-    const result = await createClass(teacherId, className.trim(), gradeLabel.trim(), description.trim());
+    const result = await createClass(teacherId, className.trim(), gradeLabel.trim(), description.trim(), schoolId);
     if (result) {
       setClassName('');
       setGradeLabel('');

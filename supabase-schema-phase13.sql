@@ -1,4 +1,5 @@
 -- Phase 13: Consolidate session data into session_logs
+-- STATUS: APPLIED — Columns added to session_logs. Legacy tables dropped in Phase 15.
 -- Run this in Supabase SQL Editor AFTER Phase 12.2 schema is applied.
 -- Safe to run multiple times (IF NOT EXISTS used).
 
