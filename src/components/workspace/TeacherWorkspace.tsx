@@ -127,6 +127,7 @@ export default function TeacherWorkspace({ teacherId, teacherName, schoolId, rol
         <ClassDetail
           classId={selectedClassId}
           classData={cls}
+          teacherId={teacherId}
           onBack={() => {
             setSelectedClassId(null);
             // Refresh classes when returning

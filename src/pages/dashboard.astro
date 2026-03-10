@@ -1,6 +1,16 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import TeacherAuthGate from '../components/workspace/TeacherAuthGate';
+import { loadAllScenarios } from '../lib/data';
+
+const scenarios = loadAllScenarios();
+const scenarioList = scenarios.map(s => ({
+  slug: s.slug,
+  title: s.title,
+  series: s.series,
+  seriesName: s.seriesName,
+  difficulty: s.difficulty,
+}));
 ---
 <BaseLayout
   title="Teacher Workspace"
@@ -20,3 +30,7 @@ import TeacherAuthGate from '../components/workspace/TeacherAuthGate';
 
   <TeacherAuthGate client:load />
 </BaseLayout>
+
+<script define:vars={{ scenarioList }}>
+  window.__SCENARIO_LIST__ = scenarioList;
+</script>

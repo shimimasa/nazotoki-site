@@ -10,16 +10,18 @@ import {
 import SessionHistoryList from './SessionHistoryList';
 import SessionLogDetail from './SessionLogDetail';
 import StudentList from './StudentList';
+import AssignmentManager from './AssignmentManager';
 
 interface Props {
   classId: string;
   classData: ClassWithStats;
+  teacherId: string;
   onBack: () => void;
 }
 
-type DetailTab = 'sessions' | 'students';
+type DetailTab = 'sessions' | 'students' | 'assignments';
 
-export default function ClassDetail({ classId, classData, onBack }: Props) {
+export default function ClassDetail({ classId, classData, teacherId, onBack }: Props) {
   const [tab, setTab] = useState<DetailTab>('sessions');
   const [sessions, setSessions] = useState<SessionLogRow[]>([]);
   const [students, setStudents] = useState<StudentRow[]>([]);
@@ -169,6 +171,16 @@ export default function ClassDetail({ classId, classData, onBack }: Props) {
         >
           生徒名簿 ({students.length})
         </button>
+        <button
+          onClick={() => setTab('assignments')}
+          class={`flex-1 py-3 text-sm font-bold transition-colors ${
+            tab === 'assignments'
+              ? 'text-amber-700 border-b-2 border-amber-500'
+              : 'text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          課題配信
+        </button>
       </div>
 
       {/* Content */}
@@ -176,6 +188,12 @@ export default function ClassDetail({ classId, classData, onBack }: Props) {
         <div class="text-center py-8 text-gray-400">読み込み中...</div>
       ) : tab === 'sessions' ? (
         <SessionHistoryList logs={sessions} onSelect={setSelectedLogId} />
+      ) : tab === 'assignments' ? (
+        <AssignmentManager
+          classId={classId}
+          teacherId={teacherId}
+          scenarios={(typeof window !== 'undefined' && (window as any).__SCENARIO_LIST__) || []}
+        />
       ) : (
         <StudentList
           classId={classId}

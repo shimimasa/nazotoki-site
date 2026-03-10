@@ -1048,3 +1048,80 @@ export async function sendInvitationEmail(params: {
   }
 }
 
+// --- Assignments (Phase 78) ---
+
+export interface AssignmentRow {
+  id: string;
+  teacher_id: string;
+  class_id: string;
+  scenario_slug: string;
+  scenario_title: string;
+  description: string;
+  due_date: string | null;
+  created_at: string;
+}
+
+export interface AssignmentInsert {
+  teacher_id: string;
+  class_id: string;
+  scenario_slug: string;
+  scenario_title: string;
+  description?: string;
+  due_date?: string | null;
+}
+
+export async function fetchAssignments(classId: string): Promise<AssignmentRow[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('assignments')
+    .select('*')
+    .eq('class_id', classId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('Failed to fetch assignments:', error); return []; }
+  return data || [];
+}
+
+export async function createAssignment(assignment: AssignmentInsert): Promise<AssignmentRow | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('assignments')
+    .insert(assignment)
+    .select()
+    .single();
+  if (error) { console.error('Failed to create assignment:', error); return null; }
+  return data;
+}
+
+export async function deleteAssignment(assignmentId: string): Promise<boolean> {
+  if (!supabase) return false;
+  const { error } = await supabase.from('assignments').delete().eq('id', assignmentId);
+  if (error) { console.error('Failed to delete assignment:', error); return false; }
+  return true;
+}
+
+export interface StudentAssignment {
+  id: string;
+  scenario_slug: string;
+  scenario_title: string;
+  description: string;
+  due_date: string | null;
+  created_at: string;
+  completed: boolean;
+  rp_earned: number;
+}
+
+export async function fetchStudentAssignments(
+  studentId: string,
+  studentToken: string,
+): Promise<{ assignments: StudentAssignment[]; error?: string }> {
+  if (!supabase) return { assignments: [], error: 'Supabase not configured' };
+  const { data, error } = await supabase.rpc('rpc_fetch_student_assignments', {
+    p_student_id: studentId,
+    p_student_token: studentToken,
+  });
+  if (error) return { assignments: [], error: error.message };
+  const result = data as Record<string, unknown>;
+  if (result.error) return { assignments: [], error: result.error as string };
+  return { assignments: (result.assignments as StudentAssignment[]) || [] };
+}
+
