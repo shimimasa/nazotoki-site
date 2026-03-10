@@ -1,0 +1,88 @@
+---
+/**
+ * Afterschool Mode — ワンタップGMモード（放課後デイ向け）
+ * Phase 79: DB不要、大画面表示、読み上げ台本付き自動進行
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AfterschoolSession from '../../components/afterschool/AfterschoolSession';
+import { loadAllScenarios } from '../../lib/data';
+import { renderMarkdown } from '../../lib/markdown';
+
+export async function getStaticPaths() {
+  function extractCharacterSections(fullContent: string) {
+    const lines = fullContent.split('\n');
+    let currentSection = '';
+    const buf: Record<string, string[]> = { secret: [], hints: [] };
+
+    for (const line of lines) {
+      if (/^###\s+.*(?:秘密|ひみつ)/i.test(line)) { currentSection = 'secret'; continue; }
+      if (/^###\s+.*(?:ヒント|hint)/i.test(line)) { currentSection = 'hints'; continue; }
+      if (/^###\s+/.test(line)) { currentSection = ''; continue; }
+      if (currentSection && buf[currentSection]) buf[currentSection].push(line);
+    }
+
+    return {
+      secret: buf.secret.join('\n').trim(),
+      hints: buf.hints.join('\n').trim(),
+    };
+  }
+
+  const scenarios = loadAllScenarios();
+  return scenarios.map(s => {
+    const witnesses = s.characters
+      .filter(c => c.fullContent)
+      .map(c => {
+        const sections = extractCharacterSections(c.fullContent);
+        return {
+          id: c.id,
+          name: c.name.replace(/\{([^}|]+)\|[^}]+\}/g, '$1'),
+          role: c.role,
+          introHtml: renderMarkdown(c.introContent || ''),
+          publicHtml: renderMarkdown(c.publicContent || ''),
+          secretHtml: renderMarkdown(sections.secret),
+          hintsHtml: renderMarkdown(sections.hints),
+        };
+      });
+
+    const afterschoolData = {
+      slug: s.slug,
+      title: s.title,
+      seriesName: s.seriesName,
+      subject: s.subject,
+      difficulty: s.difficulty,
+      commonHtml: renderMarkdown(s.common),
+      witnesses,
+      evidenceCards: s.evidenceCards.map(c => ({
+        number: c.number,
+        title: c.title,
+        contentHtml: renderMarkdown(c.content),
+      })),
+      evidence5: s.evidence5
+        ? { number: s.evidence5.number, title: s.evidence5.title, contentHtml: renderMarkdown(s.evidence5.content) }
+        : null,
+      solutionHtml: renderMarkdown(s.solution),
+      killerQuestions: s.killerQuestions || [],
+    };
+
+    return { params: { slug: s.slug }, props: { afterschoolData } };
+  });
+}
+
+const { afterschoolData } = Astro.props;
+---
+<BaseLayout
+  title={`放デイモード: ${afterschoolData.title}`}
+  description={`「${afterschoolData.title}」をワンタップGMで進行`}
+  noIndex={true}
+  fullWidth={true}
+>
+  <AfterschoolSession client:load data={afterschoolData} />
+</BaseLayout>
+
+<style is:global>
+  header, footer { display: none !important; }
+  main { padding: 0 !important; margin: 0 !important; max-width: none !important; }
+  body { min-height: 100dvh; display: flex; flex-direction: column; }
+  main { flex: 1; }
+  button, a { -webkit-tap-highlight-color: rgba(0,0,0,0.05); }
+</style>
