@@ -1125,3 +1125,33 @@ export async function fetchStudentAssignments(
   return { assignments: (result.assignments as StudentAssignment[]) || [] };
 }
 
+// --- Solo Progress (Phase 80, teacher-side) ---
+
+export interface SoloSessionRow {
+  id: string;
+  student_id: string;
+  scenario_slug: string;
+  completed_at: string | null;
+  duration_seconds: number | null;
+  vote: string | null;
+  vote_reason: string | null;
+  rp_earned: number;
+  created_at: string;
+}
+
+export async function fetchSoloSessionsForStudents(studentIds: string[]): Promise<SoloSessionRow[]> {
+  if (!supabase || studentIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from('solo_sessions')
+    .select('id, student_id, scenario_slug, completed_at, duration_seconds, vote, vote_reason, rp_earned, created_at')
+    .in('student_id', studentIds)
+    .order('completed_at', { ascending: false });
+  if (error) {
+    // Table may not exist yet
+    if (error.code === '42P01' || error.message?.includes('does not exist')) return [];
+    console.error('Failed to fetch solo sessions:', error);
+    return [];
+  }
+  return data || [];
+}
+

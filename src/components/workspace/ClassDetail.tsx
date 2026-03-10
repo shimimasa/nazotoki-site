@@ -11,6 +11,7 @@ import SessionHistoryList from './SessionHistoryList';
 import SessionLogDetail from './SessionLogDetail';
 import StudentList from './StudentList';
 import AssignmentManager from './AssignmentManager';
+import SoloProgressView from './SoloProgressView';
 
 interface Props {
   classId: string;
@@ -19,7 +20,7 @@ interface Props {
   onBack: () => void;
 }
 
-type DetailTab = 'sessions' | 'students' | 'assignments';
+type DetailTab = 'sessions' | 'students' | 'assignments' | 'solo-progress';
 
 export default function ClassDetail({ classId, classData, teacherId, onBack }: Props) {
   const [tab, setTab] = useState<DetailTab>('sessions');
@@ -181,6 +182,16 @@ export default function ClassDetail({ classId, classData, teacherId, onBack }: P
         >
           課題配信
         </button>
+        <button
+          onClick={() => setTab('solo-progress')}
+          class={`flex-1 py-3 text-sm font-bold transition-colors ${
+            tab === 'solo-progress'
+              ? 'text-amber-700 border-b-2 border-amber-500'
+              : 'text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          ソロ進捗
+        </button>
       </div>
 
       {/* Content */}
@@ -194,6 +205,8 @@ export default function ClassDetail({ classId, classData, teacherId, onBack }: P
           teacherId={teacherId}
           scenarios={(typeof window !== 'undefined' && (window as any).__SCENARIO_LIST__) || []}
         />
+      ) : tab === 'solo-progress' ? (
+        <SoloProgressView students={students} />
       ) : (
         <StudentList
           classId={classId}
@@ -206,16 +219,27 @@ export default function ClassDetail({ classId, classData, teacherId, onBack }: P
   );
 }
 
-// Inline StudentDetail component (shows student's participation history)
-import { fetchStudentHistory, type StudentSessionLogRow } from '../../lib/supabase';
+// Inline StudentDetail component (shows student's participation history + solo history)
+import {
+  fetchStudentHistory,
+  fetchSoloSessionsForStudents,
+  type StudentSessionLogRow,
+  type SoloSessionRow,
+} from '../../lib/supabase';
 
 function StudentDetail({ student, onBack }: { student: StudentRow; onBack: () => void }) {
   const [history, setHistory] = useState<(StudentSessionLogRow & { session_log: SessionLogRow })[]>([]);
+  const [soloSessions, setSoloSessions] = useState<SoloSessionRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [detailTab, setDetailTab] = useState<'classroom' | 'solo'>('classroom');
 
   useEffect(() => {
-    fetchStudentHistory(student.id).then((h) => {
+    Promise.all([
+      fetchStudentHistory(student.id),
+      fetchSoloSessionsForStudents([student.id]),
+    ]).then(([h, solo]) => {
       setHistory(h);
+      setSoloSessions(solo);
       setLoading(false);
     });
   }, [student.id]);
@@ -233,49 +257,110 @@ function StudentDetail({ student, onBack }: { student: StudentRow; onBack: () =>
 
       <div class="bg-white rounded-xl border border-gray-200 p-5">
         <h2 class="text-2xl font-black">{student.student_name}</h2>
-        <p class="text-sm text-gray-500 mt-1">参加履歴: {history.length} 回</p>
+        <div class="flex gap-4 mt-2 text-sm text-gray-600">
+          <span>授業参加: <strong class="text-blue-600">{history.length} 回</strong></span>
+          <span>ソロプレイ: <strong class="text-amber-600">{soloSessions.length} 回</strong></span>
+          {soloSessions.length > 0 && (
+            <span>累計RP: <strong class="text-amber-600">{soloSessions.reduce((sum, s) => sum + (s.rp_earned || 0), 0)}</strong></span>
+          )}
+        </div>
+      </div>
+
+      {/* Sub-tabs */}
+      <div class="flex border-b border-gray-200">
+        <button
+          onClick={() => setDetailTab('classroom')}
+          class={`flex-1 py-2 text-sm font-bold transition-colors ${
+            detailTab === 'classroom'
+              ? 'text-blue-700 border-b-2 border-blue-500'
+              : 'text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          授業履歴 ({history.length})
+        </button>
+        <button
+          onClick={() => setDetailTab('solo')}
+          class={`flex-1 py-2 text-sm font-bold transition-colors ${
+            detailTab === 'solo'
+              ? 'text-amber-700 border-b-2 border-amber-500'
+              : 'text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          ソロ履歴 ({soloSessions.length})
+        </button>
       </div>
 
       {loading ? (
         <div class="text-center py-8 text-gray-400">読み込み中...</div>
-      ) : history.length === 0 ? (
-        <div class="text-center py-8 text-gray-400">
-          <p class="font-bold">まだ授業参加記録がありません</p>
-        </div>
+      ) : detailTab === 'classroom' ? (
+        history.length === 0 ? (
+          <div class="text-center py-8 text-gray-400">
+            <p class="font-bold">まだ授業参加記録がありません</p>
+          </div>
+        ) : (
+          <div class="space-y-3">
+            {history.map((h) => {
+              const title = h.session_log?.scenario_title || h.session_log?.scenario_slug || '不明';
+              const date = h.session_log?.start_time || h.created_at;
+              return (
+                <div key={h.id} class="bg-white rounded-xl border border-gray-200 p-4">
+                  <div class="flex items-start justify-between">
+                    <div>
+                      <div class="font-bold">{title}</div>
+                      <div class="text-xs text-gray-500 mt-1">{formatDate(date)}</div>
+                    </div>
+                    <div class="text-right">
+                      {h.is_correct != null && (
+                        <span class={`text-sm font-black ${h.is_correct ? 'text-green-600' : 'text-amber-600'}`}>
+                          {h.is_correct ? '○ 正解' : '△ 不正解'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {h.voted_for && (
+                    <div class="mt-2 text-sm text-gray-600">
+                      投票先: <strong>{h.voted_for}</strong>
+                    </div>
+                  )}
+                  {h.vote_reason && (
+                    <div class="mt-1 text-xs text-gray-400">
+                      理由: 「{h.vote_reason}」
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )
       ) : (
-        <div class="space-y-3">
-          {history.map((h) => {
-            const title = h.session_log?.scenario_title || h.session_log?.scenario_slug || '不明';
-            const date = h.session_log?.start_time || h.created_at;
-            return (
-              <div key={h.id} class="bg-white rounded-xl border border-gray-200 p-4">
+        soloSessions.length === 0 ? (
+          <div class="text-center py-8 text-gray-400">
+            <p class="font-bold">まだソロモードのプレイ記録がありません</p>
+          </div>
+        ) : (
+          <div class="space-y-3">
+            {soloSessions.map((s) => (
+              <div key={s.id} class="bg-white rounded-xl border border-gray-200 p-4">
                 <div class="flex items-start justify-between">
                   <div>
-                    <div class="font-bold">{title}</div>
-                    <div class="text-xs text-gray-500 mt-1">{formatDate(date)}</div>
-                  </div>
-                  <div class="text-right">
-                    {h.is_correct != null && (
-                      <span class={`text-sm font-black ${h.is_correct ? 'text-green-600' : 'text-amber-600'}`}>
-                        {h.is_correct ? '○ 正解' : '△ 不正解'}
-                      </span>
+                    <p class="font-bold text-gray-900">{s.scenario_slug}</p>
+                    <div class="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                      {s.completed_at && <span>{formatDate(s.completed_at)}</span>}
+                      {s.duration_seconds != null && (
+                        <span>{Math.floor(s.duration_seconds / 60)}分{s.duration_seconds % 60}秒</span>
+                      )}
+                      {s.vote && <span>投票: {s.vote}</span>}
+                    </div>
+                    {s.vote_reason && (
+                      <p class="text-xs text-gray-400 mt-1">理由: 「{s.vote_reason}」</p>
                     )}
                   </div>
+                  <span class="text-sm font-black text-amber-600 shrink-0">{s.rp_earned} RP</span>
                 </div>
-                {h.voted_for && (
-                  <div class="mt-2 text-sm text-gray-600">
-                    投票先: <strong>{h.voted_for}</strong>
-                  </div>
-                )}
-                {h.vote_reason && (
-                  <div class="mt-1 text-xs text-gray-400">
-                    理由: 「{h.vote_reason}」
-                  </div>
-                )}
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )
       )}
     </div>
   );
