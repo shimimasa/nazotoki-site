@@ -65,6 +65,8 @@ export async function getStaticPaths() {
         : null,
       solutionHtml: renderMarkdown(s.solution),
       truthHtml: renderMarkdown(s.truth),
+      killerQuestions: s.killerQuestions || [],
+      challengeHtml: s.challengeSection ? renderMarkdown(s.challengeSection) : '',
       thumbnailUrl: s.thumbnailUrl,
     };
 

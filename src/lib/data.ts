@@ -39,6 +39,8 @@ export interface ScenarioData {
   characters: Character[];
   solution: string;
   gmGuide: string;
+  killerQuestions: { scene: string; question: string }[];
+  challengeSection: string;
   thumbnailUrl?: string;
 }
 

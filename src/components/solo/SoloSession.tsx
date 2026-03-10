@@ -34,6 +34,8 @@ interface SoloData {
   evidence5: EvidenceCardData | null;
   solutionHtml: string;
   truthHtml: string;
+  killerQuestions: { scene: string; question: string }[];
+  challengeHtml: string;
   thumbnailUrl?: string;
 }
 
@@ -468,6 +470,20 @@ export default function SoloSession({ data }: Props) {
                 </div>
               </div>
 
+              {/* Killer questions as thinking hints */}
+              {data.killerQuestions.length > 0 && (
+                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+                  <p class="text-xs font-black text-blue-700 mb-3">&#128161; 考えるヒント</p>
+                  <ul class="space-y-2">
+                    {data.killerQuestions.slice(0, 3).map((q, i) => (
+                      <li key={i} class="text-sm text-blue-900 leading-relaxed">
+                        {q.question}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               <button
                 onClick={handleComplete}
                 disabled={saving}
@@ -511,6 +527,18 @@ export default function SoloSession({ data }: Props) {
                 <h2 class="font-black text-gray-900 text-center mb-4">&#128161; 真相</h2>
                 <div class="solo-content text-sm" dangerouslySetInnerHTML={{ __html: data.solutionHtml }} />
               </div>
+
+              {/* Challenge problems */}
+              {data.challengeHtml && (
+                <details class="bg-white rounded-2xl border-2 border-green-200 overflow-hidden">
+                  <summary class="px-5 py-4 cursor-pointer font-black text-green-800 text-sm hover:bg-green-50 transition-colors">
+                    &#127942; チャレンジ問題に挑戦する
+                  </summary>
+                  <div class="px-5 pb-5">
+                    <div class="solo-content text-sm" dangerouslySetInnerHTML={{ __html: data.challengeHtml }} />
+                  </div>
+                </details>
+              )}
 
               {/* Actions */}
               <div class="flex flex-col gap-2">

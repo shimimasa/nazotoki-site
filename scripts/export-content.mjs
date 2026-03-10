@@ -307,6 +307,98 @@ function parseDiscussionSection(md) {
   return sections.join('\n\n');
 }
 
+// ── キラー質問抽出（ソロモード用） ──────────────────
+/**
+ * gm-guide.md のキラー質問テーブルを構造化データとして抽出。
+ * 形式: | 場面 | キラー質問 | → { scene, question }[]
+ */
+function parseKillerQuestions(md) {
+  if (!md) return [];
+  md = md.replace(/\r\n/g, '\n');
+
+  // Pattern A: ヘッダー形式 (### キラー質問 / #### キラー質問リスト)
+  let match = md.match(
+    /#{2,5}\s*[^\n]*キラー質問[^\n]*\n([\s\S]*?)(?=\n#{1,4}\s|\n---)/
+  );
+  if (!match) {
+    match = md.match(/#{2,5}\s*[^\n]*キラー質問[^\n]*\n([\s\S]+)/);
+  }
+  // Pattern B: インラインボールド形式 (**キラー質問**（...）: followed by list)
+  if (!match) {
+    match = md.match(
+      /\*\*キラー質問\*\*[^\n：:]*[：:]\s*\n([\s\S]*?)(?=\n\*\*[^\n*]+\*\*[^\n]*[：:]|\n#{1,4}\s|\n---)/
+    );
+  }
+  if (!match) {
+    match = md.match(/\*\*キラー質問\*\*[^\n：:]*[：:]\s*\n([\s\S]+?)(?=\n\n\*\*[^\n*]+\*\*|\n#{1,4}\s|\n---)/);
+  }
+  if (!match) return [];
+
+  const section = match[1];
+
+  // Format 1: テーブル形式 (| ... | ... |)
+  const rows = section.match(/\|(?!\s*[-:]).+\|/g);
+  if (rows && rows.length > 1) {
+    const questions = [];
+    for (const row of rows) {
+      const safeRow = row.replace(/\{([^}|]+)\|([^}]+)\}/g, '{$1\x00$2}');
+      const cells = safeRow.split('|').map(c => c.replace(/\x00/g, '|').trim()).filter(Boolean);
+      if (cells.length < 2) continue;
+      // ヘッダー行をスキップ
+      if (/場面|状況|シーン|^#$|No|GM/.test(cells[0]) && /キラー|質問|対応/.test(cells[1])) continue;
+      // 番号列がある場合（| # | 質問 | 狙い |）→ 質問は2列目
+      const isNumbered = /^\d+$/.test(cells[0]);
+      questions.push({
+        scene: isNumbered ? '' : cells[0].replace(/\*\*/g, ''),
+        question: (isNumbered ? cells[1] : cells[1]).replace(/\*\*/g, '').replace(/^「|」$/g, ''),
+      });
+    }
+    if (questions.length > 0) return questions;
+  }
+
+  // Format 2: 番号リスト形式 (1. **「質問」** or 1. **場面** > 「質問」)
+  const listItems = section.match(/^\d+\.\s+\*\*[^\n]+/gm);
+  if (listItems) {
+    const questions = [];
+    for (const item of listItems) {
+      const clean = item.replace(/^\d+\.\s+/, '').replace(/\*\*/g, '').trim();
+      // 「質問」形式
+      const qMatch = clean.match(/「(.+?)」/);
+      questions.push({
+        scene: '',
+        question: qMatch ? qMatch[1] : clean,
+      });
+    }
+    if (questions.length > 0) return questions;
+  }
+
+  return [];
+}
+
+// ── チャレンジ問題抽出（ソロモード用） ────────────────
+/**
+ * solution.md からチャレンジ問題セクションをmarkdownとして抽出。
+ * 答えセクションも含めて返す。
+ */
+function parseChallengeSection(md) {
+  if (!md) return '';
+  md = md.replace(/\r\n/g, '\n');
+
+  // "### チャレンジ問題" から「もっと知りたい」or 別ヘッダーまで
+  let match = md.match(
+    /#{2,4}\s*[^\n]*チャレンジ[^\n]*問題[^\n]*\n([\s\S]*?)(?=\n#{1,3}\s+(?!チャレンジ|問題|答え)[^\n])/
+  );
+  // 末尾セクションのフォールバック
+  if (!match) {
+    match = md.match(/#{2,4}\s*[^\n]*チャレンジ[^\n]*問題[^\n]*\n([\s\S]+)/);
+  }
+  if (!match) return '';
+
+  let content = match[0].trim();
+  content = cleanFileReferences(content);
+  return content;
+}
+
 // ── GMガイド Web変換 ──────────────────────────
 /**
  * BOOTH用GMガイドからWeb表示に不適切な印刷セクションを除去・置換する。
@@ -504,6 +596,10 @@ async function processScenario(slug) {
   // 議論セクション（gm-guideから抽出）
   const discussionGuide = parseDiscussionSection(gmGuideRaw);
 
+  // ソロモード用: キラー質問 + チャレンジ問題
+  const killerQuestions = parseKillerQuestions(gmGuideRaw);
+  const challengeSection = parseChallengeSection(solutionRaw);
+
   // 証拠カード
   const { cards: evidenceCards, card5 } = parseEvidenceCards(evidenceRaw);
 
@@ -585,6 +681,8 @@ async function processScenario(slug) {
     solution: cleanFileReferences(solutionRaw),
     gmGuide: transformGmGuideForWeb(gmGuideRaw, slug),
     discussionGuide: cleanFileReferences(discussionGuide),
+    killerQuestions,
+    challengeSection,
     thumbnailUrl: images.thumbnailUrl || undefined,
   };
 
@@ -604,11 +702,17 @@ async function main() {
   console.log(`Content: ${CONTENT_OUT}`);
   console.log(`Data: ${DATA_OUT}`);
 
-  // 出力先クリーン & 作成
+  // 出力先クリーン & 作成（meta/ サブディレクトリは保護）
   await fs.rm(CONTENT_OUT, { recursive: true, force: true });
-  await fs.rm(DATA_OUT, { recursive: true, force: true });
   await fs.mkdir(CONTENT_OUT, { recursive: true });
   await fs.mkdir(DATA_OUT, { recursive: true });
+  // DATA_OUT内のJSONファイルのみ削除（meta/等のサブディレクトリは保持）
+  try {
+    const existing = await fs.readdir(DATA_OUT);
+    for (const f of existing) {
+      if (f.endsWith('.json')) await fs.rm(path.join(DATA_OUT, f));
+    }
+  } catch { /* empty dir */ }
 
   // シナリオディレクトリ一覧
   const entries = await fs.readdir(SOURCE, { withFileTypes: true });
