@@ -1,14 +1,14 @@
 -- ==========================================================================
 -- Supabase schema for nazotoki-site session platform
--- Current state: Phase 74 (student login with PIN auth)
+-- Current state: Phase 75 (solo mode foundation)
 --
 -- This file represents the CANONICAL schema — the single source of truth.
--- For migration history, see supabase-schema-phase{12,12-1,12-2,13,14,15,20,40,45,46,47,48,50,51,53,55-fix,56,71,72,74}.sql
+-- For migration history, see supabase-schema-phase{12,12-1,12-2,13,14,15,20,40,45,46,47,48,50,51,53,55-fix,56,71,72,74,75}.sql
 --
--- Tables (12):
+-- Tables (13):
 --   schools, gm_memos, session_logs, teachers, classes, students,
 --   student_session_logs, monthly_reports, role_change_logs, teacher_invitations,
---   session_runs, session_participants
+--   session_runs, session_participants, solo_sessions
 --
 -- Helper functions:
 --   my_teacher_id()   — returns current auth user's teacher UUID
@@ -25,6 +25,8 @@
 --   rpc_verify_student_token(student_id, token) — validate saved token (anon)
 --   rpc_generate_student_credentials(class_id) — bulk generate login_id+PIN (teacher)
 --   rpc_reset_student_pin(student_id) — reset student PIN (teacher)
+--   rpc_save_solo_session(...) — save solo play record (anon, SECURITY DEFINER)
+--   rpc_fetch_solo_history(student_id, token) — fetch solo play history (anon, SECURITY DEFINER)
 --
 -- IMPORTANT: All CREATE POLICY statements are wrapped in DO$$ blocks
 -- with pg_policies checks for idempotent execution.
@@ -940,3 +942,41 @@ END $$;
 -- All student operations go through SECURITY DEFINER RPCs:
 --   rpc_join_session, rpc_reconnect_session, rpc_submit_vote, rpc_get_my_participant
 -- See supabase-schema-phase71.sql for RPC definitions.
+
+
+-- ============================================================
+-- 13. Solo Sessions (Phase 75: solo play records)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS public.solo_sessions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id uuid REFERENCES public.students(id) ON DELETE SET NULL,
+  scenario_slug text NOT NULL,
+  started_at timestamptz NOT NULL DEFAULT now(),
+  completed_at timestamptz,
+  duration_seconds int,
+  vote text,
+  vote_reason text,
+  evidence_read_order int[] DEFAULT '{}',
+  time_per_step jsonb DEFAULT '{}',
+  rp_earned int DEFAULT 0,
+  hints_used int DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_solo_sessions_student ON solo_sessions(student_id);
+CREATE INDEX IF NOT EXISTS idx_solo_sessions_slug ON solo_sessions(scenario_slug);
+
+ALTER TABLE solo_sessions ENABLE ROW LEVEL SECURITY;
+
+-- Teacher access (authenticated)
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='solo_sessions' AND policyname='auth_solo_sessions_all') THEN
+    CREATE POLICY "auth_solo_sessions_all" ON solo_sessions FOR ALL TO authenticated
+      USING (true);
+  END IF;
+END $$;
+
+-- Anon has NO direct access. All via SECURITY DEFINER RPCs:
+--   rpc_save_solo_session, rpc_fetch_solo_history
+-- See supabase-schema-phase75.sql for RPC definitions.

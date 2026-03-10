@@ -1,0 +1,103 @@
+---
+/**
+ * Solo Mode — 1人で推理する「探偵ファイル」モード
+ * Phase 75: キャラクター証言 + 証拠調査 + 投票 + 真相の8ステップ
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SoloSession from '../../components/solo/SoloSession';
+import { loadAllScenarios } from '../../lib/data';
+import { renderMarkdown } from '../../lib/markdown';
+
+export async function getStaticPaths() {
+  function extractCharacterSections(fullContent: string) {
+    const lines = fullContent.split('\n');
+    let currentSection = '';
+    const buf: Record<string, string[]> = { secret: [], hints: [] };
+
+    for (const line of lines) {
+      if (/^###\s+.*(?:秘密|ひみつ)/i.test(line)) { currentSection = 'secret'; continue; }
+      if (/^###\s+.*(?:ヒント|hint)/i.test(line)) { currentSection = 'hints'; continue; }
+      if (/^###\s+/.test(line)) { currentSection = ''; continue; }
+      if (currentSection && buf[currentSection]) buf[currentSection].push(line);
+    }
+
+    return {
+      secret: buf.secret.join('\n').trim(),
+      hints: buf.hints.join('\n').trim(),
+    };
+  }
+
+  const scenarios = loadAllScenarios();
+  return scenarios.map(s => {
+    const witnesses = s.characters
+      .filter(c => c.fullContent)
+      .map(c => {
+        const sections = extractCharacterSections(c.fullContent);
+        return {
+          id: c.id,
+          name: c.name.replace(/\{([^}|]+)\|[^}]+\}/g, '$1'),
+          role: c.role,
+          introHtml: renderMarkdown(c.introContent || ''),
+          publicHtml: renderMarkdown(c.publicContent || ''),
+          secretHtml: renderMarkdown(sections.secret),
+          hintsHtml: renderMarkdown(sections.hints),
+        };
+      });
+
+    const soloData = {
+      slug: s.slug,
+      title: s.title,
+      fullTitle: s.fullTitle,
+      series: s.series,
+      seriesName: s.seriesName,
+      subject: s.subject,
+      difficulty: s.difficulty,
+      time: s.time,
+      commonHtml: renderMarkdown(s.common),
+      witnesses,
+      evidenceCards: s.evidenceCards.map(c => ({
+        number: c.number,
+        title: c.title,
+        contentHtml: renderMarkdown(c.content),
+      })),
+      evidence5: s.evidence5
+        ? { number: s.evidence5.number, title: s.evidence5.title, contentHtml: renderMarkdown(s.evidence5.content) }
+        : null,
+      solutionHtml: renderMarkdown(s.solution),
+      truthHtml: renderMarkdown(s.truth),
+      thumbnailUrl: s.thumbnailUrl,
+    };
+
+    return { params: { slug: s.slug }, props: { soloData } };
+  });
+}
+
+const { soloData } = Astro.props;
+---
+<BaseLayout
+  title={`ソロ推理: ${soloData.title}`}
+  description={`「${soloData.title}」を1人で推理しよう`}
+  noIndex={true}
+  fullWidth={true}
+>
+  <SoloSession client:load data={soloData} />
+</BaseLayout>
+
+<style is:global>
+  header, footer { display: none !important; }
+  main { padding: 0 !important; margin: 0 !important; max-width: none !important; }
+  body { min-height: 100dvh; display: flex; flex-direction: column; }
+  main { flex: 1; }
+  input, textarea, select { font-size: max(16px, 1em); }
+  button, a { -webkit-tap-highlight-color: rgba(0,0,0,0.05); }
+
+  .solo-content h2 { font-size: 1.25rem; font-weight: 900; margin-top: 1.5rem; }
+  .solo-content h3 { font-size: 1.1rem; font-weight: 700; margin-top: 1rem; }
+  .solo-content p { margin: 0.5rem 0; line-height: 1.8; }
+  .solo-content ul, .solo-content ol { margin: 0.5rem 0; padding-left: 1.5rem; }
+  .solo-content table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.875rem; }
+  .solo-content th, .solo-content td { border: 1px solid #e5e7eb; padding: 0.375rem 0.5rem; text-align: left; }
+  .solo-content th { background: #f9fafb; font-weight: 700; }
+  .solo-content blockquote { border-left: 3px solid #d97706; padding-left: 1rem; margin: 0.75rem 0; color: #92400e; }
+  .solo-content strong { color: #92400e; }
+</style>
