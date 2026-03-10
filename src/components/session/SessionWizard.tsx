@@ -24,6 +24,18 @@ import {
   type ClassRow,
   type StudentRow,
 } from '../../lib/supabase';
+import {
+  createSessionRun,
+  updateSessionRun,
+  endSessionRun,
+  assignCharacter,
+  linkParticipantStudent,
+  fetchSessionParticipants,
+  subscribeToParticipants,
+  unsubscribeChannel,
+  type SessionParticipant,
+} from '../../lib/session-realtime';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface SessionWizardProps {
   data: SessionScenarioData;
@@ -61,12 +73,32 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   const [twistRevealed, setTwistRevealed] = useState(false);
   const [gmMemo, setGmMemo] = useState('');
   const memoSaveTimer = useRef<number | null>(null);
+  const timerExpiredTimer = useRef<number | null>(null);
+
+  // Realtime session state (Phase 56)
+  const [sessionRunId, setSessionRunId] = useState<string | null>(null);
+  const [joinCode, setJoinCode] = useState<string | null>(null);
+  const [participants, setParticipants] = useState<SessionParticipant[]>([]);
+  const [startError, setStartError] = useState<string | null>(null);
+  const participantChannelRef = useRef<RealtimeChannel | null>(null);
 
   // Teacher / Class / Student state
   const [currentTeacher, setCurrentTeacher] = useState<TeacherProfile | null>(null);
   const [teacherClasses, setTeacherClasses] = useState<ClassRow[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [classStudents, setClassStudents] = useState<StudentRow[]>([]);
+  const classStudentsRef = useRef<StudentRow[]>([]);
+
+  // Cleanup on unmount (Phase 56 + Phase 73: timers)
+  useEffect(() => {
+    return () => {
+      if (participantChannelRef.current) {
+        unsubscribeChannel(participantChannelRef.current);
+      }
+      if (memoSaveTimer.current) clearTimeout(memoSaveTimer.current);
+      if (timerExpiredTimer.current) clearTimeout(timerExpiredTimer.current);
+    };
+  }, []);
 
   // Load teacher profile and classes
   useEffect(() => {
@@ -82,9 +114,13 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   // Load students when class is selected
   useEffect(() => {
     if (selectedClassId) {
-      fetchStudents(selectedClassId).then(setClassStudents);
+      fetchStudents(selectedClassId).then((students) => {
+        setClassStudents(students);
+        classStudentsRef.current = students;
+      });
     } else {
       setClassStudents([]);
+      classStudentsRef.current = [];
     }
   }, [selectedClassId]);
 
@@ -120,12 +156,25 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   }, [data.slug, currentTeacher]);
 
   const handleDiscoverCard = useCallback((num: number) => {
-    setDiscoveredCards((prev) => new Set(prev).add(num));
-  }, []);
+    setDiscoveredCards((prev) => {
+      const next = new Set(prev).add(num);
+      // Sync to Realtime (Phase 56)
+      if (sessionRunId) {
+        updateSessionRun(sessionRunId, {
+          discovered_evidence: Array.from(next),
+        });
+      }
+      return next;
+    });
+  }, [sessionRunId]);
 
   const handleTwistRevealed = useCallback(() => {
     setTwistRevealed(true);
-  }, []);
+    // Sync to Realtime (Phase 56)
+    if (sessionRunId) {
+      updateSessionRun(sessionRunId, { twist_revealed: true });
+    }
+  }, [sessionRunId]);
 
   const currentPhase = PHASE_CONFIG[currentStep];
 
@@ -147,8 +196,17 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
         next[step] = Date.now();
         return next;
       });
+
+      // Sync phase to Realtime (Phase 56)
+      if (sessionRunId) {
+        updateSessionRun(sessionRunId, {
+          current_phase: config.key,
+          timer_seconds: config.defaultSeconds,
+          timer_running: config.defaultSeconds > 0,
+        });
+      }
     },
-    [],
+    [sessionRunId],
   );
 
   const goToStep = useCallback(
@@ -172,10 +230,57 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
     setTransitionTarget(null);
   }, [transitionTarget, applyStep]);
 
-  const handleStart = useCallback(() => {
+  const handleStart = useCallback(async () => {
+    setStartError(null);
+
+    // Phase 72: Create session run via atomic RPC
+    const result = await createSessionRun({
+      scenarioSlug: data.slug,
+      scenarioTitle: data.title,
+      teacherId: currentTeacher?.id || null,
+      classId: selectedClassId,
+      playerCount,
+      characterNames: data.playableCharacters.map((c) => c.name),
+      evidenceTitles: data.evidenceCards.map((c) => ({ number: c.number, title: c.title })),
+    });
+
+    if (!result) {
+      // Phase 72 H4 fix: block UI progression on failure
+      setStartError('セッションの作成に失敗しました。通信状態を確認してもう一度お試しください。');
+      return;
+    }
+
     setStartedAt(new Date());
+    setSessionRunId(result.id);
+    setJoinCode(result.joinCode);
+
+    // Subscribe to participant joins (Phase 62: auto-match student names)
+    const channel = subscribeToParticipants(
+      result.id,
+      (p) => {
+        // Auto-match participant name to student roster
+        const students = classStudentsRef.current;
+        if (students.length > 0 && !p.student_id) {
+          const name = p.participant_name.trim();
+          const match = students.find((s) =>
+            s.student_name === name ||
+            s.student_name.replace(/\s/g, '') === name.replace(/\s/g, ''),
+          );
+          if (match) {
+            linkParticipantStudent(p.id, match.id);
+            p = { ...p, student_id: match.id };
+          }
+        }
+        setParticipants((prev) => [...prev, p]);
+      },
+      (p) => setParticipants((prev) =>
+        prev.map((existing) => (existing.id === p.id ? p : existing)),
+      ),
+    );
+    participantChannelRef.current = channel;
+
     goToStep(1); // Skip to intro
-  }, [goToStep]);
+  }, [goToStep, data.slug, data.title, currentTeacher, selectedClassId, playerCount]);
 
   const handleNext = useCallback(() => {
     const effectiveSteps = getEffectiveSteps();
@@ -198,25 +303,52 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   }, []);
 
   const handleTimerToggle = useCallback(() => {
-    setTimerRunning((r) => !r);
-  }, []);
+    setTimerRunning((prev) => {
+      const next = !prev;
+      // Sync to Realtime (Phase 59) — include current seconds for accurate student sync
+      if (sessionRunId) {
+        updateSessionRun(sessionRunId, {
+          timer_running: next,
+          timer_seconds: timerSeconds,
+        });
+      }
+      return next;
+    });
+  }, [sessionRunId, timerSeconds]);
 
   const handleTimerReset = useCallback((seconds: number) => {
     setTimerSeconds(seconds);
-  }, []);
+    // Sync to Realtime (Phase 59)
+    if (sessionRunId) {
+      updateSessionRun(sessionRunId, { timer_seconds: seconds });
+    }
+  }, [sessionRunId]);
 
   const handleTimerExpired = useCallback(() => {
     setTimerExpiredOverlay(true);
-    setTimeout(() => setTimerExpiredOverlay(false), 3000);
+    // Phase 73: store ref for cleanup
+    timerExpiredTimer.current = window.setTimeout(() => setTimerExpiredOverlay(false), 3000);
   }, []);
 
   const handleVote = useCallback((voterId: string, suspectId: string) => {
-    setVotes((prev) => ({ ...prev, [voterId]: suspectId }));
-  }, []);
+    setVotes((prev) => {
+      const next = { ...prev, [voterId]: suspectId };
+      if (sessionRunId) {
+        updateSessionRun(sessionRunId, { votes: next });
+      }
+      return next;
+    });
+  }, [sessionRunId]);
 
   const handleVoteReason = useCallback((voterId: string, reason: string) => {
-    setVoteReasons((prev) => ({ ...prev, [voterId]: reason }));
-  }, []);
+    setVoteReasons((prev) => {
+      const next = { ...prev, [voterId]: reason };
+      if (sessionRunId) {
+        updateSessionRun(sessionRunId, { vote_reasons: next });
+      }
+      return next;
+    });
+  }, [sessionRunId]);
 
   const handleReflectionChange = useCallback(
     (index: number, value: string) => {
@@ -302,45 +434,125 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
     });
     setSavedLogId(sessionLogId);
 
-    // Save student session logs if class with students is selected
-    if (sessionLogId && selectedClassId && classStudents.length > 0) {
-      const studentLogs = classStudents.map((student) => {
-        // Try to match student to a voter by name
-        const matchedVoter = Object.entries(votes).find(([voterId]) => {
-          const char = data.playableCharacters.find((c) => c.id === voterId);
-          return char?.name === student.student_name;
+    // Save student session logs from participants (Phase 65)
+    // Uses participant.student_id (set by Phase 62 auto-match or manual link)
+    if (sessionLogId && participants.length > 0) {
+      const linkedParticipants = participants.filter((p) => p.student_id);
+      if (linkedParticipants.length > 0) {
+        const studentLogs = linkedParticipants.map((p) => {
+          const isCorrect = culpritName && p.voted_for
+            ? p.voted_for === culpritName ||
+              p.voted_for.includes(culpritName) ||
+              culpritName.includes(p.voted_for)
+            : null;
+          return {
+            session_log_id: sessionLogId,
+            student_id: p.student_id!,
+            voted_for: p.voted_for || undefined,
+            vote_reason: p.vote_reason || undefined,
+            is_correct: isCorrect ?? undefined,
+          };
         });
-        const votedFor = matchedVoter
-          ? data.playableCharacters.find((c) => c.id === matchedVoter[1])?.name || matchedVoter[1]
-          : null;
-        const reason = matchedVoter ? voteReasons[matchedVoter[0]] || null : null;
-        const isCorrect = matchedVoter && correctPlayers
-          ? correctPlayers.some((cp) => {
-              const voter = data.playableCharacters.find((c) => c.id === matchedVoter[0]);
-              return voter?.name === cp;
-            })
-          : null;
-
-        return {
-          session_log_id: sessionLogId,
-          student_id: student.id,
-          voted_for: votedFor || undefined,
-          vote_reason: reason || undefined,
-          is_correct: isCorrect ?? undefined,
-        };
-      });
-      await saveStudentSessionLogs(studentLogs);
+        await saveStudentSessionLogs(studentLogs);
+      }
+    }
+    // Fallback: class-based save for students not in participants (e.g. offline mode)
+    else if (sessionLogId && selectedClassId && classStudents.length > 0) {
+      const participantStudentIds = new Set(participants.map((p) => p.student_id).filter(Boolean));
+      const unlinkedStudents = classStudents.filter((s) => !participantStudentIds.has(s.id));
+      if (unlinkedStudents.length > 0) {
+        const studentLogs = unlinkedStudents.map((student) => {
+          const matchedVoter = Object.entries(votes).find(([voterId]) => {
+            const char = data.playableCharacters.find((c) => c.id === voterId);
+            return char?.name === student.student_name;
+          });
+          const vFor = matchedVoter
+            ? data.playableCharacters.find((c) => c.id === matchedVoter[1])?.name || matchedVoter[1]
+            : null;
+          const reason = matchedVoter ? voteReasons[matchedVoter[0]] || null : null;
+          const isCorrect = matchedVoter && correctPlayers
+            ? correctPlayers.some((cp) => {
+                const voter = data.playableCharacters.find((c) => c.id === matchedVoter[0]);
+                return voter?.name === cp;
+              })
+            : null;
+          return {
+            session_log_id: sessionLogId,
+            student_id: student.id,
+            voted_for: vFor || undefined,
+            vote_reason: reason || undefined,
+            is_correct: isCorrect ?? undefined,
+          };
+        });
+        await saveStudentSessionLogs(studentLogs);
+      }
     }
 
     // Final GM memo cloud save
     await saveGmMemo(data.slug, gmMemo, currentTeacher?.id);
+
+    // End session run (Phase 56)
+    if (sessionRunId) {
+      await endSessionRun(sessionRunId);
+      if (participantChannelRef.current) {
+        unsubscribeChannel(participantChannelRef.current);
+        participantChannelRef.current = null;
+      }
+    }
 
     setSaving(false);
     setCompleted(true);
   }, [votes, voteReasons, reflections, stepStartTimes, startedAt,
     data.playableCharacters, data.slug, data.truthHtml,
     discoveredCards, twistRevealed, gmMemo, environment, playerCount, teacherName,
-    currentTeacher, selectedClassId, classStudents]);
+    currentTeacher, selectedClassId, classStudents, sessionRunId, participants]);
+
+  // Student link handler (Phase 62)
+  const handleLinkStudent = useCallback(async (participantId: string, studentId: string | null) => {
+    const ok = await linkParticipantStudent(participantId, studentId);
+    if (ok) {
+      setParticipants((prev) =>
+        prev.map((p) =>
+          p.id === participantId ? { ...p, student_id: studentId } : p,
+        ),
+      );
+    }
+  }, []);
+
+  // Character assignment handlers (Phase 61)
+  const handleAssignCharacter = useCallback(async (participantId: string, characterName: string | null) => {
+    const ok = await assignCharacter(participantId, characterName);
+    if (ok) {
+      setParticipants((prev) =>
+        prev.map((p) =>
+          p.id === participantId ? { ...p, assigned_character: characterName } : p,
+        ),
+      );
+    }
+  }, []);
+
+  const handleAutoAssign = useCallback(async () => {
+    const names = [...data.playableCharacters.map((c) => c.name)];
+    // Shuffle using Fisher-Yates
+    for (let i = names.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [names[i], names[j]] = [names[j], names[i]];
+    }
+    // Assign to participants in order
+    const updates = participants.map((p, idx) => ({
+      id: p.id,
+      character: idx < names.length ? names[idx] : null,
+    }));
+    const results = await Promise.all(
+      updates.map((u) => assignCharacter(u.id, u.character)),
+    );
+    // Update local state for successful assignments
+    setParticipants((prev) =>
+      prev.map((p, idx) =>
+        results[idx] ? { ...p, assigned_character: updates[idx].character } : p,
+      ),
+    );
+  }, [participants, data.playableCharacters]);
 
   // Render phase content
   const renderPhaseContent = () => {
@@ -356,6 +568,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
             onPlayerCount={setPlayerCount}
             onEnvironment={setEnvironment}
             onStart={handleStart}
+            startError={startError}
             classes={teacherClasses}
             selectedClassId={selectedClassId}
             onClassSelect={setSelectedClassId}
@@ -450,6 +663,9 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
               setIsProjectorMode(false);
               setDiscoveredCards(new Set());
               setTwistRevealed(false);
+              setSessionRunId(null);
+              setJoinCode(null);
+              setParticipants([]);
             }}
             class="bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-bold hover:bg-gray-300 transition-colors"
           >
@@ -581,6 +797,13 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
           onGmMemoChange={handleGmMemoChange}
           truthHtml={data.truthHtml}
           stepStartTimes={stepStartTimes}
+          joinCode={joinCode}
+          participants={participants}
+          characterNames={data.playableCharacters.map((c) => c.name)}
+          onAssignCharacter={handleAssignCharacter}
+          onAutoAssign={handleAutoAssign}
+          classStudents={classStudents}
+          onLinkStudent={handleLinkStudent}
         />
       )}
 

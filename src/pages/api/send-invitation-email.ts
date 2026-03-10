@@ -32,16 +32,26 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Basic email validation
-    if (!email.includes('@') || email.length > 254) {
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email) || email.length > 254) {
       return new Response(
         JSON.stringify({ ok: false, error: 'メールアドレスの形式が正しくありません' }),
         { status: 400, headers: corsHeaders },
       );
     }
 
+    // Validate inviteLink is a safe URL
+    if (!/^https?:\/\//.test(inviteLink)) {
+      return new Response(
+        JSON.stringify({ ok: false, error: '招待リンクの形式が正しくありません' }),
+        { status: 400, headers: corsHeaders },
+      );
+    }
+
     const envFrom = import.meta.env.INVITE_EMAIL_FROM || '';
     const fromAddress = envFrom.includes('@') ? envFrom : 'onboarding@resend.dev';
+    const safeSchoolName = (schoolName || '学校').replace(/[<>"'&]/g, '');
     const expiresLabel = expiresAt
       ? new Date(expiresAt).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })
       : '7日間';
@@ -51,7 +61,7 @@ export const POST: APIRoute = async ({ request }) => {
     const { error: sendError } = await resend.emails.send({
       from: fromAddress,
       to: email,
-      subject: `【ナゾトキ探偵団】${schoolName || '学校'}への教師招待`,
+      subject: `【ナゾトキ探偵団】${safeSchoolName}への教師招待`,
       html: buildInvitationHtml(schoolName || '学校', inviteLink, expiresLabel),
       text: buildInvitationText(schoolName || '学校', inviteLink, expiresLabel),
     });
@@ -78,7 +88,25 @@ export const POST: APIRoute = async ({ request }) => {
   }
 };
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escapeAttr(str: string): string {
+  return escapeHtml(str);
+}
+
 function buildInvitationHtml(schoolName: string, inviteLink: string, expiresLabel: string): string {
+  const safeName = escapeHtml(schoolName);
+  const safeLink = escapeAttr(inviteLink);
+  const safeLinkText = escapeHtml(inviteLink);
+  const safeExpires = escapeHtml(expiresLabel);
+
   return `<!DOCTYPE html>
 <html lang="ja">
 <head><meta charset="utf-8"></head>
@@ -89,7 +117,7 @@ function buildInvitationHtml(schoolName: string, inviteLink: string, expiresLabe
   </div>
 
   <p style="font-size: 14px; line-height: 1.8;">
-    <strong>${schoolName}</strong>の管理者より、教師として招待されました。
+    <strong>${safeName}</strong>の管理者より、教師として招待されました。
   </p>
 
   <p style="font-size: 14px; line-height: 1.8;">
@@ -97,7 +125,7 @@ function buildInvitationHtml(schoolName: string, inviteLink: string, expiresLabe
   </p>
 
   <div style="text-align: center; margin: 24px 0;">
-    <a href="${inviteLink}"
+    <a href="${safeLink}"
        style="display: inline-block; background: #0ea5e9; color: #fff; font-weight: bold; font-size: 14px; padding: 12px 32px; border-radius: 8px; text-decoration: none;">
       招待を受け入れる
     </a>
@@ -105,12 +133,12 @@ function buildInvitationHtml(schoolName: string, inviteLink: string, expiresLabe
 
   <p style="font-size: 12px; color: #94a3b8; line-height: 1.6;">
     ボタンが使えない場合は、以下のURLをブラウザに貼り付けてください：<br>
-    <a href="${inviteLink}" style="color: #0ea5e9; word-break: break-all;">${inviteLink}</a>
+    <a href="${safeLink}" style="color: #0ea5e9; word-break: break-all;">${safeLinkText}</a>
   </p>
 
   <div style="border-top: 1px solid #e2e8f0; margin-top: 24px; padding-top: 16px;">
     <p style="font-size: 12px; color: #94a3b8; margin: 0;">
-      有効期限: ${expiresLabel}<br>
+      有効期限: ${safeExpires}<br>
       このメールに心当たりがない場合は、無視してください。<br>
       ご不明点は学校の管理者へお問い合わせください。
     </p>

@@ -3,7 +3,10 @@ import {
   addStudent,
   addStudentsBulk,
   deleteStudent,
+  generateStudentCredentials,
+  resetStudentPin,
   type StudentRow,
+  type StudentCredential,
 } from '../../lib/supabase';
 
 interface Props {
@@ -18,6 +21,9 @@ export default function StudentList({ classId, students, onStudentsChange, onSel
   const [adding, setAdding] = useState(false);
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkNames, setBulkNames] = useState('');
+  const [generatingCreds, setGeneratingCreds] = useState(false);
+  const [credentials, setCredentials] = useState<StudentCredential[] | null>(null);
+  const [resetResult, setResetResult] = useState<{ name: string; loginId: string; pin: string } | null>(null);
 
   const handleAddSingle = async (e: Event) => {
     e.preventDefault();
@@ -55,8 +61,97 @@ export default function StudentList({ classId, students, onStudentsChange, onSel
     }
   };
 
+  const handleGenerateCredentials = async () => {
+    if (!confirm('クラス全員のログインIDとPINを発行しますか？\n（既に発行済みの生徒はスキップされます）')) return;
+    setGeneratingCreds(true);
+    const result = await generateStudentCredentials(classId);
+    if (result.credentials) {
+      setCredentials(result.credentials);
+      // Update login_id in local student list
+      const loginIdMap = new Map(result.credentials.map(c => [c.student_id, c.login_id]));
+      onStudentsChange(students.map(s => ({
+        ...s,
+        login_id: loginIdMap.get(s.id) ?? s.login_id,
+      })));
+    }
+    setGeneratingCreds(false);
+  };
+
+  const handleResetPin = async (studentId: string, studentName: string) => {
+    if (!confirm(`「${studentName}」のPINをリセットしますか？`)) return;
+    const result = await resetStudentPin(studentId);
+    if (result) {
+      setResetResult({ name: studentName, loginId: result.login_id, pin: result.pin });
+    }
+  };
+
+  const credentialsCsvText = () => {
+    if (!credentials) return '';
+    return '名前,ログインID,PIN\n' +
+      credentials.map(c => `${c.student_name},${c.login_id},${c.pin ?? '(発行済み)'}`).join('\n');
+  };
+
+  const handleCopyCredentials = () => {
+    navigator.clipboard.writeText(credentialsCsvText());
+  };
+
   return (
     <div class="space-y-4">
+      {/* Credentials display (one-time) */}
+      {credentials && (
+        <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-black text-amber-800">ログイン情報（この画面を閉じると PIN は二度と表示されません）</h3>
+            <button
+              onClick={() => setCredentials(null)}
+              class="text-xs text-gray-400 hover:text-gray-600"
+            >
+              閉じる
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-xs text-gray-500">
+                  <th class="pb-1">名前</th>
+                  <th class="pb-1">ログインID</th>
+                  <th class="pb-1">PIN</th>
+                </tr>
+              </thead>
+              <tbody>
+                {credentials.map(c => (
+                  <tr key={c.student_id} class="border-t border-amber-200">
+                    <td class="py-1 font-bold">{c.student_name}</td>
+                    <td class="py-1 font-mono">{c.login_id}</td>
+                    <td class="py-1 font-mono font-bold text-amber-700">
+                      {c.pin ?? <span class="text-gray-400">発行済み</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <button
+            onClick={handleCopyCredentials}
+            class="mt-3 px-4 py-2 bg-amber-500 text-white rounded-lg text-xs font-bold hover:bg-amber-600 transition-colors"
+          >
+            CSV形式でコピー
+          </button>
+        </div>
+      )}
+
+      {/* PIN reset result */}
+      {resetResult && (
+        <div class="bg-blue-50 border border-blue-300 rounded-xl p-4 flex items-center justify-between">
+          <div class="text-sm">
+            <span class="font-bold">{resetResult.name}</span> の新しいPIN:
+            <span class="font-mono font-black text-blue-700 ml-2 text-lg">{resetResult.pin}</span>
+            <span class="text-xs text-gray-500 ml-2">（ID: {resetResult.loginId}）</span>
+          </div>
+          <button onClick={() => setResetResult(null)} class="text-xs text-gray-400 hover:text-gray-600">閉じる</button>
+        </div>
+      )}
+
       {/* Add form */}
       <div class="bg-gray-50 rounded-xl p-4">
         <div class="flex items-center justify-between mb-3">
@@ -110,6 +205,27 @@ export default function StudentList({ classId, students, onStudentsChange, onSel
         )}
       </div>
 
+      {/* Login credentials section */}
+      {students.length > 0 && (
+        <div class="bg-gray-50 rounded-xl p-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-gray-700">ログインID管理</h3>
+            <button
+              onClick={handleGenerateCredentials}
+              disabled={generatingCreds}
+              class={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
+                generatingCreds ? 'bg-gray-300 text-gray-500' : 'bg-blue-500 text-white hover:bg-blue-600'
+              }`}
+            >
+              {generatingCreds ? '発行中...' : 'ログインID一括発行'}
+            </button>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">
+            生徒がソロモードやマイページを使うために必要です
+          </p>
+        </div>
+      )}
+
       {/* Student list */}
       {students.length === 0 ? (
         <div class="text-center py-8 text-gray-400">
@@ -130,18 +246,39 @@ export default function StudentList({ classId, students, onStudentsChange, onSel
                 <span class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500">
                   {idx + 1}
                 </span>
-                <span class="font-bold text-gray-900 truncate">{student.student_name}</span>
+                <div class="min-w-0">
+                  <span class="font-bold text-gray-900 truncate block">{student.student_name}</span>
+                  {student.login_id && (
+                    <span class="text-xs text-gray-400 font-mono">ID: {student.login_id}</span>
+                  )}
+                </div>
               </button>
-              <button
-                onClick={() => handleDelete(student.id, student.student_name)}
-                class="text-xs text-gray-300 hover:text-red-500 transition-colors ml-2"
-              >
-                ×
-              </button>
+              <div class="flex items-center gap-2 ml-2">
+                {student.login_id && (
+                  <button
+                    onClick={() => handleResetPin(student.id, student.student_name)}
+                    class="text-xs text-blue-400 hover:text-blue-600 transition-colors whitespace-nowrap"
+                    title="PINリセット"
+                  >
+                    PIN
+                  </button>
+                )}
+                <button
+                  onClick={() => handleDelete(student.id, student.student_name)}
+                  class="text-xs text-gray-300 hover:text-red-500 transition-colors"
+                >
+                  ×
+                </button>
+              </div>
             </div>
           ))}
           <div class="text-xs text-gray-400 text-right mt-2">
             合計 {students.length} 人
+            {students.filter(s => s.login_id).length > 0 && (
+              <span class="ml-2">
+                （ログインID発行済み: {students.filter(s => s.login_id).length}人）
+              </span>
+            )}
           </div>
         </div>
       )}

@@ -10,6 +10,7 @@ interface PrepPhaseProps {
   onPlayerCount: (v: number) => void;
   onEnvironment: (v: 'classroom' | 'dayservice' | 'home') => void;
   onStart: () => void;
+  startError?: string | null;
   classes?: ClassRow[];
   selectedClassId?: string | null;
   onClassSelect?: (classId: string | null) => void;
@@ -24,6 +25,7 @@ export default function PrepPhase({
   onPlayerCount,
   onEnvironment,
   onStart,
+  startError,
   classes,
   selectedClassId,
   onClassSelect,
@@ -158,6 +160,9 @@ export default function PrepPhase({
       >
         セッションを開始する
       </button>
+      {startError && (
+        <p class="text-red-600 text-sm text-center mt-2">{startError}</p>
+      )}
     </div>
   );
 }

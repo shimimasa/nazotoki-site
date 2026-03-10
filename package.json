@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "node scripts/export-scenario-json.mjs && astro build",
     "preview": "astro preview",
     "export": "node scripts/export-content.mjs",
     "export:images": "node scripts/export-images.mjs",
@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
+    "sanitize-html": "^2.17.1",
     "satori": "^0.25.0"
   }
 }

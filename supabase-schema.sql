@@ -1,13 +1,14 @@
 -- ==========================================================================
 -- Supabase schema for nazotoki-site session platform
--- Current state: Phase 51 (teacher invitation workflow)
+-- Current state: Phase 74 (student login with PIN auth)
 --
 -- This file represents the CANONICAL schema — the single source of truth.
--- For migration history, see supabase-schema-phase{12,12-1,12-2,13,14,15,20,40,45,46,47,48,50,51}.sql
+-- For migration history, see supabase-schema-phase{12,12-1,12-2,13,14,15,20,40,45,46,47,48,50,51,53,55-fix,56,71,72,74}.sql
 --
--- Tables (10):
+-- Tables (12):
 --   schools, gm_memos, session_logs, teachers, classes, students,
---   student_session_logs, monthly_reports, role_change_logs, teacher_invitations
+--   student_session_logs, monthly_reports, role_change_logs, teacher_invitations,
+--   session_runs, session_participants
 --
 -- Helper functions:
 --   my_teacher_id()   — returns current auth user's teacher UUID
@@ -20,6 +21,10 @@
 --   create_teacher_invitation(invite_email) — admin creates invitation
 --   preview_teacher_invitation(invite_token) — preview invitation info
 --   consume_teacher_invitation(invite_token) — accept invitation
+--   rpc_student_login(login_id, pin) — student PIN auth (anon, SECURITY DEFINER)
+--   rpc_verify_student_token(student_id, token) — validate saved token (anon)
+--   rpc_generate_student_credentials(class_id) — bulk generate login_id+PIN (teacher)
+--   rpc_reset_student_pin(student_id) — reset student PIN (teacher)
 --
 -- IMPORTANT: All CREATE POLICY statements are wrapped in DO$$ blocks
 -- with pg_policies checks for idempotent execution.
@@ -143,9 +148,9 @@ DO $$ BEGIN
 END $$;
 
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='schools' AND policyname='auth_schools_update') THEN
-    CREATE POLICY "auth_schools_update" ON schools FOR UPDATE TO authenticated
-      USING (id IN (SELECT school_id FROM teachers WHERE id = my_teacher_id() AND school_id IS NOT NULL));
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='schools' AND policyname='admin_schools_update') THEN
+    CREATE POLICY "admin_schools_update" ON schools FOR UPDATE TO authenticated
+      USING (is_school_admin() AND id = my_school_id());
   END IF;
 END $$;
 
@@ -301,10 +306,16 @@ create table if not exists students (
   id uuid primary key default gen_random_uuid(),
   class_id uuid not null references classes(id) on delete cascade,
   student_name text not null,
+  login_id text,
+  pin_hash text,
+  student_token text,
+  token_expires_at timestamptz,
   created_at timestamptz not null default now()
 );
 
 create index if not exists idx_students_class on students(class_id);
+create unique index if not exists idx_students_login_id_unique
+  on students(login_id) where login_id is not null;
 
 alter table students enable row level security;
 
@@ -820,3 +831,112 @@ BEGIN
   RETURN jsonb_build_object('ok', true, 'status', 'joined');
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+-- ============================================================
+-- 11. Session Runs (live session state for Realtime broadcast)
+-- Phase 56
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS session_runs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  scenario_slug text NOT NULL,
+  scenario_title text,
+  teacher_id uuid REFERENCES teachers(id),
+  class_id uuid REFERENCES classes(id),
+  join_code text NOT NULL UNIQUE,
+  current_phase text NOT NULL DEFAULT 'prep',
+  timer_seconds integer NOT NULL DEFAULT 0,
+  timer_running boolean NOT NULL DEFAULT false,
+  discovered_evidence jsonb NOT NULL DEFAULT '[]'::jsonb,
+  twist_revealed boolean NOT NULL DEFAULT false,
+  votes jsonb NOT NULL DEFAULT '{}'::jsonb,
+  vote_reasons jsonb NOT NULL DEFAULT '{}'::jsonb,
+  character_names jsonb NOT NULL DEFAULT '[]'::jsonb,
+  evidence_titles jsonb NOT NULL DEFAULT '[]'::jsonb,
+  player_count integer NOT NULL DEFAULT 4,
+  is_active boolean NOT NULL DEFAULT true,
+  started_at timestamptz,
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_session_runs_join_code ON session_runs(join_code);
+CREATE INDEX IF NOT EXISTS idx_session_runs_teacher ON session_runs(teacher_id);
+CREATE INDEX IF NOT EXISTS idx_session_runs_active ON session_runs(is_active) WHERE is_active = true;
+-- Phase 72: One active session per teacher (safety net for RPC atomicity)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_session_runs_teacher_active_unique
+  ON session_runs(teacher_id) WHERE is_active = true;
+
+ALTER TABLE session_runs ENABLE ROW LEVEL SECURITY;
+
+-- Teacher: full access to own session_runs
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='session_runs' AND policyname='auth_session_runs_all') THEN
+    CREATE POLICY "auth_session_runs_all" ON session_runs FOR ALL TO authenticated
+      USING (teacher_id = my_teacher_id())
+      WITH CHECK (teacher_id = my_teacher_id());
+  END IF;
+END $$;
+
+-- Anon (students): can SELECT active session_runs by join_code
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='session_runs' AND policyname='anon_session_runs_select') THEN
+    CREATE POLICY "anon_session_runs_select" ON session_runs FOR SELECT TO anon
+      USING (is_active = true);
+  END IF;
+END $$;
+
+-- Authenticated users (non-owner): can also SELECT active session_runs
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='session_runs' AND policyname='auth_session_runs_select_active') THEN
+    CREATE POLICY "auth_session_runs_select_active" ON session_runs FOR SELECT TO authenticated
+      USING (is_active = true);
+  END IF;
+END $$;
+
+
+-- ============================================================
+-- 12. Session Participants (students joining via code)
+-- Phase 56
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS session_participants (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_run_id uuid NOT NULL REFERENCES session_runs(id) ON DELETE CASCADE,
+  participant_name text NOT NULL,
+  student_id uuid REFERENCES students(id),
+  session_token text NOT NULL UNIQUE,
+  assigned_character text,
+  voted_for text,
+  vote_reason text,
+  voted_at timestamptz,
+  joined_at timestamptz NOT NULL DEFAULT now(),
+  token_expires_at timestamptz
+);
+
+CREATE INDEX IF NOT EXISTS idx_session_participants_run ON session_participants(session_run_id);
+CREATE INDEX IF NOT EXISTS idx_session_participants_token ON session_participants(session_token);
+
+ALTER TABLE session_participants ENABLE ROW LEVEL SECURITY;
+
+-- Teacher: can see participants in own session_runs
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='session_participants' AND policyname='auth_session_participants_select') THEN
+    CREATE POLICY "auth_session_participants_select" ON session_participants FOR SELECT TO authenticated
+      USING (session_run_id IN (SELECT id FROM session_runs WHERE teacher_id = my_teacher_id()));
+  END IF;
+END $$;
+
+-- Teacher: can UPDATE participants in own session_runs (character assignment)
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='session_participants' AND policyname='auth_session_participants_update') THEN
+    CREATE POLICY "auth_session_participants_update" ON session_participants FOR UPDATE TO authenticated
+      USING (session_run_id IN (SELECT id FROM session_runs WHERE teacher_id = my_teacher_id()));
+  END IF;
+END $$;
+
+-- Phase 71: Anon has NO direct access to session_participants.
+-- All student operations go through SECURITY DEFINER RPCs:
+--   rpc_join_session, rpc_reconnect_session, rpc_submit_vote, rpc_get_my_participant
+-- See supabase-schema-phase71.sql for RPC definitions.

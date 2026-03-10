@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'preact/hooks';
 import { PHASE_CONFIG } from './types';
 import type { EvidenceCardData, CharacterData } from './types';
+import type { SessionParticipant } from '../../lib/session-realtime';
+import type { StudentRow } from '../../lib/supabase';
 
 interface GmControlPanelProps {
   currentStep: number;
@@ -35,6 +37,16 @@ interface GmControlPanelProps {
   onGmMemoChange: (value: string) => void;
   truthHtml: string;
   stepStartTimes: number[];
+  // Realtime (Phase 56)
+  joinCode: string | null;
+  participants: SessionParticipant[];
+  // Character assignment (Phase 61)
+  characterNames: string[];
+  onAssignCharacter: (participantId: string, characterName: string | null) => void;
+  onAutoAssign: () => void;
+  // Student link (Phase 62)
+  classStudents: StudentRow[];
+  onLinkStudent: (participantId: string, studentId: string | null) => void;
 }
 
 function extractCulprit(truthHtml: string): string | null {
@@ -86,6 +98,13 @@ export default function GmControlPanel({
   onGmMemoChange,
   truthHtml,
   stepStartTimes,
+  joinCode,
+  participants,
+  characterNames,
+  onAssignCharacter,
+  onAutoAssign,
+  classStudents,
+  onLinkStudent,
 }: GmControlPanelProps) {
   const [tab, setTab] = useState<PanelTab>('control');
 
@@ -207,6 +226,13 @@ export default function GmControlPanel({
               onGmMemoChange={onGmMemoChange}
               stepStartTimes={stepStartTimes}
               skipTwist={skipTwist}
+              joinCode={joinCode}
+              participants={participants}
+              characterNames={characterNames}
+              onAssignCharacter={onAssignCharacter}
+              onAutoAssign={onAutoAssign}
+              classStudents={classStudents}
+              onLinkStudent={onLinkStudent}
             />
           )}
         </div>
@@ -454,6 +480,16 @@ interface DashboardTabProps {
   onGmMemoChange: (value: string) => void;
   stepStartTimes: number[];
   skipTwist: boolean;
+  // Realtime (Phase 56)
+  joinCode: string | null;
+  participants: SessionParticipant[];
+  // Character assignment (Phase 61)
+  characterNames: string[];
+  onAssignCharacter: (participantId: string, characterName: string | null) => void;
+  onAutoAssign: () => void;
+  // Student link (Phase 62)
+  classStudents: StudentRow[];
+  onLinkStudent: (participantId: string, studentId: string | null) => void;
 }
 
 function DashboardTab({
@@ -478,6 +514,13 @@ function DashboardTab({
   onGmMemoChange,
   stepStartTimes,
   skipTwist,
+  joinCode,
+  participants,
+  characterNames,
+  onAssignCharacter,
+  onAutoAssign,
+  classStudents,
+  onLinkStudent,
 }: DashboardTabProps) {
   // Calculate phase durations from stepStartTimes
   const phaseDurations = useMemo(() => {
@@ -506,6 +549,105 @@ function DashboardTab({
   }, [stepStartTimes, skipTwist]);
   return (
     <div class="p-4 space-y-4">
+      {/* Join code for students (Phase 56) */}
+      {joinCode && (
+        <section class="bg-sky-50 border border-sky-200 rounded-lg p-4 text-center">
+          <h4 class="text-xs font-bold text-sky-600 uppercase tracking-wider mb-1">
+            参加コード
+          </h4>
+          <div class="font-mono font-black text-4xl tracking-[0.3em] text-sky-800 select-all">
+            {joinCode}
+          </div>
+          <p class="text-xs text-sky-500 mt-2">
+            生徒に伝えてください（{participants.length}人参加中）
+          </p>
+          {participants.length > 0 && (
+            <div class="mt-3 space-y-2">
+              {participants.map((p) => {
+                const usedChars = participants
+                  .filter((x) => x.id !== p.id && x.assigned_character)
+                  .map((x) => x.assigned_character!);
+                const availableChars = characterNames.filter((c) => !usedChars.includes(c));
+                const linkedStudent = classStudents.find((s) => s.id === p.student_id);
+                const linkedStudentIds = participants
+                  .filter((x) => x.id !== p.id && x.student_id)
+                  .map((x) => x.student_id!);
+                const availableStudents = classStudents.filter((s) => !linkedStudentIds.includes(s.id));
+                return (
+                  <div key={p.id} class="space-y-1">
+                    <div class="flex items-center gap-2">
+                      <span class={`shrink-0 text-xs font-bold px-2 py-0.5 rounded-full ${
+                        p.voted_for
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-sky-100 text-sky-700'
+                      }`}>
+                        {p.participant_name}
+                        {p.voted_for ? ' \u2713' : ''}
+                      </span>
+                      {characterNames.length > 0 && (
+                        <select
+                          value={p.assigned_character || ''}
+                          onChange={(e) => {
+                            const val = (e.target as HTMLSelectElement).value;
+                            onAssignCharacter(p.id, val || null);
+                          }}
+                          class="flex-1 text-sm border border-gray-200 rounded px-2 py-2 min-h-[44px] bg-white focus:ring-1 focus:ring-sky-300"
+                        >
+                          <option value="">-- キャラ --</option>
+                          {p.assigned_character && !availableChars.includes(p.assigned_character) && (
+                            <option value={p.assigned_character}>{p.assigned_character}</option>
+                          )}
+                          {availableChars.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                    {classStudents.length > 0 && (
+                      <div class="flex items-center gap-2 ml-1">
+                        <span class="text-xs text-gray-400">{'\u{1F4CB}'}</span>
+                        {linkedStudent ? (
+                          <span class="text-xs text-green-600 font-bold flex items-center">
+                            {linkedStudent.student_name}
+                            <button
+                              onClick={() => onLinkStudent(p.id, null)}
+                              class="ml-2 w-[44px] h-[44px] flex items-center justify-center text-gray-400 hover:text-red-500"
+                              title="リンク解除"
+                            >{'\u2715'}</button>
+                          </span>
+                        ) : (
+                          <select
+                            value=""
+                            onChange={(e) => {
+                              const val = (e.target as HTMLSelectElement).value;
+                              if (val) onLinkStudent(p.id, val);
+                            }}
+                            class="text-xs border border-gray-200 rounded px-2 py-1.5 min-h-[44px] bg-white text-gray-500"
+                          >
+                            <option value="">-- 名簿リンク --</option>
+                            {availableStudents.map((s) => (
+                              <option key={s.id} value={s.id}>{s.student_name}</option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {characterNames.length > 0 && participants.length > 0 && (
+                <button
+                  onClick={onAutoAssign}
+                  class="w-full mt-2 py-3 min-h-[44px] bg-sky-100 text-sky-700 rounded-lg text-sm font-bold hover:bg-sky-200 transition-colors"
+                >
+                  {'\u{1F3B2}'} 自動割当（ランダム）
+                </button>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
       {/* Session info */}
       <section class="bg-gray-50 rounded-lg p-3">
         <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">

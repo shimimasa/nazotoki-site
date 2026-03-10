@@ -190,7 +190,81 @@ export interface StudentRow {
   id: string;
   class_id: string;
   student_name: string;
+  login_id: string | null;
+  pin_hash: string | null;
+  student_token: string | null;
+  token_expires_at: string | null;
   created_at: string;
+}
+
+// --- Student Auth (PIN-based, Phase 74) ---
+
+export interface StudentCredential {
+  student_id: string;
+  student_name: string;
+  login_id: string;
+  pin: string | null;
+  already_exists: boolean;
+}
+
+export interface StudentLoginResult {
+  student_id: string;
+  student_name: string;
+  class_id: string;
+  login_id: string;
+  student_token: string;
+  token_expires_at: string;
+}
+
+const LS_STUDENT_ID = 'nazotoki-student-id';
+const LS_STUDENT_TOKEN = 'nazotoki-student-token';
+
+export async function studentLogin(loginId: string, pin: string): Promise<{ data: StudentLoginResult | null; error: string | null }> {
+  if (!supabase) return { data: null, error: 'Supabase not configured' };
+  const { data, error } = await supabase.rpc('rpc_student_login', {
+    p_login_id: loginId,
+    p_pin: pin,
+  });
+  if (error) return { data: null, error: error.message };
+  const result = data as Record<string, unknown>;
+  if (result.error) return { data: null, error: result.error as string };
+  return { data: result as unknown as StudentLoginResult, error: null };
+}
+
+export async function verifyStudentToken(): Promise<{ student_id: string; student_name: string; class_id: string; login_id: string } | null> {
+  if (!supabase) return null;
+  const savedId = typeof window !== 'undefined' ? localStorage.getItem(LS_STUDENT_ID) : null;
+  const savedToken = typeof window !== 'undefined' ? localStorage.getItem(LS_STUDENT_TOKEN) : null;
+  if (!savedId || !savedToken) return null;
+  const { data } = await supabase.rpc('rpc_verify_student_token', {
+    p_student_id: savedId,
+    p_token: savedToken,
+  });
+  const result = data as Record<string, unknown> | null;
+  if (!result || result.error) return null;
+  return result as unknown as { student_id: string; student_name: string; class_id: string; login_id: string };
+}
+
+export async function generateStudentCredentials(classId: string): Promise<{ credentials: StudentCredential[] | null; error: string | null }> {
+  if (!supabase) return { credentials: null, error: 'Supabase not configured' };
+  const { data, error } = await supabase.rpc('rpc_generate_student_credentials', {
+    p_class_id: classId,
+  });
+  if (error) return { credentials: null, error: error.message };
+  const result = data as Record<string, unknown>;
+  if (result.error) return { credentials: null, error: result.error as string };
+  return { credentials: result.credentials as StudentCredential[], error: null };
+}
+
+export async function resetStudentPin(studentId: string): Promise<{ login_id: string; pin: string } | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase.rpc('rpc_reset_student_pin', {
+    p_student_id: studentId,
+  });
+  if (error) return null;
+  const result = data as Record<string, unknown>;
+  if (result.error) return null;
+  return { login_id: result.login_id as string, pin: result.pin as string };
 }
 
 export async function fetchStudents(classId: string): Promise<StudentRow[]> {
