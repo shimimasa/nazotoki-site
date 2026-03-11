@@ -50,11 +50,12 @@ interface Props {
   teacherName: string;
   schoolId?: string | null;
   role?: string | null;
+  groupRole?: string | null;
   plan?: SubscriptionPlan;
   scenarios?: ScenarioItem[];
 }
 
-export default function TeacherWorkspace({ teacherId, teacherName, schoolId, role, plan = 'free', scenarios = [] }: Props) {
+export default function TeacherWorkspace({ teacherId, teacherName, schoolId, role, groupRole, plan = 'free', scenarios = [] }: Props) {
   const isAdmin = role === 'admin';
   const [tab, setTab] = useState<WorkspaceTab>('history');
   const [showUpgrade, setShowUpgrade] = useState(false);
@@ -394,7 +395,7 @@ export default function TeacherWorkspace({ teacherId, teacherName, schoolId, rol
           )}
         </div>
       ) : tab === 'admin' && isAdmin ? (
-        <AdminDashboard logs={logs} classes={classes} teacherId={teacherId} schoolId={schoolId} />
+        <AdminDashboard logs={logs} classes={classes} teacherId={teacherId} schoolId={schoolId} groupRole={groupRole} />
       ) : (
         <ClassList
           teacherId={teacherId}

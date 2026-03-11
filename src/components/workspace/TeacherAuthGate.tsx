@@ -127,7 +127,7 @@ export default function TeacherAuthGate({ scenarios = [] }: { scenarios?: Scenar
             ログアウト
           </button>
         </div>
-        <TeacherWorkspace teacherId={teacher.id} teacherName={teacher.display_name} schoolId={teacher.school_id} role={teacher.role} plan={teacher.subscription_plan || 'free'} scenarios={scenarios} />
+        <TeacherWorkspace teacherId={teacher.id} teacherName={teacher.display_name} schoolId={teacher.school_id} role={teacher.role} groupRole={teacher.group_role} plan={teacher.subscription_plan || 'free'} scenarios={scenarios} />
       </div>
     );
   }

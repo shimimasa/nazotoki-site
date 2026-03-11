@@ -18,6 +18,7 @@ import {
   sendInvitationEmail,
 } from '../../lib/supabase';
 import { buildSchoolReport } from '../../lib/school-report';
+import GroupDashboard from './GroupDashboard';
 import { formatMinSec, formatPercent, formatDate } from '../../lib/session-analytics';
 import {
   filterSessionsByRange,
@@ -81,13 +82,14 @@ interface Props {
   classes: ClassWithStats[];
   teacherId: string;
   schoolId?: string | null;
+  groupRole?: string | null;
 }
 
 // ============================================================
 // Main Component
 // ============================================================
 
-export default function AdminDashboard({ logs, classes, teacherId, schoolId }: Props) {
+export default function AdminDashboard({ logs, classes, teacherId, schoolId, groupRole }: Props) {
   const [schoolLogs, setSchoolLogs] = useState<SessionLogRow[] | null>(null);
   const [schoolClasses, setSchoolClasses] = useState<ClassWithStats[] | null>(null);
   const [students, setStudents] = useState<StudentWithClass[]>([]);
@@ -264,6 +266,14 @@ export default function AdminDashboard({ logs, classes, teacherId, schoolId }: P
           : () => exportAdminDashboardHtml(kpi, classStatuses, scenarioStatuses, adminInsights, currentRangeLabel)
         }
       />
+
+      {/* Group Dashboard (Phase 110) */}
+      {groupRole === 'group_admin' && (
+        <section>
+          <h3 class="text-sm font-black text-indigo-800 mb-3">グループ管理</h3>
+          <GroupDashboard />
+        </section>
+      )}
 
       {/* KPI Cards */}
       <div class="flex items-center justify-between mb-1">

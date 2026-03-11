@@ -11,12 +11,15 @@ export const supabase =
 export type TeacherRole = 'teacher' | 'admin';
 export type SubscriptionPlan = 'free' | 'standard' | 'school';
 
+export type GroupRole = 'group_admin' | null;
+
 export interface TeacherProfile {
   id: string;
   auth_user_id: string;
   display_name: string;
   school_id: string | null;
   role: TeacherRole;
+  group_role: GroupRole;
   subscription_plan: SubscriptionPlan;
   subscription_status: string;
   created_at: string;
@@ -38,6 +41,15 @@ export function isPremiumFeature(plan: SubscriptionPlan): boolean {
   return plan === 'standard' || plan === 'school';
 }
 
+// --- School Group (Phase 110) ---
+
+export interface SchoolGroupRow {
+  id: string;
+  name: string;
+  contact_email: string | null;
+  created_at: string;
+}
+
 // --- School ---
 
 export type SchoolType = 'elementary' | 'junior_high' | 'high' | 'combined' | 'special_needs' | 'other';
@@ -51,6 +63,7 @@ export interface SchoolRow {
   phone_number: string | null;
   website_url: string | null;
   contact_email: string | null;
+  group_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -118,7 +131,7 @@ export async function getCurrentTeacher(): Promise<TeacherProfile | null> {
     .single();
   if (data) {
     // Ensure role/plan fallback for pre-migration data
-    return { ...data, role: data.role || 'teacher', subscription_plan: data.subscription_plan || 'free', subscription_status: data.subscription_status || 'active' };
+    return { ...data, role: data.role || 'teacher', group_role: data.group_role || null, subscription_plan: data.subscription_plan || 'free', subscription_status: data.subscription_status || 'active' };
   }
   // OAuth first login: auto-create teacher profile from auth user metadata
   const meta = user.user_metadata || {};
