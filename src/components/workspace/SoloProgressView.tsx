@@ -131,7 +131,7 @@ export default function SoloProgressView({ students, classId }: Props) {
   const playedStudents = summaries.filter(s => s.sessions.length > 0).length;
   const classTotalRp = summaries.reduce((sum, s) => sum + s.totalRp, 0);
   const classAvgRp = totalStudents > 0 ? Math.round(classTotalRp / totalStudents) : 0;
-  const classTotalSessions = soloSessions.length;
+  const classTotalSessions = summaries.reduce((sum, s) => sum + (s.sessions.length || (progressMap.get(s.student.id)?.play_count || 0)), 0);
 
   // Phase 84: Lazy-load detail sessions when a student is selected
   const handleSelectStudent = (studentId: string) => {
