@@ -21,7 +21,7 @@ function checkRateLimit(key: string): boolean {
 }
 
 export const GET: APIRoute = async ({ url }) => {
-  const headers = { 'Content-Type': 'application/json' };
+  const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
 
   try {
     const code = url.searchParams.get('code');
@@ -75,7 +75,7 @@ export const GET: APIRoute = async ({ url }) => {
     // 3. Fetch class info
     const { data: classInfo } = await supabaseAdmin
       .from('classes')
-      .select('name, school_id')
+      .select('class_name, school_id')
       .eq('id', student.class_id)
       .maybeSingle();
 
@@ -89,18 +89,24 @@ export const GET: APIRoute = async ({ url }) => {
       schoolName = school?.name || '';
     }
 
-    // 4. Fetch student session logs (class sessions)
+    // 4. Fetch student session log count (separate count query to avoid limit bias)
+    const { count: sessionCount } = await supabaseAdmin
+      .from('student_session_logs')
+      .select('id', { count: 'exact', head: true })
+      .eq('student_id', student.id);
+
+    // 4b. Fetch recent logs (trimmed: id + created_at only for privacy)
     const { data: studentLogs } = await supabaseAdmin
       .from('student_session_logs')
-      .select('id, session_log_id, voted_for, vote_reason, is_correct, created_at')
+      .select('id, created_at')
       .eq('student_id', student.id)
       .order('created_at', { ascending: false })
-      .limit(20);
+      .limit(5);
 
-    // 5. Fetch solo sessions
+    // 5. Fetch solo sessions (trimmed: no vote details for anonymous endpoint)
     const { data: soloSessions } = await supabaseAdmin
       .from('solo_sessions')
-      .select('id, scenario_slug, vote, is_correct, rp_earned, completed_at')
+      .select('id, scenario_slug, is_correct, rp_earned, completed_at')
       .eq('student_id', student.id)
       .order('completed_at', { ascending: false });
 
@@ -116,12 +122,18 @@ export const GET: APIRoute = async ({ url }) => {
         ok: true,
         data: {
           studentName: student.student_name,
-          className: classInfo?.name || '',
+          className: classInfo?.class_name || '',
           schoolName,
-          sessionCount: studentLogs?.length || 0,
-          soloSessions: soloSessions || [],
+          sessionCount: sessionCount || 0,
+          soloSessions: (soloSessions || []).map(s => ({
+            id: s.id,
+            scenario_slug: s.scenario_slug,
+            is_correct: s.is_correct,
+            rp_earned: s.rp_earned,
+            completed_at: s.completed_at,
+          })),
           rubrics: rubrics || [],
-          recentLogs: (studentLogs || []).slice(0, 5),
+          recentLogs: studentLogs || [],
         },
       }),
       { status: 200, headers },

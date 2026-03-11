@@ -43,6 +43,18 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const eventTs = new Date(event.created * 1000).toISOString();
+
+    // Helper: only process if this event is newer than the last processed one
+    async function isNewerEvent(customerId: string): Promise<boolean> {
+      const { data: teacher } = await supabaseAdmin
+        .from('teachers')
+        .select('stripe_last_event_at')
+        .eq('stripe_customer_id', customerId)
+        .maybeSingle();
+      if (!teacher?.stripe_last_event_at) return true;
+      return new Date(eventTs) > new Date(teacher.stripe_last_event_at);
+    }
 
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -56,6 +68,7 @@ export const POST: APIRoute = async ({ request }) => {
               subscription_plan: plan,
               subscription_status: 'active',
               stripe_customer_id: session.customer as string,
+              stripe_last_event_at: eventTs,
             })
             .eq('id', teacherId);
         }
@@ -65,8 +78,13 @@ export const POST: APIRoute = async ({ request }) => {
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
-        const status = subscription.status;
 
+        if (!(await isNewerEvent(customerId))) {
+          console.log(`Skipping stale subscription.updated event for customer ${customerId}`);
+          break;
+        }
+
+        const status = subscription.status;
         const planStatus = status === 'active' || status === 'trialing'
           ? 'active'
           : status === 'past_due'
@@ -82,6 +100,7 @@ export const POST: APIRoute = async ({ request }) => {
           .update({
             subscription_status: planStatus,
             subscription_expires_at: expiresAt,
+            stripe_last_event_at: eventTs,
           })
           .eq('stripe_customer_id', customerId);
         break;
@@ -91,12 +110,18 @@ export const POST: APIRoute = async ({ request }) => {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
 
+        if (!(await isNewerEvent(customerId))) {
+          console.log(`Skipping stale subscription.deleted event for customer ${customerId}`);
+          break;
+        }
+
         await supabaseAdmin
           .from('teachers')
           .update({
             subscription_plan: 'free',
             subscription_status: 'canceled',
             subscription_expires_at: null,
+            stripe_last_event_at: eventTs,
           })
           .eq('stripe_customer_id', customerId);
         break;

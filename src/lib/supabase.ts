@@ -383,7 +383,7 @@ export async function generateParentLink(studentId: string): Promise<{ code: str
   const code = Array.from(crypto.getRandomValues(new Uint8Array(9)))
     .map(b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36])
     .join('');
-  const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
   const { error } = await supabase
     .from('students')
     .update({ parent_link_code: code, parent_link_expires_at: expiresAt })
