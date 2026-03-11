@@ -6,6 +6,8 @@ import {
   type StudentWithClass,
   type StudentLogSummary,
 } from '../../lib/supabase';
+import CompetencyDashboard from './CompetencyDashboard';
+import ClassTendencyChart from './ClassTendencyChart';
 import {
   computeSummaryMetrics,
   computeSessionMetrics,
@@ -239,6 +241,12 @@ export default function AnalyticsDashboard({ logs, classes, teacherId }: Props) 
           {studentLoading && students.length === 0 && classes.length > 0 && (
             <div class="text-center py-8 text-gray-400 text-sm">生徒データを読み込み中...</div>
           )}
+
+          {/* Phase 106: Class Tendency Radar Chart */}
+          <ClassTendencyChart classes={classes} logs={filteredLogs} />
+
+          {/* Phase 98: Competency Dashboard */}
+          <CompetencyDashboard classes={classes} teacherId={teacherId} />
         </>
       )}
     </div>

@@ -4,9 +4,19 @@ import {
   type SoloSessionRow,
   type StudentRow,
 } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase';
+
+interface SoloProgressSummary {
+  student_id: string;
+  total_rp: number;
+  play_count: number;
+  unique_scenarios: number;
+  last_played_at: string | null;
+}
 
 interface Props {
   students: StudentRow[];
+  classId?: string;
 }
 
 // Rank definitions (same as MyPage)
@@ -40,43 +50,66 @@ interface StudentSoloSummary {
   lastPlayedAt: string | null;
 }
 
-export default function SoloProgressView({ students }: Props) {
-  const [soloSessions, setSoloSessions] = useState<SoloSessionRow[]>([]);
+export default function SoloProgressView({ students, classId }: Props) {
+  const [progressMap, setProgressMap] = useState<Map<string, SoloProgressSummary>>(new Map());
+  const [detailSessions, setDetailSessions] = useState<SoloSessionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'name' | 'rp' | 'scenarios' | 'recent'>('rp');
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
 
+  // Phase 84: Use aggregated RPC instead of fetching all session rows
   useEffect(() => {
-    const ids = students.map(s => s.id);
-    fetchSoloSessionsForStudents(ids).then(sessions => {
-      setSoloSessions(sessions);
-      setLoading(false);
-    });
-  }, [students]);
+    if (classId && supabase) {
+      supabase.rpc('rpc_fetch_solo_progress_summary', { p_class_id: classId })
+        .then(({ data, error }) => {
+          if (!error && data && !data.error) {
+            const map = new Map<string, SoloProgressSummary>();
+            for (const s of (data.summaries as SoloProgressSummary[]) || []) {
+              map.set(s.student_id, s);
+            }
+            setProgressMap(map);
+          }
+          setLoading(false);
+        });
+    } else {
+      // Fallback: direct query (for backward compat)
+      const ids = students.map(s => s.id);
+      fetchSoloSessionsForStudents(ids).then(sessions => {
+        const map = new Map<string, SoloProgressSummary>();
+        const byStudent = new Map<string, SoloSessionRow[]>();
+        for (const s of sessions) {
+          if (!byStudent.has(s.student_id)) byStudent.set(s.student_id, []);
+          byStudent.get(s.student_id)!.push(s);
+        }
+        for (const [sid, sess] of byStudent) {
+          map.set(sid, {
+            student_id: sid,
+            total_rp: sess.reduce((sum, s) => sum + (s.rp_earned || 0), 0),
+            play_count: sess.length,
+            unique_scenarios: new Set(sess.map(s => s.scenario_slug)).size,
+            last_played_at: sess.length > 0 ? sess[0].completed_at || sess[0].created_at : null,
+          });
+        }
+        setProgressMap(map);
+        setLoading(false);
+      });
+    }
+  }, [students, classId]);
 
   if (loading) {
-    return <div class="text-center py-8 text-gray-400">読み込み中...</div>;
+    return <div class="text-center py-8 text-gray-500">読み込み中...</div>;
   }
 
-  // Build per-student summaries
-  const sessionsByStudent = new Map<string, SoloSessionRow[]>();
-  for (const s of soloSessions) {
-    if (!sessionsByStudent.has(s.student_id)) sessionsByStudent.set(s.student_id, []);
-    sessionsByStudent.get(s.student_id)!.push(s);
-  }
-
+  // Build per-student summaries from aggregated data
   const summaries: StudentSoloSummary[] = students.map(student => {
-    const sessions = sessionsByStudent.get(student.id) || [];
-    const totalRp = sessions.reduce((sum, s) => sum + (s.rp_earned || 0), 0);
-    const uniqueScenarios = new Set(sessions.map(s => s.scenario_slug)).size;
-    const lastPlayedAt = sessions.length > 0 ? sessions[0].completed_at || sessions[0].created_at : null;
+    const prog = progressMap.get(student.id);
     return {
       student,
-      sessions,
-      totalRp,
-      uniqueScenarios,
-      rank: getRankName(totalRp),
-      lastPlayedAt,
+      sessions: [], // Detail sessions loaded on demand
+      totalRp: prog?.total_rp || 0,
+      uniqueScenarios: prog?.unique_scenarios || 0,
+      rank: getRankName(prog?.total_rp || 0),
+      lastPlayedAt: prog?.last_played_at || null,
     };
   });
 
@@ -100,9 +133,18 @@ export default function SoloProgressView({ students }: Props) {
   const classAvgRp = totalStudents > 0 ? Math.round(classTotalRp / totalStudents) : 0;
   const classTotalSessions = soloSessions.length;
 
+  // Phase 84: Lazy-load detail sessions when a student is selected
+  const handleSelectStudent = (studentId: string) => {
+    setSelectedStudent(studentId);
+    setDetailSessions([]);
+    // Fetch detail sessions for this student
+    fetchSoloSessionsForStudents([studentId]).then(setDetailSessions);
+  };
+
   // Student detail view
   if (selectedStudent) {
     const summary = summaries.find(s => s.student.id === selectedStudent);
+    const prog = progressMap.get(selectedStudent);
     if (summary) {
       return (
         <div class="space-y-4">
@@ -119,17 +161,19 @@ export default function SoloProgressView({ students }: Props) {
               <span>ランク: <strong class="text-amber-600">{summary.rank}</strong></span>
               <span>累計: <strong class="text-amber-600">{summary.totalRp} RP</strong></span>
               <span>クリア: <strong class="text-blue-600">{summary.uniqueScenarios}</strong></span>
-              <span>プレイ: <strong class="text-gray-600">{summary.sessions.length} 回</strong></span>
+              <span>プレイ: <strong class="text-gray-600">{prog?.play_count || 0} 回</strong></span>
             </div>
           </div>
 
-          {summary.sessions.length === 0 ? (
-            <div class="text-center py-8 text-gray-400">
+          {detailSessions.length === 0 && (prog?.play_count || 0) === 0 ? (
+            <div class="text-center py-8 text-gray-500">
               <p class="font-bold">まだソロモードのプレイ記録がありません</p>
             </div>
+          ) : detailSessions.length === 0 ? (
+            <div class="text-center py-8 text-gray-500">読み込み中...</div>
           ) : (
             <div class="space-y-2">
-              {summary.sessions.map(s => (
+              {detailSessions.map(s => (
                 <div key={s.id} class="bg-white rounded-xl border border-gray-200 p-4">
                   <div class="flex items-start justify-between">
                     <div>
@@ -142,7 +186,7 @@ export default function SoloProgressView({ students }: Props) {
                         {s.vote && <span>投票: {s.vote}</span>}
                       </div>
                       {s.vote_reason && (
-                        <p class="text-xs text-gray-400 mt-1">理由: 「{s.vote_reason}」</p>
+                        <p class="text-xs text-gray-500 mt-1">理由: 「{s.vote_reason}」</p>
                       )}
                     </div>
                     <span class="text-sm font-black text-amber-600 shrink-0">{s.rp_earned} RP</span>
@@ -191,7 +235,7 @@ export default function SoloProgressView({ students }: Props) {
 
       {/* Student list */}
       {students.length === 0 ? (
-        <div class="text-center py-8 text-gray-400">
+        <div class="text-center py-8 text-gray-500">
           <p class="font-bold">生徒が登録されていません</p>
         </div>
       ) : (
@@ -199,7 +243,7 @@ export default function SoloProgressView({ students }: Props) {
           {sorted.map(({ student, totalRp, uniqueScenarios, rank, sessions, lastPlayedAt }) => (
             <button
               key={student.id}
-              onClick={() => setSelectedStudent(student.id)}
+              onClick={() => handleSelectStudent(student.id)}
               class="w-full text-left flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200 hover:border-amber-300 transition-colors"
             >
               <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-sm font-black text-amber-700 shrink-0">
@@ -227,7 +271,7 @@ export default function SoloProgressView({ students }: Props) {
                     style={{ width: `${Math.min(100, (uniqueScenarios / 100) * 100)}%` }}
                   />
                 </div>
-                <p class="text-[10px] text-gray-400 text-right mt-0.5">{uniqueScenarios}/100</p>
+                <p class="text-[10px] text-gray-500 text-right mt-0.5">{uniqueScenarios}/100</p>
               </div>
             </button>
           ))}

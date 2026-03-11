@@ -85,10 +85,13 @@ export default function StudentList({ classId, students, onStudentsChange, onSel
     }
   };
 
+  // Escape CSV values to prevent formula injection in Excel/Sheets
+  const csvSafe = (v: string) => /^[=+\-@\t\r]/.test(v) ? `'${v}` : v;
+
   const credentialsCsvText = () => {
     if (!credentials) return '';
     return '名前,ログインID,PIN\n' +
-      credentials.map(c => `${c.student_name},${c.login_id},${c.pin ?? '(発行済み)'}`).join('\n');
+      credentials.map(c => `${csvSafe(c.student_name)},${c.login_id},${c.pin ?? '(発行済み)'}`).join('\n');
   };
 
   const handleCopyCredentials = () => {
@@ -156,12 +159,48 @@ export default function StudentList({ classId, students, onStudentsChange, onSel
       <div class="bg-gray-50 rounded-xl p-4">
         <div class="flex items-center justify-between mb-3">
           <h3 class="text-sm font-bold text-gray-700">生徒追加</h3>
-          <button
-            onClick={() => setBulkMode(!bulkMode)}
-            class="text-xs text-amber-600 font-bold hover:underline"
-          >
-            {bulkMode ? '1人ずつ追加' : '一括追加'}
-          </button>
+          <div class="flex items-center gap-3">
+            {bulkMode && (
+              <label class="text-xs text-blue-600 font-bold hover:underline cursor-pointer">
+                CSVインポート
+                <input
+                  type="file"
+                  accept=".csv,.txt"
+                  class="hidden"
+                  onChange={(e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      let text = reader.result as string;
+                      // Remove BOM
+                      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+                      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+                      // Extract first column, skip header-like rows
+                      const names = lines
+                        .map(l => l.split(',')[0].replace(/^["']|["']$/g, '').trim())
+                        // Strip CSV formula-injection prefixes (=, +, -, @, tab, CR)
+                        .map(n => n.replace(/^[=+\-@\t\r]+/, ''))
+                        .filter(n => n.length > 0 && !/^(名前|生徒名|student_name|name)$/i.test(n));
+                      if (names.length > 50) {
+                        alert('一度に登録できるのは50名までです');
+                        return;
+                      }
+                      setBulkNames(names.join('\n'));
+                    };
+                    reader.readAsText(file, 'UTF-8');
+                    (e.target as HTMLInputElement).value = '';
+                  }}
+                />
+              </label>
+            )}
+            <button
+              onClick={() => setBulkMode(!bulkMode)}
+              class="text-xs text-amber-600 font-bold hover:underline"
+            >
+              {bulkMode ? '1人ずつ追加' : '一括追加'}
+            </button>
+          </div>
         </div>
 
         {bulkMode ? (

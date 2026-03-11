@@ -6,15 +6,21 @@ import { SERIES_CONFIG } from '../lib/series';
 
 const scenarios = loadAllScenarios();
 
-// Build-time: pass minimal scenario metadata to client
+// Build-time: pass minimal scenario metadata to client.
+// Note: characterNames and evidenceTitles are public metadata (same as /play/[slug] pages),
+// NOT spoiler content. Actual secrets (evidence body, witness secrets, solutions) are never
+// passed here. SSG cannot conditionally exclude data per-user at build time.
 const scenarioMeta = scenarios.map(s => ({
   slug: s.slug,
   title: s.title,
   series: s.series,
   seriesName: s.seriesName,
+  volume: s.volume,
   difficulty: s.difficulty,
   subject: s.subject,
   thumbnailUrl: s.thumbnailUrl || '',
+  characterNames: s.characters.filter(c => !c.isNPC).map(c => c.name.replace(/\{([^}|]+)\|[^}]+\}/g, '$1')),
+  evidenceTitles: s.evidenceCards.map(c => c.title.replace(/^証拠カード\d+[：:]/, '').trim()),
 }));
 
 // Pass series config to client

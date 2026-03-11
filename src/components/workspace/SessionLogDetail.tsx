@@ -6,6 +6,9 @@ import {
 import { exportSessionPDF } from './exportSessionPDF';
 import { computeSessionMetrics } from '../../lib/session-analytics';
 import { computeSessionInsights } from '../../lib/session-insights';
+import RubricEvaluator from './RubricEvaluator';
+import VoteAnalysis from './VoteAnalysis';
+import VoteSummary from './VoteSummary';
 
 const PHASE_LABELS: Record<string, string> = {
   intro: '導入',
@@ -31,9 +34,10 @@ interface Props {
   logId: string;
   cachedLog: SessionLogRow | null;
   onBack: () => void;
+  role?: string | null;
 }
 
-export default function SessionLogDetail({ logId, cachedLog, onBack }: Props) {
+export default function SessionLogDetail({ logId, cachedLog, onBack, role }: Props) {
   const [log, setLog] = useState<SessionLogRow | null>(cachedLog);
   const [loading, setLoading] = useState(!cachedLog);
 
@@ -189,6 +193,33 @@ export default function SessionLogDetail({ logId, cachedLog, onBack }: Props) {
         </div>
       )}
 
+      {/* Vote Summary — all teachers (Phase 104) */}
+      {voteEntries.length > 0 && log.vote_results && (
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+          <h3 class="font-bold text-lg mb-4">投票集計</h3>
+          <VoteSummary
+            voteResults={log.vote_results}
+            voteReasons={log.vote_reasons}
+            correctPlayers={log.correct_players}
+          />
+        </div>
+      )}
+
+      {/* AI Vote Analysis — admin only (Phase 104) */}
+      {role === 'admin' && voteEntries.length > 0 && log.teacher_id && (
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+          <h3 class="font-bold text-lg mb-4">AI分析（管理者限定）</h3>
+          <VoteAnalysis
+            sessionLogId={log.id}
+            voteData={voteEntries.map(([voterId, suspectId]) => ({
+              studentName: voterId,
+              votedFor: suspectId,
+              reason: log.vote_reasons?.[voterId] || '',
+            }))}
+          />
+        </div>
+      )}
+
       {/* Evidence */}
       {log.discovered_evidence && log.discovered_evidence.length > 0 && (
         <div class="bg-white rounded-xl p-6 border border-gray-200">
@@ -232,6 +263,19 @@ export default function SessionLogDetail({ logId, cachedLog, onBack }: Props) {
           <div class="bg-amber-50 rounded-lg p-4 border border-amber-200">
             <p class="text-gray-800 whitespace-pre-wrap">{log.gm_memo}</p>
           </div>
+        </div>
+      )}
+
+      {/* Rubric Evaluation (Phase 97) */}
+      {log.teacher_id && (
+        <div class="bg-white rounded-xl p-6 border border-gray-200">
+          <h3 class="font-bold text-lg mb-4">ルーブリック評価</h3>
+          <RubricEvaluator
+            sessionLogId={log.id}
+            teacherId={log.teacher_id}
+            scenarioSlug={log.scenario_slug}
+            classId={log.class_id}
+          />
         </div>
       )}
 

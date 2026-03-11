@@ -8,17 +8,106 @@ import {
   reconnectSession,
   fetchMyParticipant,
   clearSavedSession,
+  cacheSessionState,
+  getCachedSessionState,
+  clearSessionCache,
+  sendHeartbeat,
+  submitFeedback,
   type SessionRun,
   type SessionParticipant,
 } from '../../lib/session-realtime';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { PHASE_CONFIG } from './types';
+import { useFontSize } from '../../lib/use-font-size';
 
 // ============================================================
 // Types
 // ============================================================
 
 type Screen = 'join' | 'lobby' | 'session' | 'ended';
+
+// ============================================================
+// Phase 91: Feedback Form component
+// ============================================================
+
+function FeedbackForm({ participantId, sessionToken }: { participantId: string; sessionToken: string }) {
+  const [funRating, setFunRating] = useState(0);
+  const [difficultyRating, setDifficultyRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  if (!participantId || !sessionToken) return null;
+
+  if (submitted) {
+    return (
+      <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+        <p class="text-green-700 font-bold text-sm">ありがとう！</p>
+      </div>
+    );
+  }
+
+  const handleSubmit = async () => {
+    if (funRating === 0 || difficultyRating === 0) return;
+    setSubmitting(true);
+    const ok = await submitFeedback(participantId, sessionToken, funRating, difficultyRating, comment);
+    setSubmitting(false);
+    if (ok) setSubmitted(true);
+  };
+
+  const StarRow = ({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) => (
+    <div class="space-y-1">
+      <p class="text-xs font-bold text-gray-600">{label}</p>
+      <div class="flex gap-1">
+        {[1, 2, 3, 4, 5].map(n => (
+          <button
+            key={n}
+            onClick={() => onChange(n)}
+            class={`w-10 h-10 rounded-lg text-lg transition-colors ${
+              n <= value ? 'bg-amber-400 text-white' : 'bg-gray-100 text-gray-400'
+            }`}
+          >
+            {'\u2B50'}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div class="bg-white rounded-xl border-2 border-blue-200 p-4 space-y-3">
+      <h3 class="text-sm font-black text-blue-700 text-center">感想を教えてね</h3>
+      <StarRow label="楽しさ" value={funRating} onChange={setFunRating} />
+      <StarRow label="難しさ" value={difficultyRating} onChange={setDifficultyRating} />
+      <div>
+        <p class="text-xs font-bold text-gray-600 mb-1">一言（任意）</p>
+        <input
+          type="text"
+          value={comment}
+          onInput={(e) => setComment((e.target as HTMLInputElement).value.slice(0, 50))}
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 outline-none"
+          placeholder="ひとこと感想..."
+          maxLength={50}
+        />
+      </div>
+      <button
+        onClick={handleSubmit}
+        disabled={funRating === 0 || difficultyRating === 0 || submitting}
+        class="w-full py-2.5 bg-blue-500 text-white rounded-xl font-bold text-sm hover:bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500 transition-colors"
+      >
+        {submitting ? '送信中...' : '送信する'}
+      </button>
+    </div>
+  );
+}
+
+// ============================================================
+// Reconnection constants (Phase 85)
+// ============================================================
+
+const MAX_RETRIES = 5;
+const getBackoffDelay = (retryCount: number): number =>
+  Math.min(3000 * Math.pow(2, retryCount), 30000); // 3s, 6s, 12s, 24s, 30s
 
 // ============================================================
 // Phase display config (student-facing labels)
@@ -39,6 +128,8 @@ const PHASE_DISPLAY: Record<string, { icon: string; label: string; message: stri
 // ============================================================
 
 export default function StudentSession() {
+  const fontSize = useFontSize();
+
   // Join state
   const [screen, setScreen] = useState<Screen>('join');
   const [joinCode, setJoinCode] = useState('');
@@ -74,17 +165,27 @@ export default function StudentSession() {
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
 
-  // Connection state (Phase 68)
+  // Connection state (Phase 68/85)
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'reconnecting' | 'disconnected'>('connected');
   const pendingVoteRef = useRef<{ votedFor: string; voteReason: string } | null>(null);
+
+  // Auto-reconnect state (Phase 85)
+  const retryCountRef = useRef(0);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [shouldReconnect, setShouldReconnect] = useState(0);
 
   // Reconnection state
   const [reconnecting, setReconnecting] = useState(true);
 
-  // Handle Realtime channel status changes (Phase 68)
+  // Handle Realtime channel status changes (Phase 68/85: auto-reconnect)
   const handleChannelStatus = useCallback((status: string) => {
     if (status === 'SUBSCRIBED') {
       setConnectionStatus('connected');
+      retryCountRef.current = 0;
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = null;
+      }
       // Retry pending vote if any
       const pending = pendingVoteRef.current;
       const p = participantRef.current;
@@ -93,30 +194,76 @@ export default function StudentSession() {
         voteAsParticipant(p.id, p.session_token, pending.votedFor, pending.voteReason || undefined)
           .then((ok) => { if (ok) setHasVoted(true); });
       }
-    } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-      setConnectionStatus('disconnected');
-    } else if (status === 'CLOSED') {
-      setConnectionStatus('disconnected');
+    } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+      // Phase 85: trigger auto-reconnect instead of just showing disconnected
+      setShouldReconnect((n) => n + 1);
     }
   }, []);
 
-  // Manual reconnect (Phase 68)
-  const handleReconnect = useCallback(() => {
-    if (!sessionRun) return;
+  // Manual reconnect (Phase 85: reset retries and trigger auto-reconnect)
+  const handleManualReconnect = useCallback(() => {
+    retryCountRef.current = 0;
+    setShouldReconnect((n) => n + 1);
+  }, []);
+
+  // Phase 85: Auto-reconnect with exponential backoff
+  useEffect(() => {
+    if (shouldReconnect === 0 || !sessionRun || screen !== 'session') return;
+
+    if (retryCountRef.current >= MAX_RETRIES) {
+      setConnectionStatus('disconnected');
+      return;
+    }
+
     setConnectionStatus('reconnecting');
-    // Unsubscribe old channel
-    if (channelRef.current) unsubscribeChannel(channelRef.current);
-    // Re-subscribe to session run
-    const channel = subscribeToSessionRun(
-      sessionRun.id,
-      (updated) => {
-        setSessionRun(updated);
-        refreshParticipant();
-      },
-      handleChannelStatus,
-    );
-    channelRef.current = channel;
-  }, [sessionRun, handleChannelStatus]);
+    const delay = getBackoffDelay(retryCountRef.current);
+    const runId = sessionRun.id;
+
+    const timer = setTimeout(async () => {
+      retryCountRef.current++;
+
+      // Unsubscribe old channel
+      if (channelRef.current) {
+        unsubscribeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+
+      // Fetch latest state via RPC
+      try {
+        const p = participantRef.current;
+        if (p) {
+          const result = await reconnectSession(p.session_run_id, p.session_token);
+          if (result) {
+            setSessionRun(result.run);
+            setParticipant(result.participant);
+            participantRef.current = result.participant;
+            if (!result.run.is_active) {
+              clearSessionCache(runId);
+              setScreen('ended');
+              return;
+            }
+          }
+        }
+      } catch { /* continue to re-subscribe */ }
+
+      // Re-subscribe to realtime channel
+      const channel = subscribeToSessionRun(
+        runId,
+        (updated) => {
+          setSessionRun(updated);
+          refreshParticipant();
+        },
+        handleChannelStatus,
+      );
+      channelRef.current = channel;
+    }, delay);
+
+    retryTimerRef.current = timer;
+    return () => {
+      clearTimeout(timer);
+      retryTimerRef.current = null;
+    };
+  }, [shouldReconnect, screen]);
 
   // Fetch own participant data via RPC — Phase 71: replaces Realtime subscription
   const refreshParticipant = useCallback(async () => {
@@ -152,6 +299,14 @@ export default function StudentSession() {
 
         // Attempt reconnection if we have saved session data
         if (savedToken && savedRunId) {
+          // Phase 85: Instant restore from localStorage cache
+          const cached = getCachedSessionState(savedRunId);
+          if (cached && cached.is_active) {
+            setSessionRun(cached);
+            setScreen('session');
+            setReconnecting(false);
+          }
+
           const result = await reconnectSession(savedRunId, savedToken);
 
           if (cancelled) return;
@@ -184,6 +339,7 @@ export default function StudentSession() {
               setScreen('session');
             } else {
               // Session ended while we were away
+              clearSessionCache(run.id);
               setScreen('ended');
             }
 
@@ -191,8 +347,15 @@ export default function StudentSession() {
             return;
           }
 
+          // RPC failed — if cache exists, show cached state and start auto-reconnect
+          if (cached && cached.is_active && !cancelled) {
+            setShouldReconnect((n) => n + 1);
+            return;
+          }
+
           // Token invalid or session gone — clear saved data
           clearSavedSession();
+          if (cached) clearSessionCache(savedRunId);
         }
       } catch { /* ignore */ }
 
@@ -229,13 +392,38 @@ export default function StudentSession() {
     setTimerRunning(sessionRun.timer_running);
   }, [sessionRun?.current_phase, sessionRun?.timer_seconds, sessionRun?.timer_running]);
 
-  // Watch for session end — cleanup channel and transition
+  // Phase 85: Cache session state on every update for instant restore
+  useEffect(() => {
+    if (!sessionRun?.id || !sessionRun.is_active) return;
+    cacheSessionState(sessionRun.id, sessionRun);
+  }, [sessionRun]);
+
+  // Phase 86: Heartbeat (30s interval) — updates last_seen_at for GM connection monitor
+  useEffect(() => {
+    if (screen !== 'session' || !participant) return;
+    // Send initial heartbeat on join/reconnect
+    sendHeartbeat(participant.id, participant.session_token);
+    const interval = setInterval(() => {
+      const p = participantRef.current;
+      if (p) sendHeartbeat(p.id, p.session_token);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [screen, participant?.id]);
+
+  // Watch for session end — cleanup channel, cache, timers, and transition
   useEffect(() => {
     if (sessionRun && !sessionRun.is_active && screen === 'session') {
       if (channelRef.current) {
         unsubscribeChannel(channelRef.current);
         channelRef.current = null;
       }
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = null;
+      }
+      retryCountRef.current = 0;
+      clearSessionCache(sessionRun.id);
+      clearSavedSession();
       setScreen('ended');
     }
   }, [sessionRun?.is_active, screen]);
@@ -245,6 +433,9 @@ export default function StudentSession() {
     return () => {
       if (channelRef.current) {
         unsubscribeChannel(channelRef.current);
+      }
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
       }
     };
   }, []);
@@ -286,10 +477,14 @@ export default function StudentSession() {
     setJoining(true);
 
     try {
-      // Phase 71: RPC handles active check + participant insert atomically
+      // Phase 71/83: RPC handles active check + participant insert + student_id validation
+      const savedStudentId = localStorage.getItem('nazotoki-student-id') || undefined;
+      const savedStudentToken = localStorage.getItem('nazotoki-student-token') || undefined;
       const p = await joinSession({
         joinCode: sessionRun.join_code,
         participantName: playerName.trim(),
+        studentId: savedStudentId,
+        studentToken: savedStudentToken,
       });
 
       if (!p) {
@@ -513,7 +708,19 @@ export default function StudentSession() {
     const totalEvidence = ((sessionRun?.evidence_titles as { number: number; title: string }[]) || []).length;
 
     const handleReset = () => {
+      // Phase 85 fix: clear reconnect timer and refs to prevent stale callbacks
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = null;
+      }
+      if (channelRef.current) {
+        unsubscribeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+      retryCountRef.current = 0;
+      participantRef.current = null;
       clearSavedSession();
+      if (sessionRun) clearSessionCache(sessionRun.id);
       setScreen('join');
       setSessionRun(null);
       setParticipant(null);
@@ -524,6 +731,7 @@ export default function StudentSession() {
       setScenarioContent(null);
       setEvidenceOpen(false);
       setExpandedCards(new Set());
+      setConnectionStatus('connected');
     };
 
     return (
@@ -610,6 +818,12 @@ export default function StudentSession() {
             </div>
           )}
 
+          {/* Phase 91: Feedback form */}
+          <FeedbackForm
+            participantId={participant?.id || ''}
+            sessionToken={participant?.session_token || ''}
+          />
+
           {/* Thank you + reset */}
           <div class="text-center space-y-3 pt-2">
             <p class="text-gray-500 text-sm">お疲れ様でした！</p>
@@ -639,28 +853,19 @@ export default function StudentSession() {
 
   return (
     <div class="min-h-[80dvh] flex flex-col px-4 py-6 relative max-w-2xl mx-auto w-full">
-      {/* Connection indicator (Phase 68) */}
-      <div class="absolute top-2 right-2 flex items-center gap-1.5">
-        <span class={`w-2.5 h-2.5 rounded-full ${
-          connectionStatus === 'connected'
-            ? 'bg-green-400'
-            : connectionStatus === 'reconnecting'
-              ? 'bg-yellow-400 animate-pulse'
-              : 'bg-red-400'
-        }`} />
-        {connectionStatus !== 'connected' && (
-          <span class="text-[10px] text-gray-400 font-bold">
-            {connectionStatus === 'reconnecting' ? '再接続中' : '切断'}
-          </span>
-        )}
-      </div>
-
-      {/* Disconnection banner (Phase 68) */}
+      {/* Connection status banner (Phase 85: sticky, auto-reconnect feedback) */}
+      {connectionStatus === 'reconnecting' && (
+        <div class="sticky top-0 z-50 bg-yellow-50 border-b-2 border-yellow-300 px-4 py-2 text-center mb-2 rounded-t-xl">
+          <p class="text-yellow-800 text-sm font-bold">
+            再接続中...（{retryCountRef.current + 1}/{MAX_RETRIES}）
+          </p>
+        </div>
+      )}
       {connectionStatus === 'disconnected' && (
-        <div class="mb-4 bg-red-50 border border-red-200 rounded-xl p-3 flex items-center justify-between">
-          <p class="text-red-700 text-sm font-bold">接続が切れました</p>
+        <div class="sticky top-0 z-50 bg-red-50 border-b-2 border-red-300 px-4 py-2 flex items-center justify-between mb-2 rounded-t-xl">
+          <p class="text-red-700 text-sm font-bold">接続エラー</p>
           <button
-            onClick={handleReconnect}
+            onClick={handleManualReconnect}
             class="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors"
           >
             再接続
@@ -669,7 +874,14 @@ export default function StudentSession() {
       )}
 
       {/* Header: scenario + participant info */}
-      <div class="text-center mb-6">
+      <div class="text-center mb-6 relative">
+        <button
+          onClick={fontSize.cycle}
+          class="absolute right-0 top-0 text-[10px] text-gray-400 hover:text-gray-600 transition-colors px-1.5 py-0.5 border border-gray-200 rounded"
+          title={`文字サイズ: ${fontSize.label}`}
+        >
+          Aa
+        </button>
         <p class="text-sm text-gray-400">{participant?.participant_name}</p>
         {participant?.assigned_character && (
           <div class="inline-block mt-1 px-3 py-1 bg-amber-100 border border-amber-300 rounded-full">

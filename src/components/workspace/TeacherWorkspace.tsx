@@ -20,6 +20,9 @@ import TermReports from './TermReports';
 import AnnualReports from './AnnualReports';
 import SchoolReport from './SchoolReport';
 import AdminDashboard from './AdminDashboard';
+import LessonCalendar from './LessonCalendar';
+import OnboardingWizard from './OnboardingWizard';
+import ScenarioRecommender from './ScenarioRecommender';
 import {
   exportAllReportsZip,
   exportSelectedReportsZip,
@@ -28,17 +31,26 @@ import {
   type ExportSelection,
 } from '../../lib/zip-export';
 
-type WorkspaceTab = 'history' | 'classes' | 'analytics' | 'reports' | 'admin';
+type WorkspaceTab = 'history' | 'classes' | 'calendar' | 'analytics' | 'reports' | 'admin';
 type ReportSubTab = 'monthly' | 'term' | 'annual' | 'school';
+
+interface ScenarioItem {
+  slug: string;
+  title: string;
+  series: string;
+  seriesName: string;
+  difficulty: string;
+}
 
 interface Props {
   teacherId: string;
   teacherName: string;
   schoolId?: string | null;
   role?: string | null;
+  scenarios?: ScenarioItem[];
 }
 
-export default function TeacherWorkspace({ teacherId, teacherName, schoolId, role }: Props) {
+export default function TeacherWorkspace({ teacherId, teacherName, schoolId, role, scenarios = [] }: Props) {
   const isAdmin = role === 'admin';
   const [tab, setTab] = useState<WorkspaceTab>('history');
   const [reportSubTab, setReportSubTab] = useState<ReportSubTab>('monthly');
@@ -50,6 +62,14 @@ export default function TeacherWorkspace({ teacherId, teacherName, schoolId, rol
   const [zipExporting, setZipExporting] = useState(false);
   const [exportSelection, setExportSelection] = useState<ExportSelection>({ ...DEFAULT_EXPORT_SELECTION });
   const [showExportSettings, setShowExportSettings] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Phase 100: Onboarding wizard detection
+  useEffect(() => {
+    if (!loading && classes.length === 0 && !localStorage.getItem('nazotoki-onboarding-completed')) {
+      setShowOnboarding(true);
+    }
+  }, [loading, classes.length]);
 
   // Guard: redirect non-admin away from admin tab
   useEffect(() => {
@@ -115,6 +135,7 @@ export default function TeacherWorkspace({ teacherId, teacherName, schoolId, rol
         logId={selectedLogId}
         cachedLog={log || null}
         onBack={() => setSelectedLogId(null)}
+        role={role}
       />
     );
   }
@@ -128,6 +149,7 @@ export default function TeacherWorkspace({ teacherId, teacherName, schoolId, rol
           classId={selectedClassId}
           classData={cls}
           teacherId={teacherId}
+          scenarios={scenarios}
           onBack={() => {
             setSelectedClassId(null);
             // Refresh classes when returning
@@ -142,8 +164,22 @@ export default function TeacherWorkspace({ teacherId, teacherName, schoolId, rol
     fetchSessionLogs(teacherId).then(setLogs);
   };
 
+  const playedSlugs = logs.map((l) => l.scenario_slug);
+
   return (
     <div>
+      {/* Phase 100: Onboarding Wizard */}
+      {showOnboarding && (
+        <OnboardingWizard
+          teacherId={teacherId}
+          schoolId={schoolId}
+          onComplete={() => {
+            setShowOnboarding(false);
+            fetchClasses(teacherId).then(setClasses);
+          }}
+        />
+      )}
+
       {/* Orphaned logs adoption banner */}
       <OrphanedLogsBanner teacherId={teacherId} onClaimed={refreshLogs} />
 
@@ -151,64 +187,93 @@ export default function TeacherWorkspace({ teacherId, teacherName, schoolId, rol
       <StatsBar logs={logs} classCount={classes.length} />
 
       {/* Tabs */}
-      <div class="flex border-b border-gray-200 mb-6">
+      <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
         <button
           onClick={() => setTab('history')}
-          class={`flex-1 py-3 text-sm font-bold transition-colors ${
+          class={`flex-1 py-3 text-sm font-bold transition-colors whitespace-nowrap ${
             tab === 'history'
               ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50'
               : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
           }`}
         >
-          📋 授業履歴 ({logs.length})
+          授業履歴
         </button>
         <button
           onClick={() => setTab('classes')}
-          class={`flex-1 py-3 text-sm font-bold transition-colors ${
+          class={`flex-1 py-3 text-sm font-bold transition-colors whitespace-nowrap ${
             tab === 'classes'
               ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50'
               : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
           }`}
         >
-          🏫 クラス ({classes.length})
+          クラス
+        </button>
+        <button
+          onClick={() => setTab('calendar')}
+          class={`flex-1 py-3 text-sm font-bold transition-colors whitespace-nowrap ${
+            tab === 'calendar'
+              ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50'
+              : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          カレンダー
         </button>
         <button
           onClick={() => setTab('analytics')}
-          class={`flex-1 py-3 text-sm font-bold transition-colors ${
+          class={`flex-1 py-3 text-sm font-bold transition-colors whitespace-nowrap ${
             tab === 'analytics'
               ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50'
               : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
           }`}
         >
-          📊 分析
+          分析
         </button>
         <button
           onClick={() => setTab('reports')}
-          class={`flex-1 py-3 text-sm font-bold transition-colors ${
+          class={`flex-1 py-3 text-sm font-bold transition-colors whitespace-nowrap ${
             tab === 'reports'
               ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50'
               : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
           }`}
         >
-          📅 レポート
+          レポート
         </button>
         {isAdmin && (
           <button
             onClick={() => setTab('admin')}
-            class={`flex-1 py-3 text-sm font-bold transition-colors ${
+            class={`flex-1 py-3 text-sm font-bold transition-colors whitespace-nowrap ${
               tab === 'admin'
                 ? 'text-sky-700 border-b-2 border-sky-500 bg-sky-50'
                 : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
             }`}
           >
-            📊 管理
+            管理
           </button>
         )}
       </div>
 
       {/* Content */}
       {tab === 'history' ? (
-        <SessionHistoryList logs={logs} onSelect={setSelectedLogId} />
+        <div>
+          {/* Phase 103: Scenario Recommender */}
+          {scenarios.length > 0 && (
+            <div class="mb-6">
+              <ScenarioRecommender
+                scenarios={scenarios}
+                playedSlugs={playedSlugs}
+                gradeLabel={classes.length > 0 ? classes[0].grade_label : null}
+              />
+            </div>
+          )}
+          <SessionHistoryList logs={logs} onSelect={setSelectedLogId} />
+        </div>
+      ) : tab === 'calendar' ? (
+        <LessonCalendar
+          teacherId={teacherId}
+          classes={classes}
+          logs={logs}
+          scenarios={scenarios}
+        />
       ) : tab === 'analytics' ? (
         <AnalyticsDashboard logs={logs} classes={classes} teacherId={teacherId} />
       ) : tab === 'reports' ? (

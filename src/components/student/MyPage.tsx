@@ -1,5 +1,9 @@
-import { useState, useEffect } from 'preact/hooks';
-import { supabase, fetchStudentAssignments, type StudentAssignment } from '../../lib/supabase';
+import { useState, useEffect, useMemo } from 'preact/hooks';
+import { supabase, fetchStudentAssignments, fetchClassLeaderboard, fetchStudentBadges, fetchStudentStreak, BADGE_DEFS, type StudentAssignment, type LeaderboardEntry } from '../../lib/supabase';
+import GrowthReport from './GrowthReport';
+import CollectionBook from './CollectionBook';
+import { isUnlocked, getUnlockThreshold } from '../../lib/unlock';
+import { useFontSize } from '../../lib/use-font-size';
 
 // --- Types ---
 
@@ -8,9 +12,12 @@ interface ScenarioMeta {
   title: string;
   series: string;
   seriesName: string;
+  volume: number;
   difficulty: string;
   subject: string;
   thumbnailUrl?: string;
+  characterNames: string[];
+  evidenceTitles: string[];
 }
 
 interface SoloSessionRecord {
@@ -82,8 +89,13 @@ export default function MyPage({ scenarios, seriesConfig }: Props) {
   const [sessions, setSessions] = useState<SoloSessionRecord[]>([]);
   const [authenticated, setAuthenticated] = useState(false);
   const [assignments, setAssignments] = useState<StudentAssignment[]>([]);
-  const [activeTab, setActiveTab] = useState<'assignments' | 'catalog' | 'history'>('assignments');
+  const [activeTab, setActiveTab] = useState<'assignments' | 'catalog' | 'growth' | 'collection' | 'history'>('assignments');
   const [seriesFilter, setSeriesFilter] = useState<string>('all');
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [earnedBadges, setEarnedBadges] = useState<Set<string>>(new Set());
+  const [streak, setStreak] = useState(0);
+  const [streakMultiplier, setStreakMultiplier] = useState(1.0);
+  const fontSize = useFontSize();
 
   useEffect(() => {
     const savedId = localStorage.getItem(LS_STUDENT_ID);
@@ -124,14 +136,34 @@ export default function MyPage({ scenarios, seriesConfig }: Props) {
         setTotalRp((result.total_rp as number) || 0);
         setSessions((result.sessions as SoloSessionRecord[]) || []);
 
-        // Fetch assignments
-        fetchStudentAssignments(savedId!, savedToken!).then(({ assignments: a }) => {
-          setAssignments(a);
-          // Show assignments tab if there are any, otherwise catalog
-          if (a.length > 0) setActiveTab('assignments');
+        // Fetch assignments + leaderboard + badges (read-only) + streak in parallel
+        Promise.all([
+          fetchStudentAssignments(savedId!, savedToken!),
+          fetchClassLeaderboard(savedId!, savedToken!),
+          fetchStudentBadges(savedId!, savedToken!),
+          fetchStudentStreak(savedId!, savedToken!),
+        ]).then(([assignResult, lbResult, badges, streakResult]) => {
+          setAssignments(assignResult.assignments);
+          if (assignResult.assignments.length > 0) setActiveTab('assignments');
+          if (lbResult.leaderboard.length > 0) setLeaderboard(lbResult.leaderboard);
+          if (badges.length > 0) setEarnedBadges(new Set(badges));
+          setStreak(streakResult.streak);
+          setStreakMultiplier(streakResult.multiplier);
           setLoading(false);
         });
       });
+  }, []);
+
+  // Phase 82: Cross-tab logout detection via storage event
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === LS_STUDENT_TOKEN && !e.newValue) {
+        setAuthenticated(false);
+        setLoading(false);
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
   // --- Not logged in ---
@@ -157,7 +189,7 @@ export default function MyPage({ scenarios, seriesConfig }: Props) {
   if (loading) {
     return (
       <div class="min-h-[80dvh] flex items-center justify-center">
-        <p class="text-gray-400 text-lg">読み込み中...</p>
+        <p class="text-gray-500 text-lg">読み込み中...</p>
       </div>
     );
   }
@@ -177,6 +209,12 @@ export default function MyPage({ scenarios, seriesConfig }: Props) {
     rpToNext = nextRank.minRp - totalRp;
   }
 
+  // Phase 94: Assigned slugs for unlock bypass
+  const assignedSlugs = useMemo(
+    () => new Set(assignments.map(a => a.scenario_slug)),
+    [assignments],
+  );
+
   // Series groups for catalog
   const seriesKeys = Object.keys(seriesConfig);
   const filteredScenarios =
@@ -190,14 +228,23 @@ export default function MyPage({ scenarios, seriesConfig }: Props) {
       <div class="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shrink-0">
         <div class="min-w-0">
           <p class="text-sm font-black text-gray-900 truncate">{studentName}</p>
-          <p class="text-xs text-gray-400">ID: {loginId}</p>
+          <p class="text-xs text-gray-500">ID: {loginId}</p>
         </div>
-        <a
-          href="/login"
-          class="text-xs text-gray-400 hover:text-gray-600 transition-colors shrink-0"
-        >
-          ログアウト
-        </a>
+        <div class="flex items-center gap-2 shrink-0">
+          <button
+            onClick={fontSize.cycle}
+            class="text-xs text-gray-400 hover:text-gray-600 transition-colors px-1.5 py-0.5 border border-gray-200 rounded"
+            title={`文字サイズ: ${fontSize.label}`}
+          >
+            Aa:{fontSize.label}
+          </button>
+          <a
+            href="/login"
+            class="text-xs text-gray-500 hover:text-gray-600 transition-colors"
+          >
+            ログアウト
+          </a>
+        </div>
       </div>
 
       {/* Rank card */}
@@ -253,12 +300,88 @@ export default function MyPage({ scenarios, seriesConfig }: Props) {
         </div>
       </div>
 
+      {/* Phase 90: Streak banner */}
+      {streak > 0 && (
+        <div class="px-4 pt-2">
+          <div class="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-2xl p-3 flex items-center gap-3">
+            <span class="text-2xl">
+              {streak >= 7 ? '\uD83D\uDD25\uD83D\uDD25\uD83D\uDD25' : streak >= 3 ? '\uD83D\uDD25\uD83D\uDD25' : '\uD83D\uDD25'}
+            </span>
+            <div class="flex-1">
+              <p class="text-sm font-black text-orange-800">{streak}日連続プレイ中！</p>
+              {streakMultiplier > 1.0 && (
+                <p class="text-xs text-orange-600">RP x{streakMultiplier} ボーナス適用中</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Phase 89: Badge display */}
+      <div class="px-4 py-2">
+        <div class="bg-white border border-gray-200 rounded-2xl p-4">
+          <h3 class="text-sm font-black text-gray-800 mb-3">獲得バッジ</h3>
+          <div class="grid grid-cols-5 gap-2">
+            {BADGE_DEFS.map(badge => {
+              const earned = earnedBadges.has(badge.key);
+              return (
+                <div
+                  key={badge.key}
+                  class={`flex flex-col items-center gap-1 p-2 rounded-xl text-center ${
+                    earned ? '' : 'opacity-30 grayscale'
+                  }`}
+                  title={badge.description}
+                >
+                  <span class="text-2xl">{earned ? badge.icon : '\uD83D\uDD12'}</span>
+                  <span class="text-[10px] font-bold text-gray-700 leading-tight">{badge.label}</span>
+                </div>
+              );
+            })}
+          </div>
+          <p class="text-xs text-gray-400 mt-2 text-center">
+            {earnedBadges.size}/{BADGE_DEFS.length} 獲得
+          </p>
+        </div>
+      </div>
+
+      {/* Phase 88: Class Leaderboard */}
+      {leaderboard.length > 0 && (
+        <div class="px-4 py-2">
+          <div class="bg-white border border-gray-200 rounded-2xl p-4">
+            <h3 class="text-sm font-black text-gray-800 mb-3">クラスランキング</h3>
+            <div class="space-y-1.5">
+              {leaderboard.slice(0, 10).map(entry => {
+                const medal = entry.rank === 1 ? '\uD83E\uDD47' : entry.rank === 2 ? '\uD83E\uDD48' : entry.rank === 3 ? '\uD83E\uDD49' : '';
+                return (
+                  <div
+                    key={entry.rank}
+                    class={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm ${
+                      entry.is_me ? 'bg-amber-50 border border-amber-300 font-black' : ''
+                    }`}
+                  >
+                    <span class="w-8 text-center shrink-0">
+                      {medal || `${entry.rank}.`}
+                    </span>
+                    <span class="flex-1 truncate">
+                      {entry.student_name}
+                      {entry.is_me && <span class="text-xs text-amber-600 ml-1">(自分)</span>}
+                    </span>
+                    <span class="text-xs text-gray-500 shrink-0">{entry.clear_count}回</span>
+                    <span class="font-bold text-amber-600 shrink-0">{entry.total_rp} RP</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tab switch */}
       <div class="px-4 py-2 flex gap-2">
         {assignments.length > 0 && (
           <button
             onClick={() => setActiveTab('assignments')}
-            class={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${
+            class={`flex-1 py-3 rounded-xl text-sm font-bold transition-colors ${
               activeTab === 'assignments'
                 ? 'bg-blue-500 text-white'
                 : 'bg-gray-200 text-gray-600'
@@ -269,23 +392,43 @@ export default function MyPage({ scenarios, seriesConfig }: Props) {
         )}
         <button
           onClick={() => setActiveTab('catalog')}
-          class={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${
+          class={`flex-1 py-3 rounded-xl text-sm font-bold transition-colors ${
             activeTab === 'catalog'
               ? 'bg-amber-500 text-white'
               : 'bg-gray-200 text-gray-600'
           }`}
         >
-          シナリオ一覧
+          一覧
+        </button>
+        <button
+          onClick={() => setActiveTab('growth')}
+          class={`flex-1 py-3 rounded-xl text-sm font-bold transition-colors ${
+            activeTab === 'growth'
+              ? 'bg-emerald-500 text-white'
+              : 'bg-gray-200 text-gray-600'
+          }`}
+        >
+          成長
+        </button>
+        <button
+          onClick={() => setActiveTab('collection')}
+          class={`flex-1 py-3 rounded-xl text-sm font-bold transition-colors ${
+            activeTab === 'collection'
+              ? 'bg-purple-500 text-white'
+              : 'bg-gray-200 text-gray-600'
+          }`}
+        >
+          図鑑
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          class={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${
+          class={`flex-1 py-3 rounded-xl text-sm font-bold transition-colors ${
             activeTab === 'history'
               ? 'bg-amber-500 text-white'
               : 'bg-gray-200 text-gray-600'
           }`}
         >
-          プレイ履歴 ({sessions.length})
+          履歴
         </button>
       </div>
 
@@ -388,6 +531,29 @@ export default function MyPage({ scenarios, seriesConfig }: Props) {
                 const played = playedSlugs.has(s.slug);
                 const session = sessions.find(ss => ss.scenario_slug === s.slug);
                 const cfg = seriesConfig[s.series];
+                const unlocked = isUnlocked(s.volume, totalRp, assignedSlugs, s.slug);
+                const rpNeeded = getUnlockThreshold(s.volume) - totalRp;
+
+                if (!unlocked) {
+                  return (
+                    <div
+                      key={s.slug}
+                      class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50 opacity-60"
+                    >
+                      <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0 bg-gray-200">
+                        &#128274;
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold text-gray-400 truncate">{s.title}</p>
+                        <p class="text-xs text-gray-400 truncate">{s.seriesName} / {s.difficulty}</p>
+                      </div>
+                      <div class="shrink-0 text-right">
+                        <p class="text-[10px] text-gray-400">あと{rpNeeded}RP</p>
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <a
                     key={s.slug}
@@ -417,7 +583,7 @@ export default function MyPage({ scenarios, seriesConfig }: Props) {
                       {played && session ? (
                         <p class="text-xs font-bold text-amber-600">{session.rp_earned} RP</p>
                       ) : (
-                        <p class="text-xs text-gray-400">未プレイ</p>
+                        <p class="text-xs text-gray-500">未プレイ</p>
                       )}
                     </div>
                   </a>
@@ -425,6 +591,23 @@ export default function MyPage({ scenarios, seriesConfig }: Props) {
               })}
             </div>
           </div>
+        )}
+
+        {activeTab === 'growth' && (
+          <GrowthReport
+            sessions={sessions}
+            totalRp={totalRp}
+            seriesConfig={seriesConfig}
+            scenarioSeriesMap={new Map(scenarios.map(s => [s.slug, s.series]))}
+          />
+        )}
+
+        {activeTab === 'collection' && (
+          <CollectionBook
+            scenarios={scenarios}
+            playedSlugs={playedSlugs}
+            seriesConfig={seriesConfig}
+          />
         )}
 
         {activeTab === 'history' && (

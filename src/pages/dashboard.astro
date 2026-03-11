@@ -28,9 +28,5 @@ const scenarioList = scenarios.map(s => ({
     <p class="text-gray-500 mt-2">授業履歴・クラス管理・生徒参加ログ</p>
   </div>
 
-  <TeacherAuthGate client:load />
+  <TeacherAuthGate client:load scenarios={scenarioList} />
 </BaseLayout>
-
-<script define:vars={{ scenarioList }}>
-  window.__SCENARIO_LIST__ = scenarioList;
-</script>

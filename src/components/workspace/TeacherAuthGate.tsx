@@ -10,7 +10,15 @@ import {
 } from '../../lib/supabase';
 import TeacherWorkspace from './TeacherWorkspace';
 
-export default function TeacherAuthGate() {
+interface ScenarioItem {
+  slug: string;
+  title: string;
+  series: string;
+  seriesName: string;
+  difficulty: string;
+}
+
+export default function TeacherAuthGate({ scenarios = [] }: { scenarios?: ScenarioItem[] }) {
   const [teacher, setTeacher] = useState<TeacherProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<'login' | 'signup' | 'reset' | 'email-sent'>('login');
@@ -107,7 +115,7 @@ export default function TeacherAuthGate() {
             ログアウト
           </button>
         </div>
-        <TeacherWorkspace teacherId={teacher.id} teacherName={teacher.display_name} schoolId={teacher.school_id} role={teacher.role} />
+        <TeacherWorkspace teacherId={teacher.id} teacherName={teacher.display_name} schoolId={teacher.school_id} role={teacher.role} scenarios={scenarios} />
       </div>
     );
   }

@@ -23,6 +23,8 @@ import {
   type TeacherProfile,
   type ClassRow,
   type StudentRow,
+  fetchSessionFeedback,
+  type SessionFeedbackRow,
 } from '../../lib/supabase';
 import {
   createSessionRun,
@@ -81,6 +83,11 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   const [participants, setParticipants] = useState<SessionParticipant[]>([]);
   const [startError, setStartError] = useState<string | null>(null);
   const participantChannelRef = useRef<RealtimeChannel | null>(null);
+  // Phase 86 fix: separate last_seen_at tracking to avoid heartbeat-triggered re-renders
+  const lastSeenMapRef = useRef<Record<string, string>>({});
+
+  // Phase 91: Feedback summary on completed screen
+  const [feedbackSummary, setFeedbackSummary] = useState<SessionFeedbackRow[]>([]);
 
   // Teacher / Class / Student state
   const [currentTeacher, setCurrentTeacher] = useState<TeacherProfile | null>(null);
@@ -234,10 +241,10 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
     setStartError(null);
 
     // Phase 72: Create session run via atomic RPC
+    // Phase 81: teacherId resolved server-side via auth.uid()
     const result = await createSessionRun({
       scenarioSlug: data.slug,
       scenarioTitle: data.title,
-      teacherId: currentTeacher?.id || null,
       classId: selectedClassId,
       playerCount,
       characterNames: data.playableCharacters.map((c) => c.name),
@@ -273,9 +280,26 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
         }
         setParticipants((prev) => [...prev, p]);
       },
-      (p) => setParticipants((prev) =>
-        prev.map((existing) => (existing.id === p.id ? p : existing)),
-      ),
+      (updated) => {
+        // Phase 86 fix: always track last_seen_at in ref (no re-render)
+        if (updated.last_seen_at) {
+          lastSeenMapRef.current[updated.id] = updated.last_seen_at;
+        }
+        // Only trigger state update if meaningful fields changed (not just heartbeat)
+        setParticipants((prev) => {
+          const old = prev.find((p) => p.id === updated.id);
+          if (old) {
+            const isHeartbeatOnly =
+              old.assigned_character === updated.assigned_character &&
+              old.voted_for === updated.voted_for &&
+              old.vote_reason === updated.vote_reason &&
+              old.student_id === updated.student_id &&
+              old.participant_name === updated.participant_name;
+            if (isHeartbeatOnly) return prev; // same ref → no re-render
+          }
+          return prev.map((p) => (p.id === updated.id ? updated : p));
+        });
+      },
     );
     participantChannelRef.current = channel;
 
@@ -634,6 +658,16 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
     }
   };
 
+  // Phase 91: Fetch feedback when session completes
+  useEffect(() => {
+    if (!completed || !sessionRunId) return;
+    fetchSessionFeedback(sessionRunId).then(setFeedbackSummary);
+    const id = setInterval(() => {
+      fetchSessionFeedback(sessionRunId).then(setFeedbackSummary);
+    }, 15000);
+    return () => clearInterval(id);
+  }, [completed, sessionRunId]);
+
   if (completed) {
     return (
       <div class="text-center py-12 space-y-6">
@@ -672,6 +706,40 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
             もう一度プレイ
           </button>
         </div>
+
+        {/* Phase 91: Feedback summary */}
+        {feedbackSummary.length > 0 && (
+          <div class="max-w-md mx-auto text-left">
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
+              <h3 class="text-sm font-black text-blue-700 text-center">
+                生徒フィードバック ({feedbackSummary.length}件)
+              </h3>
+              <div class="flex justify-around text-center">
+                <div>
+                  <p class="text-xs text-gray-500">楽しさ</p>
+                  <p class="text-xl font-black text-amber-600">
+                    {(feedbackSummary.reduce((s, f) => s + f.fun_rating, 0) / feedbackSummary.length).toFixed(1)}
+                  </p>
+                </div>
+                <div>
+                  <p class="text-xs text-gray-500">難しさ</p>
+                  <p class="text-xl font-black text-blue-600">
+                    {(feedbackSummary.reduce((s, f) => s + f.difficulty_rating, 0) / feedbackSummary.length).toFixed(1)}
+                  </p>
+                </div>
+              </div>
+              {feedbackSummary.filter(f => f.comment).length > 0 && (
+                <div class="border-t border-blue-200 pt-2 space-y-1">
+                  {feedbackSummary.filter(f => f.comment).map(f => (
+                    <p key={f.id} class="text-xs text-gray-600">
+                      「{f.comment}」
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -804,6 +872,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
           onAutoAssign={handleAutoAssign}
           classStudents={classStudents}
           onLinkStudent={handleLinkStudent}
+          lastSeenMap={lastSeenMapRef.current}
         />
       )}
 

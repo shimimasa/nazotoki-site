@@ -9,6 +9,13 @@ import { loadAllScenarios } from '../../lib/data';
 import { renderMarkdown } from '../../lib/markdown';
 
 export async function getStaticPaths() {
+  // Phase 105: Load all pre-generated feedback JSONs at build time
+  const feedbackFiles = import.meta.glob('../../data/solo-feedback/*.json', { eager: true }) as Record<string, { default: Record<string, unknown> }>;
+  function loadFeedback(slug: string): Record<string, unknown> | null {
+    const key = Object.keys(feedbackFiles).find(k => k.includes(`/${slug}.json`));
+    if (!key) return null;
+    return (feedbackFiles[key] as any).default ?? feedbackFiles[key] ?? null;
+  }
   function extractCharacterSections(fullContent: string) {
     const lines = fullContent.split('\n');
     let currentSection = '';
@@ -50,6 +57,7 @@ export async function getStaticPaths() {
       fullTitle: s.fullTitle,
       series: s.series,
       seriesName: s.seriesName,
+      volume: s.volume,
       subject: s.subject,
       difficulty: s.difficulty,
       time: s.time,
@@ -70,11 +78,12 @@ export async function getStaticPaths() {
       thumbnailUrl: s.thumbnailUrl,
     };
 
-    return { params: { slug: s.slug }, props: { soloData } };
+    const feedbackData = loadFeedback(s.slug);
+    return { params: { slug: s.slug }, props: { soloData, feedbackData } };
   });
 }
 
-const { soloData } = Astro.props;
+const { soloData, feedbackData } = Astro.props;
 ---
 <BaseLayout
   title={`ソロ推理: ${soloData.title}`}
@@ -82,7 +91,7 @@ const { soloData } = Astro.props;
   noIndex={true}
   fullWidth={true}
 >
-  <SoloSession client:load data={soloData} />
+  <SoloSession client:load data={soloData} feedbackData={feedbackData} />
 </BaseLayout>
 
 <style is:global>

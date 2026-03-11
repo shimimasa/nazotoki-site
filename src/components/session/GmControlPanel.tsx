@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'preact/hooks';
+import { useState, useEffect, useMemo } from 'preact/hooks';
 import { PHASE_CONFIG } from './types';
 import type { EvidenceCardData, CharacterData } from './types';
 import type { SessionParticipant } from '../../lib/session-realtime';
@@ -47,6 +47,8 @@ interface GmControlPanelProps {
   // Student link (Phase 62)
   classStudents: StudentRow[];
   onLinkStudent: (participantId: string, studentId: string | null) => void;
+  // Phase 86: heartbeat last_seen_at (separate from participants state to avoid re-render)
+  lastSeenMap: Record<string, string>;
 }
 
 function extractCulprit(truthHtml: string): string | null {
@@ -105,6 +107,7 @@ export default function GmControlPanel({
   onAutoAssign,
   classStudents,
   onLinkStudent,
+  lastSeenMap,
 }: GmControlPanelProps) {
   const [tab, setTab] = useState<PanelTab>('control');
 
@@ -233,6 +236,7 @@ export default function GmControlPanel({
               onAutoAssign={onAutoAssign}
               classStudents={classStudents}
               onLinkStudent={onLinkStudent}
+              lastSeenMap={lastSeenMap}
             />
           )}
         </div>
@@ -490,6 +494,8 @@ interface DashboardTabProps {
   // Student link (Phase 62)
   classStudents: StudentRow[];
   onLinkStudent: (participantId: string, studentId: string | null) => void;
+  // Phase 86: heartbeat last_seen_at
+  lastSeenMap: Record<string, string>;
 }
 
 function DashboardTab({
@@ -521,7 +527,45 @@ function DashboardTab({
   onAutoAssign,
   classStudents,
   onLinkStudent,
+  lastSeenMap,
 }: DashboardTabProps) {
+  // Phase 86: Periodic tick to update online/offline status
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 15000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Phase 87: QR code generation
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [showQrLarge, setShowQrLarge] = useState(false);
+  useEffect(() => {
+    if (!joinCode) { setQrDataUrl(null); return; }
+    let cancelled = false;
+    const joinUrl = `https://nazotoki.gamanavi.com/join?code=${joinCode}`;
+    import('qrcode').then((QRCode) => {
+      if (cancelled) return;
+      (QRCode.default?.toDataURL || QRCode.toDataURL)(joinUrl, {
+        width: 256,
+        margin: 1,
+        color: { dark: '#0c4a6e', light: '#f0f9ff' },
+      }).then((url: string) => {
+        if (!cancelled) setQrDataUrl(url);
+      }).catch((err: unknown) => {
+        console.warn('QR code generation failed:', err);
+      });
+    }).catch((err: unknown) => {
+      console.warn('QR code library load failed:', err);
+    });
+    return () => { cancelled = true; };
+  }, [joinCode]);
+
+  const isParticipantOnline = (p: SessionParticipant): boolean => {
+    const lastSeen = lastSeenMap[p.id] || p.last_seen_at;
+    if (!lastSeen) return false;
+    return Date.now() - new Date(lastSeen).getTime() < 60000;
+  };
+
   // Calculate phase durations from stepStartTimes
   const phaseDurations = useMemo(() => {
     const durations: { key: string; label: string; icon: string; seconds: number }[] = [];
@@ -558,8 +602,30 @@ function DashboardTab({
           <div class="font-mono font-black text-4xl tracking-[0.3em] text-sky-800 select-all">
             {joinCode}
           </div>
+          {/* Phase 87: QR code */}
+          {qrDataUrl && (
+            <div class="mt-3">
+              <button
+                onClick={() => setShowQrLarge((v) => !v)}
+                class="mx-auto block"
+                title="クリックで拡大/縮小"
+              >
+                <img
+                  src={qrDataUrl}
+                  alt="QR code"
+                  class={`mx-auto rounded-lg transition-all ${
+                    showQrLarge || isProjectorMode ? 'w-48 h-48' : 'w-24 h-24'
+                  }`}
+                />
+              </button>
+              <p class="text-[10px] text-sky-400 mt-1">
+                QRスキャンで参加ページへ
+              </p>
+            </div>
+          )}
           <p class="text-xs text-sky-500 mt-2">
-            生徒に伝えてください（{participants.length}人参加中）
+            生徒に伝えてください（{participants.length}人参加中
+            {participants.length > 0 && ` / ${participants.filter(isParticipantOnline).length}人オンライン`}）
           </p>
           {participants.length > 0 && (
             <div class="mt-3 space-y-2">
@@ -576,11 +642,14 @@ function DashboardTab({
                 return (
                   <div key={p.id} class="space-y-1">
                     <div class="flex items-center gap-2">
-                      <span class={`shrink-0 text-xs font-bold px-2 py-0.5 rounded-full ${
+                      <span class={`shrink-0 text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
                         p.voted_for
                           ? 'bg-green-100 text-green-700'
                           : 'bg-sky-100 text-sky-700'
                       }`}>
+                        <span class={`inline-block w-2 h-2 rounded-full shrink-0 ${
+                          isParticipantOnline(p) ? 'bg-green-400' : 'bg-red-400'
+                        }`} />
                         {p.participant_name}
                         {p.voted_for ? ' \u2713' : ''}
                       </span>
@@ -915,6 +984,7 @@ function DashboardTab({
           )}
         </section>
       )}
+
     </div>
   );
 }

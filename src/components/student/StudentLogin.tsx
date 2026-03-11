@@ -54,6 +54,19 @@ export default function StudentLogin() {
     }
   }, []);
 
+  // Phase 82: Cross-tab logout detection via storage event
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === LS_STUDENT_TOKEN && !e.newValue) {
+        setLoggedIn(null);
+        setPin('');
+        setLoginId('');
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
   const handleLogin = async (e: Event) => {
     e.preventDefault();
     setError('');

@@ -112,7 +112,7 @@ export default function AfterschoolSession({ data }: Props) {
       <div class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shrink-0">
         <div class="min-w-0">
           <p class="text-lg font-black text-gray-900 truncate">{data.title}</p>
-          <p class="text-sm text-gray-400">{stepLabel(step)} ({step}/{TOTAL_STEPS})</p>
+          <p class="text-sm text-gray-600">{stepLabel(step)} ({step}/{TOTAL_STEPS})</p>
         </div>
         <button
           onClick={() => setShowScript(!showScript)}
@@ -135,12 +135,12 @@ export default function AfterschoolSession({ data }: Props) {
               <div key={s} class="flex items-center flex-1">
                 <button
                   onClick={() => { if (isDone || isCurrent) goToStep(s); }}
-                  class={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+                  class={`min-w-[44px] min-h-[44px] w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
                     isCurrent
                       ? 'bg-amber-500 text-white ring-2 ring-amber-300'
                       : isDone
                         ? 'bg-amber-200 text-amber-800 cursor-pointer hover:bg-amber-300'
-                        : 'bg-gray-200 text-gray-400'
+                        : 'bg-gray-200 text-gray-500'
                   }`}
                   disabled={!isDone && !isCurrent}
                 >
@@ -167,7 +167,7 @@ export default function AfterschoolSession({ data }: Props) {
                   「今日はナゾトキをやるよ！ある事件が起きました。みんなで犯人を見つけよう！」
                 </ScriptBox>
               )}
-              <ContentCard title="&#128269; 事件のあらまし">
+              <ContentCard title={"\u{1F50D} 事件のあらまし"}>
                 <div class="afterschool-content" dangerouslySetInnerHTML={{ __html: data.commonHtml }} />
               </ContentCard>
               {showScript && (
@@ -190,7 +190,7 @@ export default function AfterschoolSession({ data }: Props) {
                     「{idx + 1}人目の話を聞いてみよう。{w.name}さんです。」
                   </ScriptBox>
                 )}
-                <ContentCard title={`&#128483;&#65039; ${w.name}（${w.role}）`}>
+                <ContentCard title={`\u{1F5E3}\u{FE0F} ${w.name}（${w.role}）`}>
                   {w.introHtml && (
                     <div class="afterschool-content text-gray-600 mb-4" dangerouslySetInnerHTML={{ __html: w.introHtml }} />
                   )}
@@ -221,12 +221,12 @@ export default function AfterschoolSession({ data }: Props) {
                 </ScriptBox>
               )}
               {data.evidenceCards.map(card => (
-                <ContentCard key={card.number} title={`&#128194; 証拠${card.number}: ${card.title}`}>
+                <ContentCard key={card.number} title={`\u{1F4C2} 証拠${card.number}: ${card.title}`}>
                   <div class="afterschool-content" dangerouslySetInnerHTML={{ __html: card.contentHtml }} />
                 </ContentCard>
               ))}
               {data.evidence5 && (
-                <ContentCard title={`&#9889; 新証拠: ${data.evidence5.title}`}>
+                <ContentCard title={`\u{26A1} 新証拠: ${data.evidence5.title}`}>
                   <div class="afterschool-content" dangerouslySetInnerHTML={{ __html: data.evidence5.contentHtml }} />
                 </ContentCard>
               )}
@@ -241,7 +241,7 @@ export default function AfterschoolSession({ data }: Props) {
                   「さあ、みんなで考えよう！ 誰が怪しいと思う？ 手を挙げて教えてね！」
                 </ScriptBox>
               )}
-              <ContentCard title="&#129300; みんなで考えよう">
+              <ContentCard title={"\u{1F914} みんなで考えよう"}>
                 <div class="grid grid-cols-2 gap-4 mb-6">
                   {data.witnesses.map(w => (
                     <div
@@ -285,7 +285,7 @@ export default function AfterschoolSession({ data }: Props) {
                   「それでは、答え合わせです！ 当たった人はいるかな？」
                 </ScriptBox>
               )}
-              <ContentCard title="&#128161; 真相">
+              <ContentCard title={"\u{1F4A1} 真相"}>
                 <div class="afterschool-content" dangerouslySetInnerHTML={{ __html: data.solutionHtml }} />
               </ContentCard>
               {showScript && (
@@ -358,7 +358,7 @@ function ScriptBox({ children }: { children: string }) {
 function ContentCard({ title, children }: { title: string; children: any }) {
   return (
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-      <h2 class="text-xl font-black text-gray-900 mb-4" dangerouslySetInnerHTML={{ __html: title }} />
+      <h2 class="text-xl font-black text-gray-900 mb-4">{title}</h2>
       {children}
     </div>
   );

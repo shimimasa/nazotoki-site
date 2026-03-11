@@ -1,15 +1,17 @@
 /**
- * Session Realtime — Phase 56-62, 71 (RLS hardening)
+ * Session Realtime — Phase 56-62, 71 (RLS hardening), 81 (Critical Security Fix), 85 (Resilient Reconnection)
  *
  * session_runs: セッション進行中のライブ状態
  * session_participants: 参加コードで参加した生徒
  *
  * 先生側: createSessionRun → updateSessionRun（フェーズ変更時）→ endSessionRun
- * 生徒側: findSessionByCode → joinSession(RPC) → subscribeToSessionRun → voteAsParticipant(RPC)
+ * 生徒側: findSessionByCode(RPC) → joinSession(RPC) → subscribeToSessionRun → voteAsParticipant(RPC)
  * 再接続: reconnectSession(RPC)
  *
  * Phase 71: 生徒の session_participants 操作を全て SECURITY DEFINER RPC に移行。
  *           anon の直接 INSERT/UPDATE/SELECT を廃止し、トークン認証をDB側で実施。
+ * Phase 81: createSessionRunからteacherId引数を削除（auth.uid()で内部解決）。
+ *           findSessionByCodeをRPC化（直接SELECT廃止）。
  */
 import { supabase } from './supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
@@ -53,28 +55,27 @@ export interface SessionParticipant {
   voted_at: string | null;
   joined_at: string;
   token_expires_at: string | null;
+  last_seen_at: string | null;
 }
 
 // ============================================================
 // Teacher Functions
 // ============================================================
 
-/** Create a new session run (teacher starts session) — Phase 72: atomic RPC */
+/** Create a new session run (teacher starts session) — Phase 72/81: atomic RPC, auth.uid() internal */
 export async function createSessionRun(params: {
   scenarioSlug: string;
   scenarioTitle: string;
-  teacherId: string | null;
   classId: string | null;
   playerCount: number;
   characterNames?: string[];
   evidenceTitles?: { number: number; title: string }[];
 }): Promise<{ id: string; joinCode: string } | null> {
-  if (!supabase || !params.teacherId) return null;
+  if (!supabase) return null;
 
   const { data, error } = await supabase.rpc('rpc_create_session_run', {
     p_scenario_slug: params.scenarioSlug,
     p_scenario_title: params.scenarioTitle,
-    p_teacher_id: params.teacherId,
     p_class_id: params.classId || null,
     p_player_count: params.playerCount,
     p_character_names: params.characterNames || [],
@@ -145,28 +146,33 @@ export async function fetchSessionParticipants(
 // Student Functions
 // ============================================================
 
-/** Find active session by join code */
+/** Find active session by join code — Phase 81: RPC (no direct SELECT enumeration) */
 export async function findSessionByCode(
   joinCode: string,
 ): Promise<SessionRun | null> {
   if (!supabase) return null;
 
-  const { data, error } = await supabase
-    .from('session_runs')
-    .select('*')
-    .eq('join_code', joinCode.toUpperCase().trim())
-    .eq('is_active', true)
-    .single();
+  const { data, error } = await supabase.rpc('rpc_find_session_by_code', {
+    p_join_code: joinCode.toUpperCase().trim(),
+  });
 
-  if (error || !data) return null;
-  return data as SessionRun;
+  if (error || !data?.ok) return null;
+
+  // RPC excludes teacher_id/class_id for security; default them to null
+  const run = data.run;
+  return {
+    ...run,
+    teacher_id: null,
+    class_id: null,
+  } as SessionRun;
 }
 
-/** Join a session as participant (student) — Phase 71: uses RPC with token auth */
+/** Join a session as participant (student) — Phase 71/83: RPC with token auth + student_id validation */
 export async function joinSession(params: {
   joinCode: string;
   participantName: string;
   studentId?: string;
+  studentToken?: string;
 }): Promise<SessionParticipant | null> {
   if (!supabase) return null;
 
@@ -174,6 +180,7 @@ export async function joinSession(params: {
     p_join_code: params.joinCode,
     p_participant_name: params.participantName,
     p_student_id: params.studentId || null,
+    p_student_token: params.studentToken || null,
   });
 
   if (error || !data?.ok) {
@@ -301,6 +308,87 @@ export function clearSavedSession(): void {
   try {
     localStorage.removeItem('nazotoki-session-token');
     localStorage.removeItem('nazotoki-session-run-id');
+  } catch { /* ignore */ }
+}
+
+// ============================================================
+// Session Feedback (Phase 91)
+// ============================================================
+
+/** Submit session feedback (student calls after session ends) */
+export async function submitFeedback(
+  participantId: string,
+  sessionToken: string,
+  funRating: number,
+  difficultyRating: number,
+  comment: string,
+): Promise<boolean> {
+  if (!supabase) return false;
+  const { data, error } = await supabase.rpc('rpc_submit_feedback', {
+    p_participant_id: participantId,
+    p_session_token: sessionToken,
+    p_fun: funRating,
+    p_difficulty: difficultyRating,
+    p_comment: comment,
+  });
+  if (error || !data?.ok) return false;
+  return true;
+}
+
+// ============================================================
+// Heartbeat (Phase 86: GM connection monitor)
+// ============================================================
+
+/** Send heartbeat to update last_seen_at (student calls every 30s) */
+export async function sendHeartbeat(
+  participantId: string,
+  sessionToken: string,
+): Promise<boolean> {
+  if (!supabase) return false;
+  const { data, error } = await supabase.rpc('rpc_heartbeat', {
+    p_participant_id: participantId,
+    p_session_token: sessionToken,
+  });
+  if (error || !data?.ok) return false;
+  return true;
+}
+
+// ============================================================
+// Session State Cache (Phase 85: resilient reconnection)
+// ============================================================
+
+/** Cache session state to localStorage for instant restore on page reload */
+export function cacheSessionState(runId: string, run: SessionRun): void {
+  try {
+    localStorage.setItem(
+      `session-cache-${runId}`,
+      JSON.stringify({ ...run, _cachedAt: Date.now() }),
+    );
+  } catch { /* ignore */ }
+}
+
+/** Restore cached session state from localStorage */
+export function getCachedSessionState(runId: string): SessionRun | null {
+  try {
+    const raw = localStorage.getItem(`session-cache-${runId}`);
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    // Ignore stale cache (older than 24 hours)
+    if (cached._cachedAt && Date.now() - cached._cachedAt > 24 * 60 * 60 * 1000) {
+      localStorage.removeItem(`session-cache-${runId}`);
+      return null;
+    }
+    delete cached._cachedAt;
+    return cached as SessionRun;
+  } catch {
+    return null;
+  }
+}
+
+/** Clear cached session state */
+export function clearSessionCache(runId: string): void {
+  try {
+    localStorage.removeItem(`session-cache-${runId}`);
   } catch { /* ignore */ }
 }
 

@@ -1,5 +1,8 @@
-import { useState, useRef, useCallback } from 'preact/hooks';
-import { supabase } from '../../lib/supabase';
+import { useState, useRef, useCallback, useEffect } from 'preact/hooks';
+import { supabase, checkAndAwardBadges, fetchStudentStreak, fetchStudentAssignments, BADGE_DEFS } from '../../lib/supabase';
+import { isUnlocked, getUnlockThreshold } from '../../lib/unlock';
+import { useFontSize } from '../../lib/use-font-size';
+import SoloFeedback from './SoloFeedback';
 
 // --- Types ---
 
@@ -25,6 +28,7 @@ interface SoloData {
   fullTitle: string;
   series: string;
   seriesName: string;
+  volume: number;
   subject: string;
   difficulty: string;
   time: string;
@@ -39,8 +43,16 @@ interface SoloData {
   thumbnailUrl?: string;
 }
 
+interface FeedbackEntry {
+  correct: boolean;
+  goodPoints: string[];
+  missedClues: string[];
+  hint: string;
+}
+
 interface Props {
   data: SoloData;
+  feedbackData?: Record<string, FeedbackEntry> | null;
 }
 
 // --- Constants ---
@@ -56,7 +68,7 @@ const LS_STUDENT_TOKEN = 'nazotoki-student-token';
 
 // --- Component ---
 
-export default function SoloSession({ data }: Props) {
+export default function SoloSession({ data, feedbackData = null }: Props) {
   const witnessCount = data.witnesses.length;
   // Steps: 1=intro, 2..N+1=witnesses, N+2=evidence, N+3=vote, N+4=truth
   const STEP_INTRO = 1;
@@ -76,12 +88,70 @@ export default function SoloSession({ data }: Props) {
   const [rpEarned, setRpEarned] = useState(0);
   const [completed, setCompleted] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [newBadges, setNewBadges] = useState<string[]>([]);
+  const [streakInfo, setStreakInfo] = useState<{ streak: number; multiplier: number } | null>(null);
+  const [lockStatus, setLockStatus] = useState<'checking' | 'unlocked' | 'locked'>('checking');
+  const [lockRpNeeded, setLockRpNeeded] = useState(0);
+  const fontSize = useFontSize();
 
   const startTimeRef = useRef(Date.now());
   const stepTimesRef = useRef<Record<number, number>>({});
   const stepEnterRef = useRef(Date.now());
   const earnedSetRef = useRef<Set<string>>(new Set());
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // Phase 83: Background time exclusion for accurate duration
+  const hiddenSinceRef = useRef(0);
+  const stepBackgroundMsRef = useRef(0);
+  const totalBackgroundMsRef = useRef(0);
+
+  // Phase 83: Track background time via visibilitychange
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) {
+        hiddenSinceRef.current = Date.now();
+      } else if (hiddenSinceRef.current > 0) {
+        const bg = Date.now() - hiddenSinceRef.current;
+        stepBackgroundMsRef.current += bg;
+        totalBackgroundMsRef.current += bg;
+        hiddenSinceRef.current = 0;
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
+
+  // Phase 94: Unlock check on mount
+  // Note: SSG delivers full scenario HTML regardless of lock status. The unlock gate
+  // is a motivational mechanism for elementary students, not cryptographic DRM.
+  // Page-source inspection is not a realistic threat for the target audience.
+  useEffect(() => {
+    const threshold = getUnlockThreshold(data.volume);
+    if (threshold === 0) { setLockStatus('unlocked'); return; }
+
+    const studentId = localStorage.getItem(LS_STUDENT_ID);
+    const studentToken = localStorage.getItem(LS_STUDENT_TOKEN);
+    if (!studentId || !studentToken || !supabase) {
+      // Not logged in and scenario requires RP — prompt login
+      setLockRpNeeded(threshold);
+      setLockStatus('locked');
+      return;
+    }
+
+    Promise.all([
+      supabase.rpc('rpc_fetch_solo_history', { p_student_id: studentId, p_student_token: studentToken }),
+      fetchStudentAssignments(studentId, studentToken),
+    ]).then(([historyRes, assignRes]) => {
+      const totalRp = (historyRes.data as Record<string, unknown>)?.total_rp as number || 0;
+      const assignedSlugs = new Set(assignRes.assignments.map(a => a.scenario_slug));
+      if (isUnlocked(data.volume, totalRp, assignedSlugs, data.slug)) {
+        setLockStatus('unlocked');
+      } else {
+        setLockRpNeeded(threshold - totalRp);
+        setLockStatus('locked');
+      }
+    }).catch(() => setLockStatus('unlocked'));
+  }, [data.volume, data.slug]);
 
   // --- RP helpers ---
   const earnRP = useCallback((key: string, amount: number) => {
@@ -92,14 +162,16 @@ export default function SoloSession({ data }: Props) {
 
   // --- Navigation ---
   const recordStepTime = useCallback(() => {
-    const elapsed = Math.round((Date.now() - stepEnterRef.current) / 1000);
-    stepTimesRef.current[step] = (stepTimesRef.current[step] || 0) + elapsed;
+    const elapsed = Math.round((Date.now() - stepEnterRef.current - stepBackgroundMsRef.current) / 1000);
+    stepTimesRef.current[step] = (stepTimesRef.current[step] || 0) + Math.max(0, elapsed);
+    stepBackgroundMsRef.current = 0;
   }, [step]);
 
   const goToStep = useCallback((target: number) => {
     recordStepTime();
     setStep(target);
     stepEnterRef.current = Date.now();
+    stepBackgroundMsRef.current = 0;
     contentRef.current?.scrollTo(0, 0);
   }, [recordStepTime]);
 
@@ -144,13 +216,18 @@ export default function SoloSession({ data }: Props) {
 
     const studentId = localStorage.getItem(LS_STUDENT_ID);
     const studentToken = localStorage.getItem(LS_STUDENT_TOKEN);
-    const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
+    const duration = Math.round(((Date.now() - startTimeRef.current) - totalBackgroundMsRef.current) / 1000);
     const finalRp = rpEarned + RP_COMPLETE
       + (vote && !earnedSetRef.current.has('vote') ? RP_VOTE : 0)
       + (voteReason.trim().length >= 10 && !earnedSetRef.current.has('vote-reason') ? RP_VOTE_REASON : 0);
 
     if (studentId && studentToken && supabase) {
       setSaving(true);
+      // Phase 90: Fetch streak BEFORE save to apply multiplier to rp_earned
+      const streakResult = await fetchStudentStreak(studentId, studentToken);
+      const multiplier = streakResult.multiplier || 1.0;
+      const multipliedRp = Math.round(finalRp * multiplier);
+
       await supabase.rpc('rpc_save_solo_session', {
         p_student_id: studentId,
         p_student_token: studentToken,
@@ -161,9 +238,22 @@ export default function SoloSession({ data }: Props) {
         p_vote_reason: voteReason || null,
         p_evidence_read_order: Array.from(readEvidence),
         p_time_per_step: stepTimesRef.current,
-        p_rp_earned: finalRp,
+        p_rp_earned: multipliedRp,
         p_hints_used: 0,
       });
+
+      // Phase 89: Check badges after save
+      const badgeResult = await checkAndAwardBadges(studentId, studentToken);
+      if (badgeResult.new_badges.length > 0) {
+        setNewBadges(badgeResult.new_badges);
+      }
+      if (streakResult.streak > 0) {
+        setStreakInfo(streakResult);
+      }
+      // Update displayed RP to match saved value
+      if (multiplier > 1.0) {
+        setRpEarned(multipliedRp);
+      }
       setSaving(false);
     }
 
@@ -185,19 +275,84 @@ export default function SoloSession({ data }: Props) {
   };
 
   // --- Render ---
+
+  // Phase 94: Lock screen
+  if (lockStatus === 'checking') {
+    return (
+      <div class="flex flex-col h-[100dvh] bg-gray-50 items-center justify-center">
+        <p class="text-gray-400">読み込み中...</p>
+      </div>
+    );
+  }
+  if (lockStatus === 'locked') {
+    const isLoggedIn = !!localStorage.getItem(LS_STUDENT_ID);
+    return (
+      <div class="flex flex-col h-[100dvh] bg-gray-50 items-center justify-center p-6">
+        <div class="text-center space-y-4 max-w-sm">
+          <p class="text-5xl">&#128274;</p>
+          <h1 class="text-xl font-black text-gray-900">このシナリオはロック中</h1>
+          {isLoggedIn ? (
+            <>
+              <p class="text-sm text-gray-500">
+                あと <span class="font-black text-amber-600">{lockRpNeeded} RP</span> でアンロック！
+              </p>
+              <p class="text-xs text-gray-400">
+                他のシナリオをプレイしてRPを貯めよう
+              </p>
+            </>
+          ) : (
+            <p class="text-sm text-gray-500">
+              ログインしてRPを確認しよう
+            </p>
+          )}
+          <div class="flex gap-3 pt-2">
+            {isLoggedIn ? (
+              <a
+                href="/my"
+                class="flex-1 py-3 bg-amber-500 text-white rounded-xl text-sm font-black text-center hover:bg-amber-600 transition-colors"
+              >
+                マイページへ
+              </a>
+            ) : (
+              <a
+                href="/login"
+                class="flex-1 py-3 bg-amber-500 text-white rounded-xl text-sm font-black text-center hover:bg-amber-600 transition-colors"
+              >
+                ログインする
+              </a>
+            )}
+            <a
+              href="/"
+              class="flex-1 py-3 bg-gray-200 text-gray-700 rounded-xl text-sm font-bold text-center hover:bg-gray-300 transition-colors"
+            >
+              トップへ
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div class="flex flex-col h-[100dvh] bg-gray-50">
       {/* Header */}
       <div class="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between shrink-0">
         <div class="min-w-0">
-          <p class="text-xs text-gray-400 truncate">{data.seriesName}</p>
+          <p class="text-xs text-gray-500 truncate">{data.seriesName}</p>
           <p class="text-sm font-black text-gray-900 truncate">{data.title}</p>
         </div>
         <div class="flex items-center gap-2 shrink-0 ml-2">
+          <button
+            onClick={fontSize.cycle}
+            class="text-[10px] text-gray-400 hover:text-gray-600 transition-colors px-1 py-0.5 border border-gray-200 rounded"
+            title={`文字サイズ: ${fontSize.label}`}
+          >
+            Aa
+          </button>
           <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
             {rpEarned} RP
           </span>
-          <span class="text-xs text-gray-400">
+          <span class="text-xs text-gray-500">
             {step}/{TOTAL_STEPS}
           </span>
         </div>
@@ -214,12 +369,12 @@ export default function SoloSession({ data }: Props) {
               <div key={s} class="flex items-center flex-1">
                 <button
                   onClick={() => { if (isDone || isCurrent) goToStep(s); }}
-                  class={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                  class={`min-w-[44px] min-h-[44px] w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
                     isCurrent
                       ? 'bg-amber-500 text-white ring-2 ring-amber-300'
                       : isDone
                         ? 'bg-amber-200 text-amber-800 cursor-pointer hover:bg-amber-300'
-                        : 'bg-gray-200 text-gray-400'
+                        : 'bg-gray-200 text-gray-500'
                   }`}
                   disabled={!isDone && !isCurrent}
                   title={stepLabel(s)}
@@ -398,7 +553,7 @@ export default function SoloSession({ data }: Props) {
                   &#9664; 前の証拠
                 </button>
                 {readEvidence.size < data.evidenceCards.length && (
-                  <p class="text-xs text-gray-400 self-center">
+                  <p class="text-xs text-gray-500 self-center">
                     {readEvidence.size}/{data.evidenceCards.length} 読了
                   </p>
                 )}
@@ -466,7 +621,7 @@ export default function SoloSession({ data }: Props) {
                     maxLength={300}
                     placeholder="理由を書いてみよう（10文字以上で+10RP）"
                   />
-                  <p class="text-xs text-gray-400 text-right">{voteReason.length}/300</p>
+                  <p class="text-xs text-gray-500 text-right">{voteReason.length}/300</p>
                 </div>
               </div>
 
@@ -511,7 +666,42 @@ export default function SoloSession({ data }: Props) {
                   <span>証拠 {readEvidence.size}/{data.evidenceCards.length + (data.evidence5 ? 1 : 0)}</span>
                   {vote && <span>投票: {vote}</span>}
                 </div>
+                {/* Phase 90: Streak info */}
+                {streakInfo && streakInfo.streak > 0 && (
+                  <div class="mt-3 pt-3 border-t border-amber-200 text-center">
+                    <span class="text-sm">
+                      {streakInfo.streak >= 7 ? '\uD83D\uDD25\uD83D\uDD25\uD83D\uDD25' : streakInfo.streak >= 3 ? '\uD83D\uDD25\uD83D\uDD25' : '\uD83D\uDD25'}
+                    </span>
+                    <span class="text-sm font-bold text-orange-700 ml-1">
+                      {streakInfo.streak}日連続！
+                    </span>
+                    {streakInfo.multiplier > 1.0 && (
+                      <span class="text-xs text-orange-600 ml-2">
+                        RP x{streakInfo.multiplier}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
+
+              {/* Phase 89: New badge notification */}
+              {newBadges.length > 0 && (
+                <div class="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-400 rounded-2xl p-4 text-center animate-fadeIn">
+                  <p class="text-sm font-black text-amber-800 mb-2">バッジ獲得！</p>
+                  <div class="flex justify-center gap-3">
+                    {newBadges.map(key => {
+                      const def = BADGE_DEFS.find(b => b.key === key);
+                      if (!def) return null;
+                      return (
+                        <div key={key} class="flex flex-col items-center gap-1">
+                          <span class="text-3xl">{def.icon}</span>
+                          <span class="text-xs font-bold text-amber-700">{def.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Your reasoning */}
               {(vote || voteReason) && (
@@ -521,6 +711,9 @@ export default function SoloSession({ data }: Props) {
                   {voteReason && <p class="text-sm mt-1"><span class="font-bold">理由:</span> {voteReason}</p>}
                 </div>
               )}
+
+              {/* Phase 105: Solo feedback */}
+              <SoloFeedback votedFor={vote} feedbackData={feedbackData} />
 
               {/* Truth reveal */}
               <div class="bg-white rounded-2xl border border-gray-200 p-5">
@@ -572,7 +765,7 @@ export default function SoloSession({ data }: Props) {
             &#9664; 戻る
           </button>
           {step === STEP_VOTE ? (
-            <span class="text-xs text-gray-400">
+            <span class="text-xs text-gray-500">
               {vote ? '準備OK' : '投票してから真相へ'}
             </span>
           ) : (

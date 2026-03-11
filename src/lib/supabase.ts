@@ -1125,6 +1125,131 @@ export async function fetchStudentAssignments(
   return { assignments: (result.assignments as StudentAssignment[]) || [] };
 }
 
+// --- Badge Definitions (Phase 89) ---
+
+export const BADGE_DEFS: { key: string; icon: string; label: string; description: string }[] = [
+  { key: 'first-clear', icon: '\uD83D\uDD30', label: '\u521D\u30AF\u30EA\u30A2', description: '\u521D\u3081\u3066\u306E\u30B7\u30CA\u30EA\u30AA\u3092\u30AF\u30EA\u30A2' },
+  { key: 'clear-5', icon: '\u2B50', label: '5\u56DE\u30AF\u30EA\u30A2', description: '5\u3064\u306E\u30B7\u30CA\u30EA\u30AA\u3092\u30AF\u30EA\u30A2' },
+  { key: 'clear-10', icon: '\uD83C\uDF1F', label: '10\u56DE\u30AF\u30EA\u30A2', description: '10\u500B\u306E\u30B7\u30CA\u30EA\u30AA\u3092\u30AF\u30EA\u30A2' },
+  { key: 'clear-25', icon: '\uD83D\uDCAB', label: '25\u56DE\u30AF\u30EA\u30A2', description: '25\u500B\u306E\u30B7\u30CA\u30EA\u30AA\u3092\u30AF\u30EA\u30A2' },
+  { key: 'perfect-vote', icon: '\uD83C\uDFAF', label: '\u63A8\u7406\u767A\u8868', description: '\u6295\u7968\u3067\u63A8\u7406\u3092\u767A\u8868\u3057\u305F' },
+  { key: 'series-rika', icon: '\uD83D\uDD2C', label: '\u7406\u79D1\u30DE\u30B9\u30BF\u30FC', description: '\u7406\u79D1\u30B7\u30EA\u30FC\u30BA\u3092\u5168\u30AF\u30EA\u30A2' },
+  { key: 'series-shakai', icon: '\uD83C\uDFDB\uFE0F', label: '\u793E\u4F1A\u30DE\u30B9\u30BF\u30FC', description: '\u793E\u4F1A\u30B7\u30EA\u30FC\u30BA\u3092\u5168\u30AF\u30EA\u30A2' },
+  { key: 'series-kokugo', icon: '\uD83D\uDCD6', label: '\u56FD\u8A9E\u30DE\u30B9\u30BF\u30FC', description: '\u56FD\u8A9E\u30B7\u30EA\u30FC\u30BA\u3092\u5168\u30AF\u30EA\u30A2' },
+  { key: 'series-sansuu', icon: '\uD83D\uDD22', label: '\u7B97\u6570\u30DE\u30B9\u30BF\u30FC', description: '\u7B97\u6570\u30B7\u30EA\u30FC\u30BA\u3092\u5168\u30AF\u30EA\u30A2' },
+  { key: 'series-moral', icon: '\uD83D\uDC9B', label: '\u9053\u5FB3\u30DE\u30B9\u30BF\u30FC', description: '\u9053\u5FB3\u30B7\u30EA\u30FC\u30BA\u3092\u5168\u30AF\u30EA\u30A2' },
+];
+
+export async function checkAndAwardBadges(
+  studentId: string,
+  studentToken: string,
+): Promise<{ new_badges: string[]; all_badges: string[]; error?: string }> {
+  if (!supabase) return { new_badges: [], all_badges: [], error: 'Supabase not configured' };
+  const { data, error } = await supabase.rpc('rpc_check_and_award_badges', {
+    p_student_id: studentId,
+    p_student_token: studentToken,
+  });
+  if (error) return { new_badges: [], all_badges: [], error: error.message };
+  const result = data as Record<string, unknown>;
+  if (result.error) return { new_badges: [], all_badges: [], error: result.error as string };
+  return {
+    new_badges: (result.new_badges as string[]) || [],
+    all_badges: (result.all_badges as string[]) || [],
+  };
+}
+
+/** Read-only badge fetch for MyPage (no write side-effects) */
+export async function fetchStudentBadges(
+  studentId: string,
+  studentToken: string,
+): Promise<string[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase.rpc('rpc_fetch_student_badges', {
+    p_student_id: studentId,
+    p_student_token: studentToken,
+  });
+  if (error) return [];
+  const result = data as Record<string, unknown>;
+  if (result.error) return [];
+  return (result.badges as string[]) || [];
+}
+
+// --- Streak (Phase 90) ---
+
+export interface StreakInfo {
+  streak: number;
+  multiplier: number;
+}
+
+export async function fetchStudentStreak(
+  studentId: string,
+  studentToken: string,
+): Promise<StreakInfo> {
+  if (!supabase) return { streak: 0, multiplier: 1.0 };
+  const { data, error } = await supabase.rpc('rpc_fetch_student_streak', {
+    p_student_id: studentId,
+    p_student_token: studentToken,
+  });
+  if (error) return { streak: 0, multiplier: 1.0 };
+  const result = data as Record<string, unknown>;
+  if (result.error) return { streak: 0, multiplier: 1.0 };
+  return {
+    streak: (result.streak as number) || 0,
+    multiplier: (result.multiplier as number) || 1.0,
+  };
+}
+
+// --- Class Leaderboard (Phase 88) ---
+
+export interface LeaderboardEntry {
+  rank: number;
+  student_name: string;
+  total_rp: number;
+  clear_count: number;
+  is_me: boolean;
+}
+
+export async function fetchClassLeaderboard(
+  studentId: string,
+  studentToken: string,
+): Promise<{ leaderboard: LeaderboardEntry[]; error?: string }> {
+  if (!supabase) return { leaderboard: [], error: 'Supabase not configured' };
+  const { data, error } = await supabase.rpc('rpc_fetch_class_leaderboard', {
+    p_student_id: studentId,
+    p_student_token: studentToken,
+  });
+  if (error) return { leaderboard: [], error: error.message };
+  const result = data as Record<string, unknown>;
+  if (result.error) return { leaderboard: [], error: result.error as string };
+  return { leaderboard: (result.leaderboard as LeaderboardEntry[]) || [] };
+}
+
+// --- Session Feedback (Phase 91, teacher-side) ---
+
+export interface SessionFeedbackRow {
+  id: string;
+  session_run_id: string;
+  participant_id: string;
+  fun_rating: number;
+  difficulty_rating: number;
+  comment: string;
+  created_at: string;
+}
+
+export async function fetchSessionFeedback(sessionRunId: string): Promise<SessionFeedbackRow[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('session_feedback')
+    .select('*')
+    .eq('session_run_id', sessionRunId)
+    .order('created_at', { ascending: true });
+  if (error) {
+    if (error.code === '42P01' || error.message?.includes('does not exist')) return [];
+    return [];
+  }
+  return data || [];
+}
+
 // --- Solo Progress (Phase 80, teacher-side) ---
 
 export interface SoloSessionRow {
@@ -1155,3 +1280,199 @@ export async function fetchSoloSessionsForStudents(studentIds: string[]): Promis
   return data || [];
 }
 
+// --- Rubric Evaluations (Phase 97) ---
+
+export interface RubricEvaluationRow {
+  id: string;
+  teacher_id: string;
+  student_id: string;
+  session_log_id: string;
+  scenario_slug: string;
+  thinking: number;
+  expression: number;
+  collaboration: number;
+  comment: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RubricEvaluationUpsert {
+  teacher_id: string;
+  student_id: string;
+  session_log_id: string;
+  scenario_slug: string;
+  thinking: number;
+  expression: number;
+  collaboration: number;
+  comment?: string;
+}
+
+export async function fetchRubricEvaluations(sessionLogId: string): Promise<RubricEvaluationRow[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('rubric_evaluations')
+    .select('*')
+    .eq('session_log_id', sessionLogId)
+    .order('created_at', { ascending: true });
+  if (error) {
+    if (error.code === '42P01' || error.message?.includes('does not exist')) return [];
+    return [];
+  }
+  return data || [];
+}
+
+export async function fetchRubricEvaluationsByStudents(studentIds: string[]): Promise<RubricEvaluationRow[]> {
+  if (!supabase || studentIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from('rubric_evaluations')
+    .select('*')
+    .in('student_id', studentIds)
+    .order('created_at', { ascending: true });
+  if (error) {
+    if (error.code === '42P01' || error.message?.includes('does not exist')) return [];
+    return [];
+  }
+  return data || [];
+}
+
+export async function upsertRubricEvaluations(evaluations: RubricEvaluationUpsert[]): Promise<boolean> {
+  if (!supabase || evaluations.length === 0) return false;
+  const { error } = await supabase
+    .from('rubric_evaluations')
+    .upsert(evaluations, { onConflict: 'teacher_id,student_id,session_log_id' });
+  if (error) {
+    console.error('Failed to upsert rubric evaluations:', error);
+    return false;
+  }
+  return true;
+}
+
+// --- Lesson Plans (Phase 99) ---
+
+export interface LessonPlanRow {
+  id: string;
+  teacher_id: string;
+  class_id: string;
+  scenario_slug: string;
+  planned_date: string;
+  notes: string;
+  status: 'planned' | 'completed' | 'cancelled';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LessonPlanInsert {
+  teacher_id: string;
+  class_id: string;
+  scenario_slug: string;
+  planned_date: string;
+  notes?: string;
+}
+
+export async function fetchLessonPlans(teacherId: string): Promise<LessonPlanRow[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('lesson_plans')
+    .select('*')
+    .eq('teacher_id', teacherId)
+    .order('planned_date', { ascending: true });
+  if (error) {
+    if (error.code === '42P01' || error.message?.includes('does not exist')) return [];
+    return [];
+  }
+  return data || [];
+}
+
+export async function createLessonPlan(plan: LessonPlanInsert): Promise<LessonPlanRow | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('lesson_plans')
+    .insert(plan)
+    .select()
+    .single();
+  if (error) {
+    console.error('Failed to create lesson plan:', error);
+    return null;
+  }
+  return data;
+}
+
+export async function updateLessonPlan(id: string, updates: Partial<Pick<LessonPlanRow, 'scenario_slug' | 'planned_date' | 'notes' | 'status'>>): Promise<boolean> {
+  if (!supabase) return false;
+  const { error } = await supabase
+    .from('lesson_plans')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) {
+    console.error('Failed to update lesson plan:', error);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteLessonPlan(id: string): Promise<boolean> {
+  if (!supabase) return false;
+  const { error } = await supabase
+    .from('lesson_plans')
+    .delete()
+    .eq('id', id);
+  if (error) {
+    console.error('Failed to delete lesson plan:', error);
+    return false;
+  }
+  return true;
+}
+
+// --- AI Analysis Cache (Phase 104) ---
+
+export interface AiAnalysisCacheRow {
+  id: string;
+  teacher_id: string;
+  cache_key: string;
+  analysis_type: 'vote_analysis' | 'solo_feedback' | 'class_insight';
+  result_json: unknown;
+  model_used: string;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  created_at: string;
+}
+
+export async function fetchAiAnalysisCache(
+  teacherId: string,
+  cacheKey: string,
+  analysisType: string,
+): Promise<AiAnalysisCacheRow | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('ai_analysis_cache')
+    .select('*')
+    .eq('teacher_id', teacherId)
+    .eq('cache_key', cacheKey)
+    .eq('analysis_type', analysisType)
+    .maybeSingle();
+  if (error) {
+    if (error.code === '42P01' || error.message?.includes('does not exist')) return null;
+    return null;
+  }
+  return data;
+}
+
+export async function upsertAiAnalysisCache(row: {
+  teacher_id: string;
+  cache_key: string;
+  analysis_type: string;
+  result_json: unknown;
+  model_used: string;
+  input_tokens?: number;
+  output_tokens?: number;
+}): Promise<boolean> {
+  if (!supabase) return false;
+  const { error } = await supabase
+    .from('ai_analysis_cache')
+    .upsert(row, { onConflict: 'teacher_id,cache_key,analysis_type' });
+  if (error) {
+    console.error('Failed to upsert ai analysis cache:', error);
+    return false;
+  }
+  return true;
+}
