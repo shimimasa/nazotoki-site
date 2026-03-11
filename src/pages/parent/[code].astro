@@ -1,0 +1,14 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ParentPortal from '../../components/workspace/ParentPortal';
+
+export const prerender = false;
+const { code } = Astro.params;
+---
+<BaseLayout
+  title="保護者ポータル"
+  description="お子さまの学習進捗を確認できます"
+  noIndex={true}
+>
+  <ParentPortal client:load code={code || ''} />
+</BaseLayout>

@@ -66,6 +66,17 @@ export async function signIn(email: string, password: string): Promise<{ error: 
   return { error: error?.message || null };
 }
 
+export async function signInWithGoogle(): Promise<{ error: string | null }> {
+  if (!supabase) return { error: 'Supabase not configured' };
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/dashboard`,
+    },
+  });
+  return { error: error?.message || null };
+}
+
 export async function signOut(): Promise<void> {
   if (!supabase) return;
   await supabase.auth.signOut();
@@ -86,9 +97,36 @@ export async function getCurrentTeacher(): Promise<TeacherProfile | null> {
     .select('*')
     .eq('auth_user_id', user.id)
     .single();
-  if (!data) return null;
-  // Ensure role fallback for pre-migration data
-  return { ...data, role: data.role || 'teacher' };
+  if (data) {
+    // Ensure role fallback for pre-migration data
+    return { ...data, role: data.role || 'teacher' };
+  }
+  // OAuth first login: auto-create teacher profile from auth user metadata
+  const meta = user.user_metadata || {};
+  const displayName = meta.full_name || meta.name || user.email?.split('@')[0] || '先生';
+  const { data: newTeacher, error: insertError } = await supabase
+    .from('teachers')
+    .insert({ auth_user_id: user.id, display_name: displayName })
+    .select()
+    .single();
+  if (insertError) {
+    console.error('Auto-create teacher failed:', insertError);
+    return null;
+  }
+  return { ...newTeacher, role: newTeacher.role || 'teacher' };
+}
+
+export function detectSchoolDomain(email: string): string | null {
+  const match = email.match(/@(.+)$/);
+  if (!match) return null;
+  const domain = match[1];
+  // Japanese school domains: *.ed.jp, *.ac.jp
+  if (domain.endsWith('.ed.jp') || domain.endsWith('.ac.jp')) {
+    // Extract school name from domain (e.g., "shimizu.ed.jp" → "shimizu")
+    const parts = domain.split('.');
+    return parts[0] || null;
+  }
+  return null;
 }
 
 export function onAuthStateChange(callback: (teacher: TeacherProfile | null) => void) {
@@ -194,6 +232,8 @@ export interface StudentRow {
   pin_hash: string | null;
   student_token: string | null;
   token_expires_at: string | null;
+  parent_link_code: string | null;
+  parent_link_expires_at: string | null;
   created_at: string;
 }
 
@@ -301,6 +341,32 @@ export async function deleteStudent(studentId: string): Promise<boolean> {
   if (!supabase) return false;
   const { error } = await supabase.from('students').delete().eq('id', studentId);
   if (error) { console.error('Failed to delete student:', error); return false; }
+  return true;
+}
+
+// --- Parent Link (Phase 108) ---
+
+export async function generateParentLink(studentId: string): Promise<{ code: string; expiresAt: string } | null> {
+  if (!supabase) return null;
+  const code = Array.from(crypto.getRandomValues(new Uint8Array(9)))
+    .map(b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36])
+    .join('');
+  const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
+  const { error } = await supabase
+    .from('students')
+    .update({ parent_link_code: code, parent_link_expires_at: expiresAt })
+    .eq('id', studentId);
+  if (error) { console.error('Failed to generate parent link:', error); return null; }
+  return { code, expiresAt };
+}
+
+export async function revokeParentLink(studentId: string): Promise<boolean> {
+  if (!supabase) return false;
+  const { error } = await supabase
+    .from('students')
+    .update({ parent_link_code: null, parent_link_expires_at: null })
+    .eq('id', studentId);
+  if (error) { console.error('Failed to revoke parent link:', error); return false; }
   return true;
 }
 

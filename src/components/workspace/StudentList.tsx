@@ -5,6 +5,8 @@ import {
   deleteStudent,
   generateStudentCredentials,
   resetStudentPin,
+  generateParentLink,
+  revokeParentLink,
   type StudentRow,
   type StudentCredential,
 } from '../../lib/supabase';
@@ -24,6 +26,27 @@ export default function StudentList({ classId, students, onStudentsChange, onSel
   const [generatingCreds, setGeneratingCreds] = useState(false);
   const [credentials, setCredentials] = useState<StudentCredential[] | null>(null);
   const [resetResult, setResetResult] = useState<{ name: string; loginId: string; pin: string } | null>(null);
+  const [parentLinkResult, setParentLinkResult] = useState<{ name: string; code: string; expiresAt: string } | null>(null);
+
+  const handleGenerateParentLink = async (studentId: string, studentName: string) => {
+    const result = await generateParentLink(studentId);
+    if (result) {
+      setParentLinkResult({ name: studentName, code: result.code, expiresAt: result.expiresAt });
+      onStudentsChange(students.map(s =>
+        s.id === studentId ? { ...s, parent_link_code: result.code, parent_link_expires_at: result.expiresAt } : s
+      ));
+    }
+  };
+
+  const handleRevokeParentLink = async (studentId: string) => {
+    if (!confirm('保護者リンクを無効にしますか？')) return;
+    const ok = await revokeParentLink(studentId);
+    if (ok) {
+      onStudentsChange(students.map(s =>
+        s.id === studentId ? { ...s, parent_link_code: null, parent_link_expires_at: null } : s
+      ));
+    }
+  };
 
   const handleAddSingle = async (e: Event) => {
     e.preventDefault();
@@ -152,6 +175,36 @@ export default function StudentList({ classId, students, onStudentsChange, onSel
             <span class="text-xs text-gray-500 ml-2">（ID: {resetResult.loginId}）</span>
           </div>
           <button onClick={() => setResetResult(null)} class="text-xs text-gray-400 hover:text-gray-600">閉じる</button>
+        </div>
+      )}
+
+      {/* Parent link result */}
+      {parentLinkResult && (
+        <div class="bg-green-50 border border-green-300 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-black text-green-800">保護者リンク発行完了</h3>
+            <button onClick={() => setParentLinkResult(null)} class="text-xs text-gray-400 hover:text-gray-600">閉じる</button>
+          </div>
+          <p class="text-sm text-gray-700 mb-2">
+            <span class="font-bold">{parentLinkResult.name}</span> の保護者リンク:
+          </p>
+          <div class="bg-white rounded-lg border border-green-200 p-3 font-mono text-sm text-green-800 break-all">
+            {typeof window !== 'undefined' ? `${window.location.origin}/parent/${parentLinkResult.code}` : `/parent/${parentLinkResult.code}`}
+          </div>
+          <div class="flex items-center gap-3 mt-2">
+            <button
+              onClick={() => {
+                const url = `${window.location.origin}/parent/${parentLinkResult.code}`;
+                navigator.clipboard.writeText(url);
+              }}
+              class="px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-bold hover:bg-green-600 transition-colors"
+            >
+              URLをコピー
+            </button>
+            <span class="text-xs text-gray-400">
+              有効期限: {new Date(parentLinkResult.expiresAt).toLocaleDateString('ja-JP')}
+            </span>
+          </div>
         </div>
       )}
 
@@ -293,6 +346,23 @@ export default function StudentList({ classId, students, onStudentsChange, onSel
                 </div>
               </button>
               <div class="flex items-center gap-2 ml-2">
+                {student.parent_link_code ? (
+                  <button
+                    onClick={() => handleRevokeParentLink(student.id)}
+                    class="text-xs text-green-500 hover:text-red-500 transition-colors whitespace-nowrap"
+                    title="保護者リンク無効化"
+                  >
+                    🔗
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleGenerateParentLink(student.id, student.student_name)}
+                    class="text-xs text-gray-300 hover:text-green-500 transition-colors whitespace-nowrap"
+                    title="保護者リンク生成"
+                  >
+                    🔗
+                  </button>
+                )}
                 {student.login_id && (
                   <button
                     onClick={() => handleResetPin(student.id, student.student_name)}
