@@ -189,8 +189,8 @@ export default function VoteAnalysis({ sessionLogId, voteData }: Props) {
                       </span>
                     </td>
                     <td class="py-2 px-2 text-center">
-                      <span class="text-xs font-bold" title={QUALITY_LABELS[p.quality] || ''}>
-                        {'★'.repeat(p.quality)}{'☆'.repeat(5 - p.quality)}
+                      <span class="text-xs font-bold" title={QUALITY_LABELS[Math.max(1, Math.min(5, p.quality))] || ''}>
+                        {'★'.repeat(Math.max(0, Math.min(5, p.quality)))}{'☆'.repeat(Math.max(0, 5 - Math.max(0, Math.min(5, p.quality))))}
                       </span>
                     </td>
                     <td class="py-2 px-2 text-gray-600 text-xs">{p.explanation}</td>

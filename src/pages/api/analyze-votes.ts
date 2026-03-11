@@ -78,10 +78,10 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // 3. Verify user is a teacher
+    // 3. Verify user is a teacher AND admin
     const { data: teacher } = await supabaseAdmin
       .from('teachers')
-      .select('id')
+      .select('id, role')
       .eq('auth_user_id', user.id)
       .maybeSingle();
 
@@ -92,15 +92,14 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // 4. Rate limit check
-    if (!checkRateLimit(teacher.id)) {
+    if (teacher.role !== 'admin') {
       return new Response(
-        JSON.stringify({ ok: false, error: 'レート制限に達しました。1時間後にお試しください。' }),
-        { status: 429, headers },
+        JSON.stringify({ ok: false, error: '管理者権限が必要です' }),
+        { status: 403, headers },
       );
     }
 
-    // 5. Parse request body
+    // 4. Parse request body
     const body = await request.json();
     const { sessionLogId, voteData } = body as {
       sessionLogId?: string;
@@ -114,7 +113,7 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // 6. Check cache
+    // 5. Check cache (before rate limit — cached reads are free)
     const { data: cached } = await supabaseAdmin
       .from('ai_analysis_cache')
       .select('result_json')
@@ -127,6 +126,14 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(
         JSON.stringify({ ok: true, result: cached.result_json, cached: true }),
         { status: 200, headers },
+      );
+    }
+
+    // 6. Rate limit check (only for uncached requests that hit Claude API)
+    if (!checkRateLimit(teacher.id)) {
+      return new Response(
+        JSON.stringify({ ok: false, error: 'レート制限に達しました。1時間後にお試しください。' }),
+        { status: 429, headers },
       );
     }
 
@@ -186,24 +193,57 @@ ${anonymized.map((a) => `- ${a.label}: ${a.votedFor}に投票「${a.reason}」`)
       messages: [{ role: 'user', content: prompt }],
     });
 
-    // 9. Parse response
+    // 9. Parse and validate response
     const responseText = message.content
       .filter((block): block is Anthropic.TextBlock => block.type === 'text')
       .map((block) => block.text)
       .join('');
 
-    let result: AnalysisResult;
+    let rawResult: unknown;
     try {
-      result = JSON.parse(responseText);
+      rawResult = JSON.parse(responseText);
     } catch {
       // Try extracting JSON from markdown code block
       const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
       if (jsonMatch) {
-        result = JSON.parse(jsonMatch[1].trim());
+        rawResult = JSON.parse(jsonMatch[1].trim());
       } else {
         throw new Error('AI応答のJSON解析に失敗しました');
       }
     }
+
+    // Schema validation & clamping
+    const parsed = rawResult as Record<string, unknown>;
+    const VALID_PATTERNS = new Set(['logical', 'emotional', 'evidence-based', 'speculative']);
+
+    const patterns: AnalysisPattern[] = Array.isArray(parsed.patterns)
+      ? parsed.patterns.map((p: Record<string, unknown>) => ({
+          studentLabel: String(p.studentLabel || ''),
+          votedFor: String(p.votedFor || ''),
+          reason: String(p.reason || ''),
+          pattern: VALID_PATTERNS.has(String(p.pattern)) ? String(p.pattern) as AnalysisPattern['pattern'] : 'speculative',
+          quality: Math.max(1, Math.min(5, Math.round(Number(p.quality) || 1))),
+          explanation: String(p.explanation || ''),
+        }))
+      : [];
+
+    const distribution: Record<string, number> = {};
+    if (parsed.distribution && typeof parsed.distribution === 'object') {
+      for (const key of ['logical', 'emotional', 'evidence-based', 'speculative']) {
+        distribution[key] = Math.max(0, Math.round(Number((parsed.distribution as Record<string, unknown>)[key]) || 0));
+      }
+    } else {
+      // Derive from patterns
+      for (const p of patterns) {
+        distribution[p.pattern] = (distribution[p.pattern] || 0) + 1;
+      }
+    }
+
+    const result: AnalysisResult = {
+      patterns,
+      summary: String(parsed.summary || 'AI分析の要約を取得できませんでした'),
+      distribution,
+    };
 
     // 10. Map anonymized labels back to real names
     const nameMap = new Map(anonymized.map((a, i) => [a.label, voteData[i].studentName]));

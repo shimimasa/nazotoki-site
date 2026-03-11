@@ -151,10 +151,8 @@ export default function SessionLogDetail({ logId, cachedLog, onBack, role }: Pro
           <div class="space-y-2">
             {voteEntries.map(([voterId, suspectId]) => {
               const reason = log.vote_reasons?.[voterId];
-              // vote_results stores character IDs; correct_players stores character names
-              // Try matching by both ID and name
-              const isCorrect =
-                correctSet.has(voterId) || correctSet.has(suspectId);
+              // correct_players contains voter IDs who voted correctly
+              const isCorrect = correctSet.has(voterId);
 
               return (
                 <div

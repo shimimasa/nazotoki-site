@@ -17,9 +17,9 @@ export default function VoteSummary({ voteResults, voteReasons, correctPlayers }
       suspectCounts[suspect] = (suspectCounts[suspect] || 0) + 1;
     }
 
-    // Accuracy rate
+    // Accuracy rate — correct_players contains voter IDs who voted correctly
     const correctCount = entries.filter(
-      ([voter, suspect]) => correctSet.has(voter) || correctSet.has(suspect),
+      ([voter]) => correctSet.has(voter),
     ).length;
     const accuracy = entries.length > 0 ? Math.round((correctCount / entries.length) * 100) : 0;
 
@@ -78,7 +78,9 @@ export default function VoteSummary({ voteResults, voteReasons, correctPlayers }
           {sortedSuspects.map(([suspect, count]) => {
             const pct = maxVotes > 0 ? Math.round((count / entries.length) * 100) : 0;
             const barWidth = maxVotes > 0 ? Math.round((count / maxVotes) * 100) : 0;
-            const isCorrectSuspect = correctSet.has(suspect);
+            // Derive correct suspect: the suspect that correct voters chose
+            const correctSuspect = entries.find(([v]) => correctSet.has(v))?.[1] || null;
+            const isCorrectSuspect = suspect === correctSuspect;
             return (
               <div key={suspect} class="flex items-center gap-3">
                 <div class="w-24 text-sm font-medium text-gray-700 truncate" title={suspect}>

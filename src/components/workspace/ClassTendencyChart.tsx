@@ -51,9 +51,10 @@ function computeVoteStats(classId: string, logs: SessionLogRow[]) {
     if (!log.vote_results) continue;
     const entries = Object.entries(log.vote_results);
     const correctSet = new Set(log.correct_players || []);
-    for (const [voterId, suspectId] of entries) {
+    for (const [voterId] of entries) {
       totalVotes++;
-      if (correctSet.has(voterId) || correctSet.has(suspectId)) correctVotes++;
+      // correct_players contains voter IDs who voted correctly
+      if (correctSet.has(voterId)) correctVotes++;
       const reason = log.vote_reasons?.[voterId];
       if (reason && reason.trim()) {
         totalReasonLength += reason.trim().length;
