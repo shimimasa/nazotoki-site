@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import TeacherAuthGate from '../components/workspace/TeacherAuthGate';
+import DashboardIsland from '../components/workspace/DashboardIsland';
 import { loadAllScenarios } from '../lib/data';
 
 const scenarios = loadAllScenarios();
@@ -28,5 +28,5 @@ const scenarioList = scenarios.map(s => ({
     <p class="text-gray-500 mt-2">授業履歴・クラス管理・生徒参加ログ</p>
   </div>
 
-  <TeacherAuthGate client:load scenarios={scenarioList} />
+  <DashboardIsland client:load scenarios={scenarioList} />
 </BaseLayout>

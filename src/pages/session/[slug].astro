@@ -4,7 +4,7 @@
  * Preact island で全インタラクションを処理
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import SessionWizard from '../../components/session/SessionWizard';
+import SessionWizardIsland from '../../components/session/SessionWizardIsland';
 import { loadAllScenarios, type ScenarioData } from '../../lib/data';
 import { renderMarkdown } from '../../lib/markdown';
 import QRCode from 'qrcode';
@@ -85,7 +85,7 @@ const siteUrl = Astro.site?.toString() || 'https://nazotoki.gamanavi.com/';
   description={`${scenario.title} のセッション進行モード`}
   noIndex={true}
 >
-  <SessionWizard
+  <SessionWizardIsland
     client:load
     data={sessionData}
     siteUrl={siteUrl}

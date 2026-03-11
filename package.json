@@ -17,6 +17,7 @@
     "@astrojs/sitemap": "^3.7.0",
     "@astrojs/tailwind": "^6.0.2",
     "@astrojs/vercel": "^9.0.4",
+    "@sentry/browser": "^10.43.0",
     "@supabase/supabase-js": "^2.98.0",
     "astro": "^5.5.0",
     "fflate": "^0.8.2",

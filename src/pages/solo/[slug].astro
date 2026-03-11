@@ -4,7 +4,7 @@
  * Phase 75: キャラクター証言 + 証拠調査 + 投票 + 真相の8ステップ
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import SoloSession from '../../components/solo/SoloSession';
+import SoloSessionIsland from '../../components/solo/SoloSessionIsland';
 import { loadAllScenarios } from '../../lib/data';
 import { renderMarkdown } from '../../lib/markdown';
 
@@ -91,7 +91,7 @@ const { soloData, feedbackData } = Astro.props;
   noIndex={true}
   fullWidth={true}
 >
-  <SoloSession client:load data={soloData} feedbackData={feedbackData} />
+  <SoloSessionIsland client:load data={soloData} feedbackData={feedbackData} />
 </BaseLayout>
 
 <style is:global>
