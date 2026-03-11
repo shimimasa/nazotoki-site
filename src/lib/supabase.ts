@@ -9,6 +9,7 @@ export const supabase =
 // --- Auth & Teacher Profile ---
 
 export type TeacherRole = 'teacher' | 'admin';
+export type SubscriptionPlan = 'free' | 'standard' | 'school';
 
 export interface TeacherProfile {
   id: string;
@@ -16,7 +17,25 @@ export interface TeacherProfile {
   display_name: string;
   school_id: string | null;
   role: TeacherRole;
+  subscription_plan: SubscriptionPlan;
+  subscription_status: string;
   created_at: string;
+}
+
+// --- Plan limits (Phase 109) ---
+
+const PLAN_LIMITS = {
+  free: { maxClasses: 1, maxScenarios: 10, aiAnalysis: false },
+  standard: { maxClasses: Infinity, maxScenarios: Infinity, aiAnalysis: true },
+  school: { maxClasses: Infinity, maxScenarios: Infinity, aiAnalysis: true },
+} as const;
+
+export function getPlanLimits(plan: SubscriptionPlan) {
+  return PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+}
+
+export function isPremiumFeature(plan: SubscriptionPlan): boolean {
+  return plan === 'standard' || plan === 'school';
 }
 
 // --- School ---
@@ -98,8 +117,8 @@ export async function getCurrentTeacher(): Promise<TeacherProfile | null> {
     .eq('auth_user_id', user.id)
     .single();
   if (data) {
-    // Ensure role fallback for pre-migration data
-    return { ...data, role: data.role || 'teacher' };
+    // Ensure role/plan fallback for pre-migration data
+    return { ...data, role: data.role || 'teacher', subscription_plan: data.subscription_plan || 'free', subscription_status: data.subscription_status || 'active' };
   }
   // OAuth first login: auto-create teacher profile from auth user metadata
   const meta = user.user_metadata || {};
@@ -113,7 +132,7 @@ export async function getCurrentTeacher(): Promise<TeacherProfile | null> {
     console.error('Auto-create teacher failed:', insertError);
     return null;
   }
-  return { ...newTeacher, role: newTeacher.role || 'teacher' };
+  return { ...newTeacher, role: newTeacher.role || 'teacher', subscription_plan: newTeacher.subscription_plan || 'free', subscription_status: newTeacher.subscription_status || 'active' };
 }
 
 export function detectSchoolDomain(email: string): string | null {

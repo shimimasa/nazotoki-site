@@ -23,6 +23,9 @@ import AdminDashboard from './AdminDashboard';
 import LessonCalendar from './LessonCalendar';
 import OnboardingWizard from './OnboardingWizard';
 import ScenarioRecommender from './ScenarioRecommender';
+import PlanBadge from './PlanBadge';
+import UpgradeModal from './UpgradeModal';
+import type { SubscriptionPlan } from '../../lib/supabase';
 import {
   exportAllReportsZip,
   exportSelectedReportsZip,
@@ -47,12 +50,14 @@ interface Props {
   teacherName: string;
   schoolId?: string | null;
   role?: string | null;
+  plan?: SubscriptionPlan;
   scenarios?: ScenarioItem[];
 }
 
-export default function TeacherWorkspace({ teacherId, teacherName, schoolId, role, scenarios = [] }: Props) {
+export default function TeacherWorkspace({ teacherId, teacherName, schoolId, role, plan = 'free', scenarios = [] }: Props) {
   const isAdmin = role === 'admin';
   const [tab, setTab] = useState<WorkspaceTab>('history');
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [reportSubTab, setReportSubTab] = useState<ReportSubTab>('monthly');
   const [logs, setLogs] = useState<SessionLogRow[]>([]);
   const [classes, setClasses] = useState<ClassWithStats[]>([]);
@@ -183,7 +188,31 @@ export default function TeacherWorkspace({ teacherId, teacherName, schoolId, rol
       {/* Orphaned logs adoption banner */}
       <OrphanedLogsBanner teacherId={teacherId} onClaimed={refreshLogs} />
 
+      {/* Plan badge + Upgrade modal */}
+      {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} />}
+
       {/* Stats */}
+      <div class="flex items-center justify-between mb-1">
+        <PlanBadge plan={plan} onUpgrade={() => setShowUpgrade(true)} />
+        {plan !== 'free' && (
+          <button
+            onClick={async () => {
+              const session = await (await import('../../lib/supabase')).supabase?.auth.getSession();
+              const token = session?.data.session?.access_token;
+              if (!token) return;
+              const res = await fetch('/api/stripe/portal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              });
+              const data = await res.json();
+              if (data.ok) window.location.href = data.url;
+            }}
+            class="text-xs text-gray-400 hover:text-gray-600 hover:underline"
+          >
+            サブスク管理
+          </button>
+        )}
+      </div>
       <StatsBar logs={logs} classCount={classes.length} />
 
       {/* Tabs */}

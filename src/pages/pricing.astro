@@ -1,0 +1,90 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout
+  title="料金プラン"
+  description="ナゾトキ探偵団の料金プラン。Free / Standard / School の3プランから選べます。"
+>
+  <nav class="text-sm text-gray-500 mb-6">
+    <a href={import.meta.env.BASE_URL} class="hover:text-gray-700">トップ</a>
+    <span class="mx-1">/</span>
+    <span>料金プラン</span>
+  </nav>
+
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-10">
+      <h1 class="text-3xl font-black mb-3">料金プラン</h1>
+      <p class="text-gray-500">教室の規模に合わせて選べる3つのプラン</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <!-- Free -->
+      <div class="bg-white rounded-2xl border border-gray-200 p-6">
+        <div class="text-sm font-bold text-gray-500 mb-2">Free</div>
+        <div class="text-3xl font-black mb-1">¥0</div>
+        <div class="text-sm text-gray-400 mb-6">ずっと無料</div>
+        <ul class="space-y-3 text-sm text-gray-700 mb-8">
+          <li class="flex items-center gap-2"><span class="text-green-500">&#10003;</span> 1クラスまで</li>
+          <li class="flex items-center gap-2"><span class="text-green-500">&#10003;</span> 10シナリオ</li>
+          <li class="flex items-center gap-2"><span class="text-green-500">&#10003;</span> 基本集計機能</li>
+          <li class="flex items-center gap-2 text-gray-400"><span>&#10007;</span> AI分析</li>
+          <li class="flex items-center gap-2 text-gray-400"><span>&#10007;</span> 保護者ポータル</li>
+        </ul>
+        <a
+          href="/dashboard"
+          class="block w-full py-3 text-center rounded-xl font-bold text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+        >
+          無料で始める
+        </a>
+      </div>
+
+      <!-- Standard -->
+      <div class="bg-white rounded-2xl border-2 border-amber-400 p-6 relative">
+        <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-amber-500 text-white text-xs font-bold rounded-full">
+          おすすめ
+        </div>
+        <div class="text-sm font-bold text-amber-700 mb-2">Standard</div>
+        <div class="text-3xl font-black mb-1">¥1,980</div>
+        <div class="text-sm text-gray-400 mb-6">/月（税込）</div>
+        <ul class="space-y-3 text-sm text-gray-700 mb-8">
+          <li class="flex items-center gap-2"><span class="text-green-500">&#10003;</span> 無制限クラス</li>
+          <li class="flex items-center gap-2"><span class="text-green-500">&#10003;</span> 全100シナリオ</li>
+          <li class="flex items-center gap-2"><span class="text-green-500">&#10003;</span> AI思考分析</li>
+          <li class="flex items-center gap-2"><span class="text-green-500">&#10003;</span> CSV/PDFエクスポート</li>
+          <li class="flex items-center gap-2"><span class="text-green-500">&#10003;</span> 保護者ポータル</li>
+        </ul>
+        <a
+          href="/dashboard"
+          class="block w-full py-3 text-center rounded-xl font-bold text-sm bg-amber-500 text-white hover:bg-amber-600 transition-colors"
+        >
+          Standardプランで始める
+        </a>
+      </div>
+
+      <!-- School -->
+      <div class="bg-white rounded-2xl border border-gray-200 p-6">
+        <div class="text-sm font-bold text-indigo-700 mb-2">School</div>
+        <div class="text-3xl font-black mb-1">¥9,800</div>
+        <div class="text-sm text-gray-400 mb-6">/月/校（税込）</div>
+        <ul class="space-y-3 text-sm text-gray-700 mb-8">
+          <li class="flex items-center gap-2"><span class="text-green-500">&#10003;</span> 全先生アカウント</li>
+          <li class="flex items-center gap-2"><span class="text-green-500">&#10003;</span> 全100シナリオ</li>
+          <li class="flex items-center gap-2"><span class="text-green-500">&#10003;</span> AI思考分析</li>
+          <li class="flex items-center gap-2"><span class="text-green-500">&#10003;</span> 管理者ダッシュボード</li>
+          <li class="flex items-center gap-2"><span class="text-green-500">&#10003;</span> 優先サポート</li>
+        </ul>
+        <a
+          href="/dashboard"
+          class="block w-full py-3 text-center rounded-xl font-bold text-sm bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+        >
+          Schoolプランで始める
+        </a>
+      </div>
+    </div>
+
+    <div class="text-center text-sm text-gray-400">
+      <p>いつでもキャンセル可能。Stripeによる安全な決済処理。</p>
+      <p class="mt-1">学校法人・教育委員会はお問い合わせください → <a href="/contact" class="text-amber-600 hover:underline">お問い合わせ</a></p>
+    </div>
+  </div>
+</BaseLayout>
