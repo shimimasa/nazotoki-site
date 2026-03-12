@@ -58,17 +58,28 @@ export default function Timer({
   if (defaultSeconds === 0) return null;
 
   const isUrgent = !isOvertime && seconds > 0 && seconds <= 60;
+  const isCritical = !isOvertime && seconds > 0 && seconds <= 10 && running;
 
   return (
     <div
       class={`flex items-center gap-3 select-none rounded-xl px-3 py-1 transition-colors duration-500 ${
         isOvertime
           ? 'bg-red-100'
-          : isUrgent
-            ? 'bg-red-50 ring-2 ring-red-300 animate-pulse'
-            : ''
+          : isCritical
+            ? 'bg-red-100 ring-2 ring-red-400'
+            : isUrgent
+              ? 'bg-red-50 ring-2 ring-red-300 animate-pulse'
+              : ''
       }`}
     >
+      {isCritical && (
+        <style>{`
+          @keyframes timer-bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+          }
+        `}</style>
+      )}
       <button
         onClick={onToggle}
         class="w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-xl transition-colors"
@@ -78,16 +89,22 @@ export default function Timer({
       </button>
 
       <div
+        key={isCritical ? seconds : undefined}
         class={`font-mono font-black tabular-nums text-center ${
           isOvertime
             ? 'text-red-600 animate-pulse'
-            : isUrgent
-              ? 'text-red-600'
-              : seconds <= 120
-                ? 'text-amber-600'
-                : 'text-gray-900'
+            : isCritical
+              ? 'text-red-700'
+              : isUrgent
+                ? 'text-red-600'
+                : seconds <= 120
+                  ? 'text-amber-600'
+                  : 'text-gray-900'
         }`}
-        style="font-size: clamp(2rem, 6vw, 4rem)"
+        style={{
+          fontSize: 'clamp(2rem, 6vw, 4rem)',
+          ...(isCritical ? { animation: 'timer-bounce 0.4s ease-out' } : {}),
+        }}
       >
         {isOvertime && '-'}
         {mm}:{ss}

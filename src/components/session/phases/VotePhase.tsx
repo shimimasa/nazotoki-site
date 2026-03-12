@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'preact/hooks';
+import { useState, useMemo, useEffect } from 'preact/hooks';
 import type { CharacterData, EvidenceCardData } from '../types';
 import { splitHtml } from '../splitHtml';
 import EvidenceViewer from '../EvidenceViewer';
+import Confetti from '../Confetti';
 
 interface VotePhaseProps {
   characters: CharacterData[];
@@ -38,7 +39,7 @@ function extractVoteGuidance(gmGuideHtml: string): string {
   return matched.length > 0 ? matched.join('<hr>') : '';
 }
 
-type VoteStage = 'prepare' | 'voting' | 'sealed' | 'results';
+type VoteStage = 'prepare' | 'voting' | 'sealed' | 'countdown' | 'results';
 
 export default function VotePhase({
   characters,
@@ -56,6 +57,7 @@ export default function VotePhase({
   const [currentReason, setCurrentReason] = useState('');
   const [selectedEvidence, setSelectedEvidence] = useState<number | null>(null);
   const [revealAnim, setRevealAnim] = useState(false);
+  const [countdownNum, setCountdownNum] = useState(3);
 
   const allEvidence = useMemo(() => {
     const cards = [...evidenceCards];
@@ -93,9 +95,21 @@ export default function VotePhase({
   };
 
   const handleReveal = () => {
-    setStage('results');
-    setTimeout(() => setRevealAnim(true), 100);
+    setCountdownNum(3);
+    setStage('countdown');
   };
+
+  // Countdown timer for dramatic reveal
+  useEffect(() => {
+    if (stage !== 'countdown') return;
+    if (countdownNum <= 0) {
+      setStage('results');
+      setTimeout(() => setRevealAnim(true), 100);
+      return;
+    }
+    const id = setTimeout(() => setCountdownNum((n) => n - 1), 1000);
+    return () => clearTimeout(id);
+  }, [stage, countdownNum]);
 
   // ── Stage: Prepare ──
   if (stage === 'prepare') {
@@ -322,9 +336,39 @@ export default function VotePhase({
     );
   }
 
+  // ── Stage: Countdown (dramatic reveal) ──
+  if (stage === 'countdown') {
+    return (
+      <div class="space-y-4">
+        <div class="fixed inset-0 z-40 flex items-center justify-center bg-gradient-to-b from-red-900 to-red-800">
+          <div class="text-center">
+            <style>{`
+              @keyframes vote-countdown-pop {
+                0% { transform: scale(2); opacity: 0; }
+                40% { transform: scale(1); opacity: 1; }
+                100% { transform: scale(0.8); opacity: 0.6; }
+              }
+            `}</style>
+            <div
+              key={countdownNum}
+              class="text-9xl font-black text-white"
+              style="animation: vote-countdown-pop 0.9s ease-out"
+            >
+              {countdownNum}
+            </div>
+            <div class="text-xl text-red-200 mt-4 font-bold">
+              {'\u958B\u7968\u307E\u3067\u2026'}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ── Stage: Results ──
   return (
     <div class="space-y-5">
+      <Confetti count={70} />
       <div class="bg-white rounded-xl border-2 border-red-300 p-6">
         <h4 class="font-black text-lg mb-4 text-center">
           {'\uD83D\uDCCA'} {'\u6295\u7968\u7D50\u679C'}

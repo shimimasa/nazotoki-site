@@ -6,6 +6,7 @@ import PhaseProgress from './PhaseProgress';
 import PhaseTransition, { getPhaseColor } from './PhaseTransition';
 import GmControlPanel from './GmControlPanel';
 import FeedbackSummary from './FeedbackSummary';
+import Confetti from './Confetti';
 import PrepPhase from './phases/PrepPhase';
 import IntroPhase from './phases/IntroPhase';
 import ExplorePhase from './phases/ExplorePhase';
@@ -672,6 +673,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   if (completed) {
     return (
       <div class="text-center py-12 space-y-6">
+        <Confetti count={80} duration={4000} />
         <div class="text-6xl">🎉</div>
         <h2 class="text-3xl font-black">セッション完了！</h2>
         <p class="text-gray-600">
@@ -853,6 +855,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
           icon={PHASE_CONFIG[transitionTarget].icon}
           label={PHASE_CONFIG[transitionTarget].label}
           color={getPhaseColor(PHASE_CONFIG[transitionTarget].key)}
+          phaseKey={PHASE_CONFIG[transitionTarget].key}
           onComplete={handleTransitionComplete}
         />
       )}

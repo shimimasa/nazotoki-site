@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'preact/hooks';
 import type { CharacterData } from '../types';
 import SteppedContent from '../SteppedContent';
 import GmNote from '../GmNote';
+import Confetti from '../Confetti';
 
 interface TruthPhaseProps {
   solutionHtml: string;
@@ -208,41 +209,63 @@ export default function TruthPhase({
           </div>
 
           {/* Correct/incorrect judgment (only if culprit exists) */}
-          {solutionDone && culpritName && hasVotes && stage === 'solution' && (
-            <div class="bg-white rounded-xl border-2 border-amber-200 p-5 mt-4">
-              <h4 class="font-black text-center mb-4">
-                {'\uD83C\uDFAF \u63A8\u7406\u7D50\u679C'}
-              </h4>
-              <div class="space-y-2">
-                {characters.map((voter) => {
-                  const correct = isCorrectVote(voter.id);
-                  if (correct === null) return null;
-                  const suspect = characters.find((c) => c.id === votes[voter.id]);
-                  return (
-                    <div key={voter.id} class="flex items-center gap-3">
-                      <span class={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-black ${
-                        correct
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-amber-100 text-amber-700'
-                      }`}>
-                        {correct ? '\u25CB' : '\u25B3'}
-                      </span>
-                      <span class="text-sm">
-                        <span class="font-bold">{voter.name}</span>
-                        <span class="text-gray-400 mx-1">{'\u2192'}</span>
-                        <span class={correct ? 'font-bold text-green-700' : 'text-gray-600'}>
-                          {suspect?.name}
-                        </span>
-                        <span class={`ml-2 text-xs font-bold ${correct ? 'text-green-600' : 'text-amber-600'}`}>
-                          {correct ? '\u6B63\u89E3\uFF01' : '\u60DC\u3057\u3044\uFF01'}
-                        </span>
+          {solutionDone && culpritName && hasVotes && stage === 'solution' && (() => {
+            const correctCount = characters.filter((v) => isCorrectVote(v.id) === true).length;
+            return (
+              <>
+                {correctCount > 0 && <Confetti count={60} />}
+                <div class="bg-white rounded-xl border-2 border-amber-200 p-5 mt-4">
+                  <h4 class="font-black text-center mb-4">
+                    {'\uD83C\uDFAF \u63A8\u7406\u7D50\u679C'}
+                  </h4>
+                  <div class="space-y-2">
+                    {characters.map((voter) => {
+                      const correct = isCorrectVote(voter.id);
+                      if (correct === null) return null;
+                      const suspect = characters.find((c) => c.id === votes[voter.id]);
+                      return (
+                        <div
+                          key={voter.id}
+                          class={`flex items-center gap-3 p-2 rounded-lg transition-all ${
+                            correct
+                              ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-300 shadow-sm'
+                              : ''
+                          }`}
+                        >
+                          <span class={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-black ${
+                            correct
+                              ? 'bg-yellow-400 text-white shadow-md'
+                              : 'bg-amber-100 text-amber-700'
+                          }`}>
+                            {correct ? '\u2B50' : '\u25B3'}
+                          </span>
+                          <span class="text-sm">
+                            <span class="font-bold">{voter.name}</span>
+                            <span class="text-gray-400 mx-1">{'\u2192'}</span>
+                            <span class={correct ? 'font-bold text-green-700' : 'text-gray-600'}>
+                              {suspect?.name}
+                            </span>
+                            <span class={`ml-2 text-xs font-bold ${correct ? 'text-green-600' : 'text-amber-600'}`}>
+                              {correct ? '\u6B63\u89E3\uFF01' : '\u60DC\u3057\u3044\uFF01'}
+                            </span>
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {correctCount > 0 && (
+                    <div class="mt-4 pt-3 border-t border-amber-200 text-center">
+                      <span class="text-lg font-black text-amber-800">
+                        {correctCount === characters.length
+                          ? '\uD83C\uDF1F \u5168\u54E1\u6B63\u89E3\uFF01\u3059\u3054\u3044\uFF01'
+                          : `\uD83C\uDFAF ${correctCount}\u4EBA\u304C\u898B\u4E8B\u306B\u7684\u4E2D\uFF01`}
                       </span>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+                  )}
+                </div>
+              </>
+            );
+          })()}
 
           {/* GM truth reference */}
           <div class="rounded-xl border border-gray-200 overflow-hidden bg-white mt-4">

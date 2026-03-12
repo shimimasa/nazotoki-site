@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'preact/hooks';
+import { useState, useCallback, useEffect, useRef } from 'preact/hooks';
 import type { EvidenceCardData, CharacterData } from '../types';
 import EvidenceViewer from '../EvidenceViewer';
+import Confetti from '../Confetti';
 
 interface ExplorePhaseProps {
   evidenceCards: EvidenceCardData[];
@@ -18,10 +19,20 @@ export default function ExplorePhase({
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
   const [justDiscovered, setJustDiscovered] = useState<number | null>(null);
   const [showQR, setShowQR] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const prevDiscoveredRef = useRef(discoveredCards.size);
 
   const totalCards = evidenceCards.length;
   const discoveredCount = discoveredCards.size;
   const allDiscovered = discoveredCount === totalCards;
+
+  // Trigger confetti when all evidence is discovered
+  useEffect(() => {
+    if (allDiscovered && prevDiscoveredRef.current < totalCards) {
+      setShowConfetti(true);
+    }
+    prevDiscoveredRef.current = discoveredCount;
+  }, [allDiscovered, discoveredCount, totalCards]);
   const progressPercent = totalCards > 0 ? (discoveredCount / totalCards) * 100 : 0;
 
   const handleSelectCard = useCallback((num: number) => {
@@ -191,16 +202,17 @@ export default function ExplorePhase({
 
       {/* All discovered celebration */}
       {allDiscovered && !selectedCard && (
-        <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-          <p class="text-2xl mb-1">{'\uD83C\uDF89'}</p>
-          <p class="font-black text-green-800">
-            {'\u5168\u3066\u306E\u624B\u304C\u304B\u308A\u3092\u767A\u898B\u3057\u307E\u3057\u305F\uFF01'}
+        <div class="bg-green-50 border-2 border-green-300 rounded-xl p-6 text-center">
+          <p class="text-4xl mb-2">{'\uD83C\uDF89'}</p>
+          <p class="text-xl font-black text-green-800">
+            {'\u5168\u3066\u306E\u624B\u304C\u304B\u308A\u3092\u767A\u898B\uFF01'}
           </p>
-          <p class="text-sm text-green-700 mt-1">
+          <p class="text-sm text-green-700 mt-2">
             {'\u8A3C\u62E0\u3092\u3082\u3046\u4E00\u5EA6\u78BA\u8A8D\u3057\u305F\u3044\u5834\u5408\u306F\u3001\u30AB\u30FC\u30C9\u3092\u30BF\u30C3\u30D7\u3057\u3066\u304F\u3060\u3055\u3044'}
           </p>
         </div>
       )}
+      {showConfetti && <Confetti />}
     </div>
   );
 }
