@@ -62,29 +62,6 @@ function renderMarkdown(md) {
   return sanitizeHtml(raw, SANITIZE_OPTIONS);
 }
 
-// Phase 133: Extract secret section from fullContent
-// Codex M2 fix: Match all header variants across 100 scenarios
-function extractSecret(fullContent) {
-  if (!fullContent) return '';
-
-  // Strategy 1: ## or ### headers containing 秘密/ひみつ/きみだけの
-  // Covers: ## ひみつの情報, ## 秘密情報（...）, ### ★秘密★, ### きみだけのひみつ, etc.
-  const headerPattern = /^#{2,3}\s+.*(?:秘密|ひみつ|きみだけの).*$/m;
-  const match = fullContent.match(headerPattern);
-  if (match) {
-    return fullContent.substring(match.index + match[0].length).trim();
-  }
-
-  // Strategy 2: "真実（自分だけの情報）" pattern (e.g., time-travel-04 アキラ)
-  const truthPattern = /^#{2,3}\s+.*真実.*自分だけ.*$/m;
-  const truthMatch = fullContent.match(truthPattern);
-  if (truthMatch) {
-    return fullContent.substring(truthMatch.index + truthMatch[0].length).trim();
-  }
-
-  return '';
-}
-
 const dataDir = path.resolve('src/data');
 const outDir = path.resolve('public/data/scenarios');
 

@@ -105,9 +105,15 @@ export default function StudentSession() {
       const pending = pendingVoteRef.current;
       const p = participantRef.current;
       if (pending && p) {
-        pendingVoteRef.current = null;
         voteAsParticipant(p.id, p.session_token, pending.votedFor, pending.voteReason || undefined)
-          .then((ok) => { if (ok) { setHasVoted(true); setVotePending(false); } });
+          .then((ok) => {
+            if (ok) {
+              pendingVoteRef.current = null;
+              setHasVoted(true);
+              setVotePending(false);
+            }
+          })
+          .catch(() => { /* keep pending for next reconnect */ });
       }
     } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
       setShouldReconnect((n) => n + 1);
