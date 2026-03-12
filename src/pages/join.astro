@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import StudentSession from '../components/session/StudentSession';
+import StudentSessionIsland from '../components/session/StudentSessionIsland';
 ---
 <BaseLayout
   title="セッションに参加"
@@ -8,7 +8,7 @@ import StudentSession from '../components/session/StudentSession';
   noIndex={true}
   fullWidth={true}
 >
-  <StudentSession client:load />
+  <StudentSessionIsland client:load />
 </BaseLayout>
 
 <style is:global>
