@@ -824,9 +824,28 @@ export default function StudentSession() {
             sessionToken={participant?.session_token || ''}
           />
 
-          {/* Thank you + reset */}
-          <div class="text-center space-y-3 pt-2">
-            <p class="text-gray-500 text-sm">お疲れ様でした！</p>
+          {/* Phase 122: Navigation after session */}
+          <div class="space-y-2 pt-2">
+            <p class="text-gray-500 text-sm text-center">お疲れ様でした！</p>
+
+            {/* Solo replay link */}
+            {sessionRun?.scenario_slug && (
+              <a
+                href={`/solo/${sessionRun.scenario_slug}`}
+                class="block w-full py-3 bg-amber-500 text-white rounded-xl font-black text-sm text-center hover:bg-amber-600 transition-colors"
+              >
+                ソロモードで復習する
+              </a>
+            )}
+
+            {/* My page link */}
+            <a
+              href="/my"
+              class="block w-full py-3 bg-blue-500 text-white rounded-xl font-black text-sm text-center hover:bg-blue-600 transition-colors"
+            >
+              マイページへ
+            </a>
+
             <button
               onClick={handleReset}
               class="w-full py-3 bg-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-300 active:bg-gray-400 transition-colors"

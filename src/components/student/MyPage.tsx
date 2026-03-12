@@ -209,6 +209,35 @@ export default function MyPage({ scenarios, seriesConfig }: Props) {
     rpToNext = nextRank.minRp - totalRp;
   }
 
+  // Phase 122: Compute suggested next scenario
+  const suggestedScenario = useMemo(() => {
+    // Priority 1: Pending assignments
+    const pending = assignments.filter(a => !playedSlugs.has(a.scenario_slug));
+    if (pending.length > 0) {
+      const s = scenarios.find(sc => sc.slug === pending[0].scenario_slug);
+      if (s) return { scenario: s, reason: 'assignment' as const };
+    }
+    // Priority 2: Next in the same series as last played
+    if (sessions.length > 0) {
+      const lastSlug = sessions[0].scenario_slug;
+      const lastScenario = scenarios.find(sc => sc.slug === lastSlug);
+      if (lastScenario) {
+        const nextInSeries = scenarios
+          .filter(sc => sc.series === lastScenario.series && sc.volume > lastScenario.volume && !playedSlugs.has(sc.slug))
+          .sort((a, b) => a.volume - b.volume)[0];
+        if (nextInSeries && isUnlocked(nextInSeries.volume, totalRp, new Set(assignments.map(a => a.scenario_slug)), nextInSeries.slug)) {
+          return { scenario: nextInSeries, reason: 'next_in_series' as const };
+        }
+      }
+    }
+    // Priority 3: Any unplayed, unlocked scenario
+    const unplayed = scenarios
+      .filter(sc => !playedSlugs.has(sc.slug) && isUnlocked(sc.volume, totalRp, new Set(assignments.map(a => a.scenario_slug)), sc.slug))
+      .sort((a, b) => a.volume - b.volume)[0];
+    if (unplayed) return { scenario: unplayed, reason: 'explore' as const };
+    return null;
+  }, [scenarios, sessions, assignments, playedSlugs, totalRp]);
+
   // Phase 94: Assigned slugs for unlock bypass
   const assignedSlugs = useMemo(
     () => new Set(assignments.map(a => a.scenario_slug)),
@@ -299,6 +328,35 @@ export default function MyPage({ scenarios, seriesConfig }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Phase 122: Next mission card */}
+      {suggestedScenario && (
+        <div class="px-4 pt-3">
+          <a
+            href={`/solo/${suggestedScenario.scenario.slug}`}
+            class="block bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-2xl p-4 hover:shadow-md transition-shadow"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-bold text-blue-600 mb-1">
+                  {suggestedScenario.reason === 'assignment' ? '先生からの課題'
+                    : suggestedScenario.reason === 'next_in_series' ? '続きに挑戦'
+                    : '新しいシナリオ'}
+                </p>
+                <p class="text-sm font-black text-gray-900 truncate">{suggestedScenario.scenario.title}</p>
+                <div class="flex gap-2 mt-1 text-xs text-gray-500">
+                  <span>{suggestedScenario.scenario.subject}</span>
+                  <span>{suggestedScenario.scenario.difficulty}</span>
+                  {nextRank && <span class="text-amber-600">あと{rpToNext}RPで{nextRank.name}</span>}
+                </div>
+              </div>
+              <div class="shrink-0 ml-3 w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+                <span class="text-white text-lg font-black">{'\u25B6'}</span>
+              </div>
+            </div>
+          </a>
+        </div>
+      )}
 
       {/* Phase 90: Streak banner */}
       {streak > 0 && (

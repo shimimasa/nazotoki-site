@@ -50,9 +50,19 @@ interface FeedbackEntry {
   hint: string;
 }
 
+interface NextScenarioData {
+  slug: string;
+  title: string;
+  seriesName: string;
+  volume: number;
+  subject: string;
+  difficulty: string;
+}
+
 interface Props {
   data: SoloData;
   feedbackData?: Record<string, FeedbackEntry> | null;
+  nextScenario?: NextScenarioData | null;
 }
 
 // --- Constants ---
@@ -68,7 +78,7 @@ const LS_STUDENT_TOKEN = 'nazotoki-student-token';
 
 // --- Component ---
 
-export default function SoloSession({ data, feedbackData = null }: Props) {
+export default function SoloSession({ data, feedbackData = null, nextScenario = null }: Props) {
   const witnessCount = data.witnesses.length;
   // Steps: 1=intro, 2..N+1=witnesses, N+2=evidence, N+3=vote, N+4=truth
   const STEP_INTRO = 1;
@@ -739,17 +749,41 @@ export default function SoloSession({ data, feedbackData = null }: Props) {
                 </details>
               )}
 
+              {/* Phase 122: Next scenario recommendation */}
+              {nextScenario && (
+                <a
+                  href={`/solo/${nextScenario.slug}`}
+                  class="block bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-4 hover:shadow-md transition-shadow"
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="flex-1 min-w-0">
+                      <p class="text-xs font-bold text-amber-600 mb-1">
+                        {nextScenario.seriesName === data.seriesName ? '次のシナリオ' : '別シリーズに挑戦'}
+                      </p>
+                      <p class="text-sm font-black text-gray-900 truncate">{nextScenario.title}</p>
+                      <div class="flex gap-2 mt-1 text-xs text-gray-500">
+                        <span>{nextScenario.subject}</span>
+                        <span>{nextScenario.difficulty}</span>
+                      </div>
+                    </div>
+                    <div class="shrink-0 ml-3 w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center">
+                      <span class="text-white text-lg font-black">{'\u25B6'}</span>
+                    </div>
+                  </div>
+                </a>
+              )}
+
               {/* Actions */}
-              <div class="flex flex-col gap-2">
+              <div class="flex gap-2">
                 <a
                   href="/my"
-                  class="block w-full py-3 bg-amber-500 text-white rounded-xl font-black text-sm text-center hover:bg-amber-600 transition-colors"
+                  class="flex-1 block py-3 bg-amber-500 text-white rounded-xl font-black text-sm text-center hover:bg-amber-600 transition-colors"
                 >
                   マイページへ
                 </a>
                 <a
                   href="/"
-                  class="block w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-bold text-sm text-center hover:bg-gray-200 transition-colors"
+                  class="flex-1 block py-3 bg-gray-100 text-gray-700 rounded-xl font-bold text-sm text-center hover:bg-gray-200 transition-colors"
                 >
                   トップに戻る
                 </a>

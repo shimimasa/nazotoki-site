@@ -79,11 +79,32 @@ export async function getStaticPaths() {
     };
 
     const feedbackData = loadFeedback(s.slug);
-    return { params: { slug: s.slug }, props: { soloData, feedbackData } };
+
+    // Phase 122: Compute next scenario recommendation at build time
+    const sameSeries = scenarios
+      .filter(sc => sc.series === s.series && sc.volume > s.volume)
+      .sort((a, b) => a.volume - b.volume);
+    const nextInSeries = sameSeries[0] || null;
+    // If no next in series, suggest first scenario of a different series
+    const otherSeries = scenarios
+      .filter(sc => sc.series !== s.series)
+      .sort((a, b) => a.volume - b.volume);
+    const altScenario = otherSeries[0] || null;
+    const pick = nextInSeries || altScenario;
+    const nextScenario = pick ? {
+      slug: pick.slug,
+      title: pick.title,
+      seriesName: pick.seriesName,
+      volume: pick.volume,
+      subject: pick.subject,
+      difficulty: pick.difficulty,
+    } : null;
+
+    return { params: { slug: s.slug }, props: { soloData, feedbackData, nextScenario } };
   });
 }
 
-const { soloData, feedbackData } = Astro.props;
+const { soloData, feedbackData, nextScenario } = Astro.props;
 ---
 <BaseLayout
   title={`ソロ推理: ${soloData.title}`}
@@ -91,7 +112,7 @@ const { soloData, feedbackData } = Astro.props;
   noIndex={true}
   fullWidth={true}
 >
-  <SoloSessionIsland client:load data={soloData} feedbackData={feedbackData} />
+  <SoloSessionIsland client:load data={soloData} feedbackData={feedbackData} nextScenario={nextScenario} />
 </BaseLayout>
 
 <style is:global>
