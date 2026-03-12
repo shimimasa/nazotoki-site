@@ -64,6 +64,7 @@ export default function AnalyticsDashboard({ logs, classes, teacherId }: Props) 
   const [studentLoading, setStudentLoading] = useState(true);
   const [soloSessions, setSoloSessions] = useState<SoloSessionRow[]>([]);
   const [feedbackRows, setFeedbackRows] = useState<SessionFeedbackRow[]>([]);
+  const [goNoGoReady, setGoNoGoReady] = useState(false);
 
   // Date range filter state
   const [dateRange, setDateRange] = useState<DateRange>({ type: 'all' });
@@ -75,22 +76,28 @@ export default function AnalyticsDashboard({ logs, classes, teacherId }: Props) 
       setStudentLoading(false);
       return;
     }
+    const feedbackPromise = fetchAllTeacherFeedback().then((rows) => {
+      setFeedbackRows(rows);
+    });
+
     fetchAllStudentsForTeacher(classIds).then((allStudents) => {
       setStudents(allStudents);
       const ids = allStudents.map((s) => s.id);
       if (ids.length === 0) {
         setStudentLoading(false);
+        setGoNoGoReady(true);
         return;
       }
-      fetchStudentLogSummaries(ids).then((sl) => {
+      const logsPromise = fetchStudentLogSummaries(ids).then((sl) => {
         setStudentLogs(sl);
         setStudentLoading(false);
       });
-      // Phase 119: Fetch solo sessions for Go/No-Go
-      fetchSoloSessionsForStudents(ids).then(setSoloSessions);
+      const soloPromise = fetchSoloSessionsForStudents(ids).then(setSoloSessions);
+
+      Promise.all([logsPromise, soloPromise, feedbackPromise]).then(() => {
+        setGoNoGoReady(true);
+      });
     });
-    // Phase 119: Fetch feedback for Go/No-Go
-    fetchAllTeacherFeedback().then(setFeedbackRows);
   }, [classes]);
 
   // Apply date range filter
@@ -225,7 +232,7 @@ export default function AnalyticsDashboard({ logs, classes, teacherId }: Props) 
       )}
 
       {/* Phase 119: Go/No-Go Summary (always visible, uses full data) */}
-      {!studentLoading && <GoNoGoSection result={goNoGo} />}
+      {goNoGoReady && <GoNoGoSection result={goNoGo} />}
 
       {filteredLogs.length > 0 && (
         <>

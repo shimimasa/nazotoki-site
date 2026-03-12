@@ -185,7 +185,7 @@ function ParentDashboard({ data }: { data: ParentData }) {
         </div>
         <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
           <div class="text-2xl font-black text-purple-600">
-            {data.soloSessions.filter(s => s.is_correct).length}
+            {data.soloSessions.filter(s => s.is_correct === true).length}
           </div>
           <div class="text-xs text-gray-500 mt-1">正解数</div>
         </div>
@@ -251,7 +251,7 @@ function ParentDashboard({ data }: { data: ParentData }) {
             {data.soloSessions.slice(0, 5).map((s) => (
               <div key={s.id} class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
                 <div class="flex items-center gap-2">
-                  <span class="text-sm">{s.is_correct ? '✅' : '❌'}</span>
+                  <span class="text-sm">{s.is_correct === true ? '✅' : s.is_correct === false ? '❌' : '➖'}</span>
                   <span class="text-sm text-gray-700">{getSubject(s.scenario_slug)}</span>
                 </div>
                 <div class="flex items-center gap-3">
