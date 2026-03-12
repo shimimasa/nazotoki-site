@@ -62,6 +62,17 @@ function renderMarkdown(md) {
   return sanitizeHtml(raw, SANITIZE_OPTIONS);
 }
 
+// Phase 133: Extract secret section from fullContent
+function extractSecret(fullContent) {
+  if (!fullContent) return '';
+  // Match ★秘密の情報★ or ★{秘密|ひみつ}の情報★ header
+  const secretPattern = /###?\s*★[^★]*秘密[^★]*★[^\n]*/;
+  const match = fullContent.match(secretPattern);
+  if (!match) return '';
+  const startIdx = match.index + match[0].length;
+  return fullContent.substring(startIdx).trim();
+}
+
 const dataDir = path.resolve('src/data');
 const outDir = path.resolve('public/data/scenarios');
 
@@ -95,6 +106,15 @@ for (const file of files) {
           content_html: renderMarkdown(raw.evidence5.content),
         }
       : null,
+    // Phase 133: Character data for student session
+    characters: (raw.characters || []).filter((c) => !c.isNPC).map((c) => ({
+      id: c.id,
+      name: c.name,
+      role: c.role,
+      intro_html: renderMarkdown(c.introContent || ''),
+      public_html: renderMarkdown(c.publicContent || ''),
+      secret_html: renderMarkdown(extractSecret(c.fullContent)),
+    })),
   };
 
   fs.writeFileSync(

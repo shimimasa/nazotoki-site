@@ -3,6 +3,8 @@ import { supabase, checkAndAwardBadges, fetchStudentStreak, fetchStudentAssignme
 import { isUnlocked, getUnlockThreshold } from '../../lib/unlock';
 import { useFontSize } from '../../lib/use-font-size';
 import SoloFeedback from './SoloFeedback';
+import CharacterSelect from './CharacterSelect';
+import Confetti from '../session/Confetti';
 
 // --- Types ---
 
@@ -72,6 +74,7 @@ const RP_READ_EVIDENCE = 5;
 const RP_VOTE = 10;
 const RP_VOTE_REASON = 10;
 const RP_COMPLETE = 20;
+const RP_PERSPECTIVE_MODE = 10;
 
 const LS_STUDENT_ID = 'nazotoki-student-id';
 const LS_STUDENT_TOKEN = 'nazotoki-student-token';
@@ -80,10 +83,33 @@ const LS_STUDENT_TOKEN = 'nazotoki-student-token';
 
 export default function SoloSession({ data, feedbackData = null, nextScenario = null }: Props) {
   const witnessCount = data.witnesses.length;
-  // Steps: 1=intro, 2..N+1=witnesses, N+2=evidence, N+3=vote, N+4=truth
+
+  // Phase 125: Solo mode (classic = current behavior, perspective = 1-character viewpoint)
+  const [soloMode, setSoloMode] = useState<'classic' | 'perspective'>('classic');
+  const [selectedCharacterIdx, setSelectedCharacterIdx] = useState<number | null>(null);
+  // Phase 127: Investigation tokens (perspective mode)
+  const [investigationTokens, setInvestigationTokens] = useState(2);
+  const [interrogatedCharacters, setInterrogatedCharacters] = useState<Set<number>>(new Set());
+  // Phase 128: Hypothesis
+  const [hypothesis, setHypothesis] = useState('');
+  const [hypothesisSuspect, setHypothesisSuspect] = useState('');
+  // Phase 130: Countdown overlay
+  const [showCountdown, setShowCountdown] = useState(false);
+  const [countdownValue, setCountdownValue] = useState(3);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  const isPerspective = soloMode === 'perspective';
+
+  // Steps: dynamic based on mode
+  // Classic:     Intro → Witness×N → Evidence → Vote → Truth
+  // Perspective: Intro → CharSelect → Witness×N → Hypothesis → Evidence → Vote → Truth
   const STEP_INTRO = 1;
-  const STEP_FIRST_WITNESS = 2;
-  const STEP_EVIDENCE = STEP_FIRST_WITNESS + witnessCount;
+  const STEP_CHAR_SELECT = isPerspective ? 2 : -1;
+  const STEP_FIRST_WITNESS = isPerspective ? 3 : 2;
+  const STEP_HYPOTHESIS = isPerspective ? STEP_FIRST_WITNESS + witnessCount : -1;
+  const STEP_EVIDENCE = isPerspective
+    ? STEP_FIRST_WITNESS + witnessCount + 1
+    : STEP_FIRST_WITNESS + witnessCount;
   const STEP_VOTE = STEP_EVIDENCE + 1;
   const STEP_TRUTH = STEP_VOTE + 1;
   const TOTAL_STEPS = STEP_TRUTH;
@@ -194,10 +220,19 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
   }, [step, goToStep]);
 
   // --- Witness actions ---
+  // Phase 126-127: perspective mode uses investigation tokens
   const revealSecret = useCallback((witnessIdx: number) => {
+    if (isPerspective && witnessIdx !== selectedCharacterIdx) {
+      // Use investigation token for other characters
+      if (investigationTokens <= 0) return;
+      setInvestigationTokens(prev => prev - 1);
+      setInterrogatedCharacters(prev => new Set(prev).add(witnessIdx));
+    }
     setRevealedSecrets(prev => new Set(prev).add(witnessIdx));
+    // Own character in perspective mode: 0 RP (auto-revealed)
+    if (isPerspective && witnessIdx === selectedCharacterIdx) return;
     earnRP(`testimony-${witnessIdx}`, RP_READ_TESTIMONY);
-  }, [earnRP]);
+  }, [earnRP, isPerspective, selectedCharacterIdx, investigationTokens]);
 
   // --- Evidence actions ---
   const openEvidence = useCallback((cardNumber: number) => {
@@ -256,6 +291,13 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
         p_rp_earned: multipliedRp,
         p_hints_used: 0,
         p_is_correct: isCorrect,
+        // Phase 131: Perspective mode data
+        p_solo_mode: soloMode,
+        p_played_character: isPerspective && selectedCharacterIdx !== null
+          ? data.witnesses[selectedCharacterIdx].name : null,
+        p_interrogated_characters: isPerspective
+          ? Array.from(interrogatedCharacters).map(i => data.witnesses[i]?.name).filter(Boolean) : null,
+        p_hypothesis: isPerspective && hypothesis ? hypothesis : null,
       });
 
       // Phase 89: Check badges after save
@@ -274,16 +316,36 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
     }
 
     setCompleted(true);
-    goToStep(STEP_TRUTH);
-  }, [vote, voteReason, rpEarned, readEvidence, data.slug, earnRP, recordStepTime, goToStep, STEP_TRUTH]);
+    // Phase 130: Countdown before truth reveal
+    setCountdownValue(3);
+    setShowCountdown(true);
+  }, [vote, voteReason, rpEarned, readEvidence, data.slug, earnRP, recordStepTime, goToStep, STEP_TRUTH,
+      isPerspective, selectedCharacterIdx, interrogatedCharacters, hypothesis, hypothesisSuspect, soloMode]);
 
   // --- Step label ---
+  // Phase 130: Countdown effect
+  useEffect(() => {
+    if (!showCountdown) return;
+    if (countdownValue <= 0) {
+      setShowCountdown(false);
+      // Determine correctness for confetti
+      const isCorrect = vote && feedbackData && feedbackData[vote]?.correct;
+      if (isCorrect) setShowConfetti(true);
+      goToStep(STEP_TRUTH);
+      return;
+    }
+    const t = setTimeout(() => setCountdownValue(v => v - 1), 1000);
+    return () => clearTimeout(t);
+  }, [showCountdown, countdownValue]);
+
   const stepLabel = (s: number): string => {
     if (s === STEP_INTRO) return '事件概要';
-    if (s >= STEP_FIRST_WITNESS && s < STEP_EVIDENCE) {
+    if (s === STEP_CHAR_SELECT) return 'キャラ選択';
+    if (s >= STEP_FIRST_WITNESS && s < STEP_FIRST_WITNESS + witnessCount) {
       const idx = s - STEP_FIRST_WITNESS;
       return `${data.witnesses[idx]?.name}の証言`;
     }
+    if (s === STEP_HYPOTHESIS) return '中間仮説';
     if (s === STEP_EVIDENCE) return '証拠調査';
     if (s === STEP_VOTE) return '最終推理';
     if (s === STEP_TRUTH) return '真相解明';
@@ -365,6 +427,11 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
           >
             Aa
           </button>
+          {isPerspective && (
+            <span class="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
+              &#128270; {investigationTokens}/2
+            </span>
+          )}
           <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
             {rpEarned} RP
           </span>
@@ -425,28 +492,86 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
                 </div>
                 <div class="solo-content" dangerouslySetInnerHTML={{ __html: data.commonHtml }} />
               </div>
+              {/* Phase 125: Mode selection */}
+              <div class="bg-white rounded-2xl border border-gray-200 p-4">
+                <p class="text-xs font-bold text-gray-500 mb-3 text-center">プレイモード</p>
+                <div class="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setSoloMode('classic')}
+                    class={`py-3 px-3 rounded-xl text-sm font-bold transition-all border-2 ${
+                      soloMode === 'classic'
+                        ? 'border-amber-500 bg-amber-50 text-amber-900'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                    }`}
+                  >
+                    <span class="block text-lg mb-1">&#128214;</span>
+                    クラシック
+                  </button>
+                  <button
+                    onClick={() => setSoloMode('perspective')}
+                    class={`py-3 px-3 rounded-xl text-sm font-bold transition-all border-2 ${
+                      soloMode === 'perspective'
+                        ? 'border-purple-500 bg-purple-50 text-purple-900'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                    }`}
+                  >
+                    <span class="block text-lg mb-1">&#127917;</span>
+                    視点モード
+                    <span class="block text-[10px] text-purple-500 mt-0.5">4倍遊べる！</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Steps 2-N+1: Witness testimonies */}
-          {step >= STEP_FIRST_WITNESS && step < STEP_EVIDENCE && (() => {
+          {/* Phase 125: Character selection step (perspective mode only) */}
+          {step === STEP_CHAR_SELECT && isPerspective && (
+            <CharacterSelect
+              witnesses={data.witnesses}
+              selectedIdx={selectedCharacterIdx}
+              onSelect={(idx) => {
+                setSelectedCharacterIdx(idx);
+                // Auto-reveal own character's secret
+                setRevealedSecrets(prev => new Set(prev).add(idx));
+                earnRP('perspective-mode', RP_PERSPECTIVE_MODE);
+              }}
+            />
+          )}
+
+          {/* Witness testimonies */}
+          {step >= STEP_FIRST_WITNESS && step < STEP_FIRST_WITNESS + witnessCount && (() => {
             const idx = step - STEP_FIRST_WITNESS;
             const w = data.witnesses[idx];
             if (!w) return null;
             const isRevealed = revealedSecrets.has(idx);
+            const isOwnCharacter = isPerspective && idx === selectedCharacterIdx;
+            const isOtherLocked = isPerspective && idx !== selectedCharacterIdx && !isRevealed;
 
             return (
               <div class="space-y-4">
                 {/* Witness card */}
-                <div class="bg-white rounded-2xl border border-gray-200 p-5">
+                <div class={`bg-white rounded-2xl p-5 ${
+                  isOwnCharacter
+                    ? 'border-2 border-green-400'
+                    : 'border border-gray-200'
+                }`}>
                   <div class="flex items-center gap-3 mb-3">
-                    <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-lg font-black text-amber-700">
+                    <div class={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-black ${
+                      isOwnCharacter
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-amber-100 text-amber-700'
+                    }`}>
                       {w.name.charAt(0)}
                     </div>
-                    <div>
+                    <div class="flex-1">
                       <h2 class="font-black text-gray-900">{w.name}</h2>
                       <p class="text-xs text-gray-500">{w.role}</p>
                     </div>
+                    {isOwnCharacter && (
+                      <span class="text-[10px] font-black text-green-700 bg-green-100 px-2 py-1 rounded-full">
+                        YOUR CHARACTER
+                      </span>
+                    )}
                   </div>
 
                   {/* Intro */}
@@ -460,8 +585,35 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
                     <div class="solo-content text-sm" dangerouslySetInnerHTML={{ __html: w.publicHtml }} />
                   </div>
 
-                  {/* Secret reveal */}
-                  {!isRevealed ? (
+                  {/* Secret reveal — Phase 126: perspective-aware display */}
+                  {isOwnCharacter ? (
+                    // Own character: auto-revealed with green styling
+                    <div class="bg-green-50 border-2 border-green-300 rounded-xl p-4 animate-fadeIn">
+                      <p class="text-xs font-black text-green-700 mb-2">&#128100; あなたが知っている秘密</p>
+                      <div class="solo-content text-sm" dangerouslySetInnerHTML={{ __html: w.secretHtml }} />
+                    </div>
+                  ) : isOtherLocked ? (
+                    // Other character, not investigated — locked
+                    <div class="space-y-2">
+                      <div class="bg-gray-100 border-2 border-gray-200 rounded-xl p-4 text-center">
+                        <p class="text-2xl mb-1">&#128274;</p>
+                        <p class="text-xs text-gray-500 font-bold">秘密の情報はロック中</p>
+                      </div>
+                      {investigationTokens > 0 ? (
+                        <button
+                          onClick={() => revealSecret(idx)}
+                          class="w-full py-3 bg-purple-500 text-white rounded-xl font-black text-sm hover:bg-purple-600 active:bg-purple-700 transition-colors"
+                        >
+                          &#128270; 調査トークンを使う（残り{investigationTokens}）
+                        </button>
+                      ) : (
+                        <p class="text-xs text-gray-400 text-center py-2">
+                          トークンを使い切りました。他の手がかりから推理しよう！
+                        </p>
+                      )}
+                    </div>
+                  ) : !isRevealed ? (
+                    // Classic mode: original reveal button
                     <button
                       onClick={() => revealSecret(idx)}
                       class="w-full py-3 bg-amber-500 text-white rounded-xl font-black text-sm hover:bg-amber-600 active:bg-amber-700 transition-colors"
@@ -469,6 +621,7 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
                       &#128270; 深掘り調査する
                     </button>
                   ) : (
+                    // Revealed secret (classic or investigated other)
                     <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 animate-fadeIn">
                       <p class="text-xs font-black text-amber-700 mb-2">&#128275; 調査で判明した事実</p>
                       <div class="solo-content text-sm" dangerouslySetInnerHTML={{ __html: w.secretHtml }} />
@@ -479,26 +632,83 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
             );
           })()}
 
-          {/* Step N+2: Evidence investigation */}
+          {/* Phase 128: Hypothesis step (perspective mode only) */}
+          {step === STEP_HYPOTHESIS && isPerspective && (
+            <div class="space-y-4">
+              <div class="bg-white rounded-2xl border-2 border-purple-200 p-5">
+                <div class="text-center mb-4">
+                  <p class="text-3xl mb-2">&#129300;</p>
+                  <h2 class="text-lg font-black text-gray-900">中間仮説</h2>
+                  <p class="text-sm text-gray-500 mt-1">ここまでの情報で、あなたの第一印象は？</p>
+                </div>
+
+                <div class="mb-4">
+                  <label class="block text-sm font-bold text-gray-700 mb-2">怪しいと思う人</label>
+                  <div class="grid grid-cols-2 gap-2">
+                    {data.witnesses.map(w => (
+                      <button
+                        key={w.id}
+                        onClick={() => setHypothesisSuspect(w.name)}
+                        class={`py-3 px-3 rounded-xl text-sm font-bold transition-colors ${
+                          hypothesisSuspect === w.name
+                            ? 'bg-purple-500 text-white ring-2 ring-purple-300'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {w.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-bold text-gray-700 mb-1">
+                    なぜそう思う？（任意）
+                  </label>
+                  <textarea
+                    value={hypothesis}
+                    onInput={(e) => setHypothesis((e.target as HTMLTextAreaElement).value)}
+                    class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm resize-none focus:ring-2 focus:ring-purple-400 outline-none"
+                    rows={3}
+                    maxLength={200}
+                    placeholder="第一印象をメモしておこう"
+                  />
+                  <p class="text-xs text-gray-500 text-right">{hypothesis.length}/200</p>
+                </div>
+              </div>
+
+              <p class="text-xs text-gray-400 text-center">スキップして証拠調査に進んでもOK</p>
+            </div>
+          )}
+
+          {/* Evidence investigation */}
           {step === STEP_EVIDENCE && (
             <div class="space-y-4">
               {/* Evidence cards */}
               <div class="flex justify-center gap-2 mb-2">
-                {data.evidenceCards.map((card, i) => (
-                  <button
-                    key={card.number}
-                    onClick={() => { setCurrentEvidenceIdx(i); openEvidence(card.number); }}
-                    class={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold transition-colors ${
-                      currentEvidenceIdx === i
-                        ? 'bg-amber-500 text-white ring-2 ring-amber-300'
-                        : readEvidence.has(card.number)
-                          ? 'bg-amber-100 text-amber-700'
-                          : 'bg-gray-200 text-gray-500'
-                    }`}
-                  >
-                    {card.number}
-                  </button>
-                ))}
+                {data.evidenceCards.map((card, i) => {
+                  // Phase 129: Sequential unlock in perspective mode
+                  const isUnlockable = !isPerspective || i === 0 || readEvidence.has(data.evidenceCards[i - 1].number);
+                  return (
+                    <button
+                      key={card.number}
+                      onClick={() => { if (isUnlockable) { setCurrentEvidenceIdx(i); openEvidence(card.number); } }}
+                      disabled={!isUnlockable}
+                      class={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold transition-colors ${
+                        !isUnlockable
+                          ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                          : currentEvidenceIdx === i
+                            ? 'bg-amber-500 text-white ring-2 ring-amber-300'
+                            : readEvidence.has(card.number)
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-gray-200 text-gray-500'
+                      }`}
+                      title={!isUnlockable ? '前の証拠を先に読もう' : ''}
+                    >
+                      {isUnlockable ? card.number : '?'}
+                    </button>
+                  );
+                })}
                 {data.evidence5 && (
                   <button
                     onClick={() => {
@@ -669,9 +879,12 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
             </div>
           )}
 
-          {/* Step N+4: Truth */}
+          {/* Truth */}
           {step === STEP_TRUTH && (
             <div class="space-y-4">
+              {/* Phase 130: Confetti on correct answer */}
+              {showConfetti && <Confetti count={80} />}
+
               {/* Score card */}
               <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-5 text-center">
                 <p class="text-3xl mb-2">&#128269;</p>
@@ -716,6 +929,25 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
                       );
                     })}
                   </div>
+                </div>
+              )}
+
+              {/* Phase 128: Hypothesis recall (perspective mode) */}
+              {isPerspective && hypothesisSuspect && (
+                <div class="bg-purple-50 border border-purple-200 rounded-2xl p-4">
+                  <h3 class="text-sm font-black text-purple-700 mb-2">&#129300; あなたの第一印象</h3>
+                  <p class="text-sm"><span class="font-bold">怪しいと思った人:</span> {hypothesisSuspect}</p>
+                  {hypothesis && <p class="text-sm mt-1 text-gray-600">「{hypothesis}」</p>}
+                  {vote && hypothesisSuspect !== vote && (
+                    <p class="text-xs text-purple-500 mt-2">
+                      &#8594; 最終投票では「{vote}」に変更しました
+                    </p>
+                  )}
+                  {vote && hypothesisSuspect === vote && (
+                    <p class="text-xs text-green-600 mt-2">
+                      &#8594; 最後まで考えが変わりませんでした！
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -795,7 +1027,7 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
       </div>
 
       {/* Bottom navigation */}
-      {step !== STEP_TRUTH && (
+      {step !== STEP_TRUTH && !showCountdown && (
         <div class="bg-white border-t border-gray-200 px-4 py-3 flex justify-between items-center shrink-0">
           <button
             onClick={goBack}
@@ -811,12 +1043,22 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
           ) : (
             <button
               onClick={goNext}
-              disabled={step >= STEP_VOTE}
+              disabled={step >= STEP_VOTE || (step === STEP_CHAR_SELECT && selectedCharacterIdx === null)}
               class="px-5 py-2 rounded-xl text-sm font-black bg-amber-500 text-white hover:bg-amber-600 active:bg-amber-700 disabled:opacity-30 transition-colors"
             >
               次へ &#9654;
             </button>
           )}
+        </div>
+      )}
+
+      {/* Phase 130: Countdown overlay */}
+      {showCountdown && (
+        <div class="fixed inset-0 z-40 bg-black/70 flex items-center justify-center">
+          <div class="text-center">
+            <p class="text-white text-lg font-bold mb-4">真相が明かされます...</p>
+            <p class="text-white text-8xl font-black animate-bounce">{countdownValue}</p>
+          </div>
         </div>
       )}
 

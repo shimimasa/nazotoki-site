@@ -19,6 +19,7 @@ import {
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { PHASE_CONFIG } from './types';
 import { useFontSize } from '../../lib/use-font-size';
+import Confetti from './Confetti';
 
 // ============================================================
 // Types
@@ -154,12 +155,21 @@ export default function StudentSession() {
   // Expanded evidence card indices (Phase 67)
   const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
 
-  // Scenario content (Phase 67: rich student view)
+  // Scenario content (Phase 67: rich student view, Phase 133: characters)
   const [scenarioContent, setScenarioContent] = useState<{
     common_html: string;
     evidence_cards: { number: number; title: string; content_html: string }[];
     evidence5: { number: number; title: string; content_html: string } | null;
+    characters?: { id: string; name: string; role: string; intro_html: string; public_html: string; secret_html: string }[];
   } | null>(null);
+
+  // Phase 134: Character sheet panel
+  const [charPanelOpen, setCharPanelOpen] = useState(false);
+  // Phase 135: Hypothesis input (discuss phase)
+  const [studentHypothesis, setStudentHypothesis] = useState('');
+  const [studentHypothesisSuspect, setStudentHypothesisSuspect] = useState('');
+  // Phase 136: Student confetti
+  const [studentConfetti, setStudentConfetti] = useState(false);
 
   // Timer state (local countdown)
   const [timerSeconds, setTimerSeconds] = useState(0);
@@ -409,6 +419,40 @@ export default function StudentSession() {
     }, 30000);
     return () => clearInterval(interval);
   }, [screen, participant?.id]);
+
+  // Phase 135: Load/save hypothesis from localStorage
+  useEffect(() => {
+    if (!sessionRun?.id) return;
+    try {
+      const saved = localStorage.getItem(`nazotoki-hypothesis-${sessionRun.id}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.suspect) setStudentHypothesisSuspect(parsed.suspect);
+        if (parsed.reason) setStudentHypothesis(parsed.reason);
+      }
+    } catch { /* ignore */ }
+  }, [sessionRun?.id]);
+
+  useEffect(() => {
+    if (!sessionRun?.id || (!studentHypothesisSuspect && !studentHypothesis)) return;
+    try {
+      localStorage.setItem(`nazotoki-hypothesis-${sessionRun.id}`, JSON.stringify({
+        suspect: studentHypothesisSuspect,
+        reason: studentHypothesis,
+      }));
+    } catch { /* ignore */ }
+  }, [sessionRun?.id, studentHypothesisSuspect, studentHypothesis]);
+
+  // Phase 136: Trigger confetti when entering truth phase
+  const prevPhaseRef = useRef<string>('');
+  useEffect(() => {
+    const phase = sessionRun?.current_phase || '';
+    if (phase === 'truth' && prevPhaseRef.current !== 'truth') {
+      setStudentConfetti(true);
+      setTimeout(() => setStudentConfetti(false), 4000);
+    }
+    prevPhaseRef.current = phase;
+  }, [sessionRun?.current_phase]);
 
   // Watch for session end — cleanup channel, cache, timers, and transition
   useEffect(() => {
@@ -732,6 +776,9 @@ export default function StudentSession() {
       setEvidenceOpen(false);
       setExpandedCards(new Set());
       setConnectionStatus('connected');
+      setCharPanelOpen(false);
+      setStudentHypothesis('');
+      setStudentHypothesisSuspect('');
     };
 
     return (
@@ -892,6 +939,9 @@ export default function StudentSession() {
         </div>
       )}
 
+      {/* Phase 136: Confetti on truth phase */}
+      {studentConfetti && <Confetti count={60} />}
+
       {/* Header: scenario + participant info */}
       <div class="text-center mb-6 relative">
         <button
@@ -939,6 +989,55 @@ export default function StudentSession() {
           />
         </div>
       )}
+
+      {/* Phase 134: Character sheet panel */}
+      {participant?.assigned_character && scenarioContent?.characters && (() => {
+        const myChar = scenarioContent.characters.find(c => c.name === participant.assigned_character);
+        if (!myChar) return null;
+        const showSecret = ['discuss', 'vote', 'truth'].includes(phase);
+        return (
+          <div class="mb-4">
+            <button
+              onClick={() => setCharPanelOpen(v => !v)}
+              class="w-full flex items-center justify-between px-4 py-2.5 bg-green-50 border border-green-200 rounded-xl text-sm font-bold text-green-800 hover:bg-green-100 transition-colors"
+            >
+              <span>{'\uD83C\uDFAD'} マイキャラクター: {myChar.name}</span>
+              <span class={`transition-transform ${charPanelOpen ? 'rotate-180' : ''}`}>{'\u25BC'}</span>
+            </button>
+            {charPanelOpen && (
+              <div class="mt-1 border border-green-200 rounded-xl bg-white p-4 space-y-3">
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-sm font-black text-green-700">
+                    {myChar.name.charAt(0)}
+                  </div>
+                  <div>
+                    <p class="font-black text-gray-900 text-sm">{myChar.name}</p>
+                    <p class="text-xs text-gray-500">{myChar.role}</p>
+                  </div>
+                </div>
+                {myChar.intro_html && (
+                  <div class="prose prose-sm max-w-none text-gray-700 [&_ruby_rt]:text-[0.6em] [&_ruby_rt]:text-gray-400" dangerouslySetInnerHTML={{ __html: myChar.intro_html }} />
+                )}
+                <div class="bg-blue-50 rounded-lg p-3">
+                  <p class="text-xs font-bold text-blue-600 mb-1">{'\uD83D\uDDE3\uFE0F'} 公開情報</p>
+                  <div class="prose prose-sm max-w-none [&_ruby_rt]:text-[0.6em] [&_ruby_rt]:text-gray-400" dangerouslySetInnerHTML={{ __html: myChar.public_html }} />
+                </div>
+                {showSecret && myChar.secret_html && (
+                  <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p class="text-xs font-bold text-red-600 mb-1">{'\uD83D\uDD12'} 秘密の情報</p>
+                    <div class="prose prose-sm max-w-none [&_ruby_rt]:text-[0.6em] [&_ruby_rt]:text-gray-400" dangerouslySetInnerHTML={{ __html: myChar.secret_html }} />
+                  </div>
+                )}
+                {!showSecret && myChar.secret_html && (
+                  <div class="bg-gray-100 rounded-lg p-3 text-center">
+                    <p class="text-xs text-gray-400 font-bold">{'\uD83D\uDD12'} 秘密の情報は議論フェーズで公開されます</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Evidence reference panel (Phase 63/67) — explore/discuss/vote phases */}
       {sessionRun && ['explore', 'discuss', 'vote'].includes(phase) && (() => {
@@ -1032,15 +1131,64 @@ export default function StudentSession() {
           </div>
         )}
 
-        {/* Discuss phase */}
-        {phase === 'discuss' && (
-          <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
-            <p class="text-blue-800 font-bold">💬 グループで話し合いましょう</p>
-            <p class="text-blue-600 text-sm mt-1">
-              証拠をもとに、犯人は誰か議論してください
-            </p>
-          </div>
-        )}
+        {/* Discuss phase — Phase 135: hypothesis form */}
+        {phase === 'discuss' && (() => {
+          const charNames = (sessionRun?.character_names as string[]) || [];
+          return (
+            <div class="space-y-4">
+              <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+                <p class="text-blue-800 font-bold">{'\uD83D\uDCAC'} グループで話し合いましょう</p>
+                <p class="text-blue-600 text-sm mt-1">
+                  証拠をもとに、犯人は誰か議論してください
+                </p>
+              </div>
+
+              {/* Hypothesis input */}
+              <div class="bg-white rounded-xl border-2 border-blue-200 p-4 space-y-3">
+                <h3 class="text-sm font-black text-blue-700 text-center">
+                  {'\u270D\uFE0F'} あなたの仮説
+                </h3>
+
+                {charNames.length > 0 && (
+                  <div>
+                    <p class="text-xs font-bold text-gray-600 mb-2">怪しいと思う人</p>
+                    <div class="grid grid-cols-2 gap-2">
+                      {charNames.map(name => (
+                        <button
+                          key={name}
+                          onClick={() => setStudentHypothesisSuspect(name)}
+                          class={`py-2 px-3 rounded-lg text-sm font-bold transition-colors ${
+                            studentHypothesisSuspect === name
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <p class="text-xs font-bold text-gray-600 mb-1">理由メモ（任意）</p>
+                  <textarea
+                    value={studentHypothesis}
+                    onInput={(e) => setStudentHypothesis((e.target as HTMLTextAreaElement).value)}
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none focus:ring-2 focus:ring-blue-400 outline-none"
+                    rows={2}
+                    maxLength={200}
+                    placeholder="なぜそう思う？メモしておこう"
+                  />
+                </div>
+
+                <p class="text-[10px] text-gray-400 text-center">
+                  このメモは自分だけが見れます（先生には送信されません）
+                </p>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Vote phase: student vote form */}
         {isVotePhase && !hasVoted && (() => {
@@ -1128,6 +1276,20 @@ export default function StudentSession() {
             <p class="text-gray-500 text-sm mt-2">
               先生の画面で結果を確認しましょう
             </p>
+          </div>
+        )}
+
+        {/* Phase 135: Hypothesis recall in truth phase */}
+        {phase === 'truth' && studentHypothesisSuspect && (
+          <div class="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
+            <h3 class="text-sm font-black text-purple-700 mb-2">{'\u270D\uFE0F'} あなたの仮説</h3>
+            <p class="text-sm"><span class="font-bold">怪しいと思った人:</span> {studentHypothesisSuspect}</p>
+            {studentHypothesis && <p class="text-sm mt-1 text-gray-600">「{studentHypothesis}」</p>}
+            {(votedFor || participant?.voted_for) && studentHypothesisSuspect !== (votedFor || participant?.voted_for) && (
+              <p class="text-xs text-purple-500 mt-2">
+                {'\u2192'} 投票では「{votedFor || participant?.voted_for}」に変更しました
+              </p>
+            )}
           </div>
         )}
 
