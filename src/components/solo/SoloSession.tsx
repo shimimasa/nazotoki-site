@@ -87,6 +87,23 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
   // Phase 125: Solo mode (classic = current behavior, perspective = 1-character viewpoint)
   const [soloMode, setSoloMode] = useState<'classic' | 'perspective'>('classic');
   const [selectedCharacterIdx, setSelectedCharacterIdx] = useState<number | null>(null);
+
+  // Codex M1 fix: Reset all perspective state when mode changes
+  const handleModeChange = useCallback((mode: 'classic' | 'perspective') => {
+    setSoloMode(mode);
+    setSelectedCharacterIdx(null);
+    setRevealedSecrets(new Set());
+    setReadEvidence(new Set());
+    setCurrentEvidenceIdx(0);
+    setEvidence5Revealed(false);
+    setInvestigationTokens(2);
+    setInterrogatedCharacters(new Set());
+    setHypothesis('');
+    setHypothesisSuspect('');
+    setStep(1); // STEP_INTRO is always 1
+    earnedSetRef.current = new Set();
+    setRpEarned(0);
+  }, []);
   // Phase 127: Investigation tokens (perspective mode)
   const [investigationTokens, setInvestigationTokens] = useState(2);
   const [interrogatedCharacters, setInterrogatedCharacters] = useState<Set<number>>(new Set());
@@ -324,14 +341,18 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
 
   // --- Step label ---
   // Phase 130: Countdown effect
+  // Codex m2 fix: Skip recordStepTime on countdown→truth transition (already recorded in handleComplete)
   useEffect(() => {
     if (!showCountdown) return;
     if (countdownValue <= 0) {
       setShowCountdown(false);
-      // Determine correctness for confetti
       const isCorrect = vote && feedbackData && feedbackData[vote]?.correct;
       if (isCorrect) setShowConfetti(true);
-      goToStep(STEP_TRUTH);
+      // Direct step change without recordStepTime (vote time already recorded)
+      setStep(STEP_TRUTH);
+      stepEnterRef.current = Date.now();
+      stepBackgroundMsRef.current = 0;
+      contentRef.current?.scrollTo(0, 0);
       return;
     }
     const t = setTimeout(() => setCountdownValue(v => v - 1), 1000);
@@ -441,9 +462,9 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
         </div>
       </div>
 
-      {/* Progress bar */}
-      <div class="px-4 py-2 bg-white border-b border-gray-100 shrink-0">
-        <div class="flex items-center gap-1">
+      {/* Progress bar — Codex m1 fix: overflow-x-auto for 10-step Perspective */}
+      <div class="px-4 py-2 bg-white border-b border-gray-100 shrink-0 overflow-x-auto">
+        <div class="flex items-center gap-1" style={{ minWidth: 'min-content' }}>
           {Array.from({ length: TOTAL_STEPS }, (_, i) => {
             const s = i + 1;
             const isCurrent = s === step;
@@ -497,7 +518,7 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
                 <p class="text-xs font-bold text-gray-500 mb-3 text-center">プレイモード</p>
                 <div class="grid grid-cols-2 gap-2">
                   <button
-                    onClick={() => setSoloMode('classic')}
+                    onClick={() => handleModeChange('classic')}
                     class={`py-3 px-3 rounded-xl text-sm font-bold transition-all border-2 ${
                       soloMode === 'classic'
                         ? 'border-amber-500 bg-amber-50 text-amber-900'
@@ -508,7 +529,7 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
                     クラシック
                   </button>
                   <button
-                    onClick={() => setSoloMode('perspective')}
+                    onClick={() => handleModeChange('perspective')}
                     class={`py-3 px-3 rounded-xl text-sm font-bold transition-all border-2 ${
                       soloMode === 'perspective'
                         ? 'border-purple-500 bg-purple-50 text-purple-900'
@@ -530,9 +551,14 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
               witnesses={data.witnesses}
               selectedIdx={selectedCharacterIdx}
               onSelect={(idx) => {
+                // Codex M1 fix: Reset investigation state when changing character
+                setRevealedSecrets(new Set([idx]));
+                setInterrogatedCharacters(new Set());
+                setInvestigationTokens(2);
+                setReadEvidence(new Set());
+                setCurrentEvidenceIdx(0);
+                setEvidence5Revealed(false);
                 setSelectedCharacterIdx(idx);
-                // Auto-reveal own character's secret
-                setRevealedSecrets(prev => new Set(prev).add(idx));
                 earnRP('perspective-mode', RP_PERSPECTIVE_MODE);
               }}
             />

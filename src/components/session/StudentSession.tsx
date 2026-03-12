@@ -160,7 +160,7 @@ export default function StudentSession() {
     common_html: string;
     evidence_cards: { number: number; title: string; content_html: string }[];
     evidence5: { number: number; title: string; content_html: string } | null;
-    characters?: { id: string; name: string; role: string; intro_html: string; public_html: string; secret_html: string }[];
+    characters?: { id: string; name: string; role: string; intro_html: string; public_html: string }[];
   } | null>(null);
 
   // Phase 134: Character sheet panel
@@ -994,7 +994,6 @@ export default function StudentSession() {
       {participant?.assigned_character && scenarioContent?.characters && (() => {
         const myChar = scenarioContent.characters.find(c => c.name === participant.assigned_character);
         if (!myChar) return null;
-        const showSecret = ['discuss', 'vote', 'truth'].includes(phase);
         return (
           <div class="mb-4">
             <button
@@ -1022,17 +1021,9 @@ export default function StudentSession() {
                   <p class="text-xs font-bold text-blue-600 mb-1">{'\uD83D\uDDE3\uFE0F'} 公開情報</p>
                   <div class="prose prose-sm max-w-none [&_ruby_rt]:text-[0.6em] [&_ruby_rt]:text-gray-400" dangerouslySetInnerHTML={{ __html: myChar.public_html }} />
                 </div>
-                {showSecret && myChar.secret_html && (
-                  <div class="bg-red-50 border border-red-200 rounded-lg p-3">
-                    <p class="text-xs font-bold text-red-600 mb-1">{'\uD83D\uDD12'} 秘密の情報</p>
-                    <div class="prose prose-sm max-w-none [&_ruby_rt]:text-[0.6em] [&_ruby_rt]:text-gray-400" dangerouslySetInnerHTML={{ __html: myChar.secret_html }} />
-                  </div>
-                )}
-                {!showSecret && myChar.secret_html && (
-                  <div class="bg-gray-100 rounded-lg p-3 text-center">
-                    <p class="text-xs text-gray-400 font-bold">{'\uD83D\uDD12'} 秘密の情報は議論フェーズで公開されます</p>
-                  </div>
-                )}
+                <div class="bg-gray-100 rounded-lg p-3 text-center">
+                  <p class="text-xs text-gray-400 font-bold">{'\uD83D\uDD12'} 秘密の情報は先生から配られたシートで確認してね</p>
+                </div>
               </div>
             )}
           </div>

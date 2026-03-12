@@ -63,14 +63,26 @@ function renderMarkdown(md) {
 }
 
 // Phase 133: Extract secret section from fullContent
+// Codex M2 fix: Match all header variants across 100 scenarios
 function extractSecret(fullContent) {
   if (!fullContent) return '';
-  // Match ★秘密の情報★ or ★{秘密|ひみつ}の情報★ header
-  const secretPattern = /###?\s*★[^★]*秘密[^★]*★[^\n]*/;
-  const match = fullContent.match(secretPattern);
-  if (!match) return '';
-  const startIdx = match.index + match[0].length;
-  return fullContent.substring(startIdx).trim();
+
+  // Strategy 1: ## or ### headers containing 秘密/ひみつ/きみだけの
+  // Covers: ## ひみつの情報, ## 秘密情報（...）, ### ★秘密★, ### きみだけのひみつ, etc.
+  const headerPattern = /^#{2,3}\s+.*(?:秘密|ひみつ|きみだけの).*$/m;
+  const match = fullContent.match(headerPattern);
+  if (match) {
+    return fullContent.substring(match.index + match[0].length).trim();
+  }
+
+  // Strategy 2: "真実（自分だけの情報）" pattern (e.g., time-travel-04 アキラ)
+  const truthPattern = /^#{2,3}\s+.*真実.*自分だけ.*$/m;
+  const truthMatch = fullContent.match(truthPattern);
+  if (truthMatch) {
+    return fullContent.substring(truthMatch.index + truthMatch[0].length).trim();
+  }
+
+  return '';
 }
 
 const dataDir = path.resolve('src/data');
@@ -107,13 +119,13 @@ for (const file of files) {
         }
       : null,
     // Phase 133: Character data for student session
+    // Codex M3 fix: Exclude secret_html from public JSON to prevent client-side inspection
     characters: (raw.characters || []).filter((c) => !c.isNPC).map((c) => ({
       id: c.id,
       name: c.name,
       role: c.role,
       intro_html: renderMarkdown(c.introContent || ''),
       public_html: renderMarkdown(c.publicContent || ''),
-      secret_html: renderMarkdown(extractSecret(c.fullContent)),
     })),
   };
 
