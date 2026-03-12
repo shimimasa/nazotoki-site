@@ -218,56 +218,25 @@ export default function TeacherWorkspace({ teacherId, teacherName, schoolId, rol
 
       {/* Tabs */}
       <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
-        <button
-          onClick={() => setTab('history')}
-          class={`flex-1 py-3 text-sm font-bold transition-colors whitespace-nowrap ${
-            tab === 'history'
-              ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50'
-              : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-          }`}
-        >
-          授業履歴
-        </button>
-        <button
-          onClick={() => setTab('classes')}
-          class={`flex-1 py-3 text-sm font-bold transition-colors whitespace-nowrap ${
-            tab === 'classes'
-              ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50'
-              : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-          }`}
-        >
-          クラス
-        </button>
-        <button
-          onClick={() => setTab('calendar')}
-          class={`flex-1 py-3 text-sm font-bold transition-colors whitespace-nowrap ${
-            tab === 'calendar'
-              ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50'
-              : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-          }`}
-        >
-          カレンダー
-        </button>
-        <button
-          onClick={() => setTab('analytics')}
-          class={`flex-1 py-3 text-sm font-bold transition-colors whitespace-nowrap ${
-            tab === 'analytics'
-              ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50'
-              : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-          }`}
-        >
-          分析
-        </button>
-        <button
-          onClick={() => setTab('reports')}
-          class={`flex-1 py-3 text-sm font-bold transition-colors whitespace-nowrap ${
-            tab === 'reports'
-              ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50'
-              : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-          }`}
-        >
-          レポート
-        </button>
+        {([
+          { key: 'history' as const, label: '授業履歴' },
+          { key: 'classes' as const, label: 'クラス' },
+          { key: 'calendar' as const, label: 'カレンダー' },
+          { key: 'analytics' as const, label: '分析' },
+          { key: 'reports' as const, label: 'レポート' },
+        ] as const).map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            class={`flex-1 py-3 text-sm font-bold transition-colors whitespace-nowrap ${
+              tab === key
+                ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50'
+                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
         {isAdmin && (
           <button
             onClick={() => setTab('admin')}
@@ -534,10 +503,10 @@ function StatsBar({ logs, classCount }: { logs: SessionLogRow[]; classCount: num
   const avgSec = avgTime % 60;
 
   const stats = [
-    { label: '総授業数', value: String(logs.length) },
-    { label: 'クラス数', value: String(classCount) },
-    { label: 'シナリオ数', value: String(uniqueSlugs) },
-    { label: '平均授業時間', value: avgTime > 0 ? `${avgMin}:${String(avgSec).padStart(2, '0')}` : '--' },
+    { label: '総授業数', value: String(logs.length), color: 'border-t-amber-500 text-amber-600' },
+    { label: 'クラス数', value: String(classCount), color: 'border-t-blue-500 text-blue-600' },
+    { label: 'シナリオ数', value: String(uniqueSlugs), color: 'border-t-indigo-500 text-indigo-600' },
+    { label: '平均授業時間', value: avgTime > 0 ? `${avgMin}:${String(avgSec).padStart(2, '0')}` : '--', color: 'border-t-green-500 text-green-600' },
   ];
 
   return (
@@ -545,10 +514,10 @@ function StatsBar({ logs, classCount }: { logs: SessionLogRow[]; classCount: num
       {stats.map((s) => (
         <div
           key={s.label}
-          class="bg-white rounded-xl p-4 text-center border border-gray-200"
+          class={`bg-white rounded-xl p-4 text-center border border-gray-200 border-t-4 ${s.color.split(' ')[0]}`}
         >
-          <div class="text-2xl font-black text-amber-600">{s.value}</div>
-          <div class="text-sm text-gray-500 mt-1">{s.label}</div>
+          <div class={`text-2xl font-black ${s.color.split(' ')[1]}`}>{s.value}</div>
+          <div class="text-xs text-gray-500 mt-1 font-bold">{s.label}</div>
         </div>
       ))}
     </div>

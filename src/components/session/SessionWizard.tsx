@@ -720,7 +720,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   const isLastStep = currentIndex === effectiveSteps.length - 1;
 
   return (
-    <div class={`space-y-4 ${isProjectorMode ? 'text-lg leading-relaxed' : ''}`}>
+    <div class={`space-y-4 ${isProjectorMode ? 'text-xl leading-relaxed max-w-4xl mx-auto' : ''}`}>
       {/* ヘッダー: フェーズ進捗 + タイマー + GM/投影ボタン */}
       {currentStep > 0 && (
         <div class="sticky top-0 z-10 bg-gray-50 -mx-4 px-4 py-3 border-b border-gray-200">
@@ -749,9 +749,9 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
               </button>
               <button
                 onClick={() => setGmPanelOpen(true)}
-                class="shrink-0 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-black hover:bg-indigo-700 transition-colors flex items-center gap-1"
+                class="shrink-0 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-black hover:bg-indigo-700 transition-colors"
               >
-                {'\uD83C\uDFAE'} GM
+                GM
               </button>
             </div>
           </div>
@@ -760,7 +760,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
 
       {/* フェーズタイトル */}
       {currentStep > 0 && (
-        <h2 class={`font-black ${isProjectorMode ? 'text-4xl' : 'text-2xl'}`}>
+        <h2 class={`font-black ${isProjectorMode ? 'text-5xl mt-4 mb-2' : 'text-2xl'}`}>
           {currentPhase?.icon} {currentPhase?.label}
         </h2>
       )}
