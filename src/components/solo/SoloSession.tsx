@@ -228,6 +228,11 @@ export default function SoloSession({ data, feedbackData = null }: Props) {
       const multiplier = streakResult.multiplier || 1.0;
       const multipliedRp = Math.round(finalRp * multiplier);
 
+      // Phase 118: Determine is_correct from feedback data
+      const isCorrect = vote && feedbackData && feedbackData[vote]
+        ? feedbackData[vote].correct
+        : null;
+
       await supabase.rpc('rpc_save_solo_session', {
         p_student_id: studentId,
         p_student_token: studentToken,
@@ -240,6 +245,7 @@ export default function SoloSession({ data, feedbackData = null }: Props) {
         p_time_per_step: stepTimesRef.current,
         p_rp_earned: multipliedRp,
         p_hints_used: 0,
+        p_is_correct: isCorrect,
       });
 
       // Phase 89: Check badges after save

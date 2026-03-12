@@ -3,6 +3,8 @@ import { PHASE_CONFIG } from './types';
 import type { EvidenceCardData, CharacterData } from './types';
 import type { SessionParticipant } from '../../lib/session-realtime';
 import type { StudentRow } from '../../lib/supabase';
+import type { SessionFeedbackRow } from '../../lib/supabase-client';
+import FeedbackSummary from './FeedbackSummary';
 
 interface GmControlPanelProps {
   currentStep: number;
@@ -49,6 +51,8 @@ interface GmControlPanelProps {
   onLinkStudent: (participantId: string, studentId: string | null) => void;
   // Phase 86: heartbeat last_seen_at (separate from participants state to avoid re-render)
   lastSeenMap: Record<string, string>;
+  // Phase 117: student feedback
+  feedbackSummary: SessionFeedbackRow[];
 }
 
 function extractCulprit(truthHtml: string): string | null {
@@ -108,6 +112,7 @@ export default function GmControlPanel({
   classStudents,
   onLinkStudent,
   lastSeenMap,
+  feedbackSummary,
 }: GmControlPanelProps) {
   const [tab, setTab] = useState<PanelTab>('control');
 
@@ -237,6 +242,7 @@ export default function GmControlPanel({
               classStudents={classStudents}
               onLinkStudent={onLinkStudent}
               lastSeenMap={lastSeenMap}
+              feedbackSummary={feedbackSummary}
             />
           )}
         </div>
@@ -496,6 +502,8 @@ interface DashboardTabProps {
   onLinkStudent: (participantId: string, studentId: string | null) => void;
   // Phase 86: heartbeat last_seen_at
   lastSeenMap: Record<string, string>;
+  // Phase 117: student feedback
+  feedbackSummary: SessionFeedbackRow[];
 }
 
 function DashboardTab({
@@ -528,6 +536,7 @@ function DashboardTab({
   classStudents,
   onLinkStudent,
   lastSeenMap,
+  feedbackSummary,
 }: DashboardTabProps) {
   // Phase 86: Periodic tick to update online/offline status
   const [, setTick] = useState(0);
@@ -984,6 +993,9 @@ function DashboardTab({
           )}
         </section>
       )}
+
+      {/* Phase 117: Student feedback summary */}
+      <FeedbackSummary feedback={feedbackSummary} variant="section" />
 
     </div>
   );

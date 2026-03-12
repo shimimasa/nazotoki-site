@@ -1,11 +1,14 @@
 import { useState, useEffect, useMemo } from 'preact/hooks';
-import type { SessionLogRow, ClassWithStats } from '../../lib/supabase';
+import type { SessionLogRow, ClassWithStats, SoloSessionRow, SessionFeedbackRow } from '../../lib/supabase';
 import {
   fetchAllStudentsForTeacher,
   fetchStudentLogSummaries,
+  fetchSoloSessionsForStudents,
+  fetchAllTeacherFeedback,
   type StudentWithClass,
   type StudentLogSummary,
 } from '../../lib/supabase';
+import { computeGoNoGo, type GoNoGoResult } from '../../lib/classroom-summary';
 import CompetencyDashboard from './CompetencyDashboard';
 import ClassTendencyChart from './ClassTendencyChart';
 import {
@@ -59,6 +62,8 @@ export default function AnalyticsDashboard({ logs, classes, teacherId }: Props) 
   const [students, setStudents] = useState<StudentWithClass[]>([]);
   const [studentLogs, setStudentLogs] = useState<StudentLogSummary[]>([]);
   const [studentLoading, setStudentLoading] = useState(true);
+  const [soloSessions, setSoloSessions] = useState<SoloSessionRow[]>([]);
+  const [feedbackRows, setFeedbackRows] = useState<SessionFeedbackRow[]>([]);
 
   // Date range filter state
   const [dateRange, setDateRange] = useState<DateRange>({ type: 'all' });
@@ -81,7 +86,11 @@ export default function AnalyticsDashboard({ logs, classes, teacherId }: Props) 
         setStudentLogs(sl);
         setStudentLoading(false);
       });
+      // Phase 119: Fetch solo sessions for Go/No-Go
+      fetchSoloSessionsForStudents(ids).then(setSoloSessions);
     });
+    // Phase 119: Fetch feedback for Go/No-Go
+    fetchAllTeacherFeedback().then(setFeedbackRows);
   }, [classes]);
 
   // Apply date range filter
@@ -93,6 +102,12 @@ export default function AnalyticsDashboard({ logs, classes, teacherId }: Props) 
   const filteredStudentLogs = useMemo(
     () => filterStudentLogsByRange(studentLogs, dateRange),
     [studentLogs, dateRange],
+  );
+
+  // Phase 119: Go/No-Go KPI (uses full data, not filtered)
+  const goNoGo = useMemo(
+    () => computeGoNoGo(logs, students.length, studentLogs, soloSessions, feedbackRows),
+    [logs, students.length, studentLogs, soloSessions, feedbackRows],
   );
 
   // Compute all metrics (using filtered data)
@@ -208,6 +223,9 @@ export default function AnalyticsDashboard({ logs, classes, teacherId }: Props) 
           <p class="text-sm mt-1">期間を変更してください</p>
         </div>
       )}
+
+      {/* Phase 119: Go/No-Go Summary (always visible, uses full data) */}
+      {!studentLoading && <GoNoGoSection result={goNoGo} />}
 
       {filteredLogs.length > 0 && (
         <>
@@ -1017,6 +1035,51 @@ function InsightsSection({
           </div>
         );
       })}
+    </section>
+  );
+}
+
+// ============================================================
+// Phase 119: Go/No-Go Summary
+// ============================================================
+
+function GoNoGoSection({ result }: { result: GoNoGoResult }) {
+  return (
+    <section>
+      <div class="flex items-center gap-3 mb-4">
+        <h3 class="font-bold text-lg">Go/No-Go 教室実績</h3>
+        <span class={`text-xs font-bold px-2 py-1 rounded-full ${
+          result.allPassed
+            ? 'bg-green-100 text-green-700'
+            : result.passedCount >= 3
+              ? 'bg-amber-100 text-amber-700'
+              : 'bg-red-100 text-red-700'
+        }`}>
+          {result.passedCount}/{result.metrics.length} 達成
+        </span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        {result.metrics.map((m) => (
+          <div key={m.label} class={`rounded-xl p-4 border-2 ${
+            m.passed ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-white'
+          }`}>
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs text-gray-500">{m.label}</span>
+              <span class={`text-xs font-bold ${m.passed ? 'text-green-600' : 'text-gray-400'}`}>
+                {m.passed ? 'PASS' : `目標 ${m.target}${m.unit}`}
+              </span>
+            </div>
+            <div class={`text-2xl font-black ${m.passed ? 'text-green-600' : 'text-gray-700'}`}>
+              {m.value}<span class="text-sm font-normal text-gray-400 ml-0.5">{m.unit}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      {result.allPassed && (
+        <div class="mt-3 text-center text-sm font-bold text-green-600 bg-green-50 rounded-lg py-2">
+          全指標達成 — Go判定可能
+        </div>
+      )}
     </section>
   );
 }

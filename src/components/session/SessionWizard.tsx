@@ -5,6 +5,7 @@ import Timer from './Timer';
 import PhaseProgress from './PhaseProgress';
 import PhaseTransition, { getPhaseColor } from './PhaseTransition';
 import GmControlPanel from './GmControlPanel';
+import FeedbackSummary from './FeedbackSummary';
 import PrepPhase from './phases/PrepPhase';
 import IntroPhase from './phases/IntroPhase';
 import ExplorePhase from './phases/ExplorePhase';
@@ -708,38 +709,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
         </div>
 
         {/* Phase 91: Feedback summary */}
-        {feedbackSummary.length > 0 && (
-          <div class="max-w-md mx-auto text-left">
-            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
-              <h3 class="text-sm font-black text-blue-700 text-center">
-                生徒フィードバック ({feedbackSummary.length}件)
-              </h3>
-              <div class="flex justify-around text-center">
-                <div>
-                  <p class="text-xs text-gray-500">楽しさ</p>
-                  <p class="text-xl font-black text-amber-600">
-                    {(feedbackSummary.reduce((s, f) => s + f.fun_rating, 0) / feedbackSummary.length).toFixed(1)}
-                  </p>
-                </div>
-                <div>
-                  <p class="text-xs text-gray-500">難しさ</p>
-                  <p class="text-xl font-black text-blue-600">
-                    {(feedbackSummary.reduce((s, f) => s + f.difficulty_rating, 0) / feedbackSummary.length).toFixed(1)}
-                  </p>
-                </div>
-              </div>
-              {feedbackSummary.filter(f => f.comment).length > 0 && (
-                <div class="border-t border-blue-200 pt-2 space-y-1">
-                  {feedbackSummary.filter(f => f.comment).map(f => (
-                    <p key={f.id} class="text-xs text-gray-600">
-                      「{f.comment}」
-                    </p>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        <FeedbackSummary feedback={feedbackSummary} variant="card" />
       </div>
     );
   }
@@ -873,6 +843,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
           classStudents={classStudents}
           onLinkStudent={handleLinkStudent}
           lastSeenMap={lastSeenMapRef.current}
+          feedbackSummary={feedbackSummary}
         />
       )}
 
