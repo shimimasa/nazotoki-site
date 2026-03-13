@@ -23,6 +23,12 @@ fs.mkdirSync(DEST_DIR, { recursive: true });
 let totalCopied = 0;
 let scenarioCount = 0;
 
+// Skip if source directory doesn't exist (e.g. Vercel build where apps/ is absent)
+if (!fs.existsSync(SOURCE_DIR)) {
+  console.log(`[copy-classroom-materials] Source directory not found (${SOURCE_DIR}), skipping.`);
+  process.exit(0);
+}
+
 const slugDirs = fs.readdirSync(SOURCE_DIR, { withFileTypes: true })
   .filter(d => d.isDirectory())
   .map(d => d.name);
