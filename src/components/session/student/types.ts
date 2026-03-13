@@ -1,12 +1,12 @@
 import type { SessionRun, SessionParticipant } from '../../../lib/session-realtime';
 
-export type Screen = 'join' | 'lobby' | 'session' | 'ended';
+export type Screen = 'join' | 'lobby' | 'connecting' | 'session' | 'ended';
 
 export interface ScenarioContent {
   common_html: string;
   evidence_cards: { number: number; title: string; content_html: string }[];
   evidence5: { number: number; title: string; content_html: string } | null;
-  characters?: { id: string; name: string; role: string; intro_html: string; public_html: string }[];
+  characters?: { id: string; name: string; role: string; intro_html: string; public_html: string; imageUrl?: string }[];
 }
 
 export const PHASE_DISPLAY: Record<string, { icon: string; label: string; message: string }> = {

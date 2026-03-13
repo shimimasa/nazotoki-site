@@ -144,7 +144,7 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
   const [streakInfo, setStreakInfo] = useState<{ streak: number; multiplier: number } | null>(null);
   const [lockStatus, setLockStatus] = useState<'checking' | 'unlocked' | 'locked'>('checking');
   const [lockRpNeeded, setLockRpNeeded] = useState(0);
-  const fontSize = useFontSize();
+  const fontSize = useFontSize('solo');
 
   const startTimeRef = useRef(Date.now());
   const stepTimesRef = useRef<Record<number, number>>({});

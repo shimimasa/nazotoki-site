@@ -4,6 +4,7 @@ import {
   joinSession,
   voteAsParticipant,
   subscribeToSessionRun,
+  subscribeToSessionRunAsync,
   unsubscribeChannel,
   reconnectSession,
   fetchMyParticipant,
@@ -24,13 +25,62 @@ import ConnectionBanner from './student/ConnectionBanner';
 import JoinScreen from './student/JoinScreen';
 import EndScreen from './student/EndScreen';
 import { VoteResultsCard } from './student/EndScreen';
+import StudentPhaseProgress from './student/StudentPhaseProgress';
+import TruthCountdown from './student/TruthCountdown';
+import CharacterAvatar from './CharacterAvatar';
+import Furi from './student/Furi';
+import { initSound, playVoteConfirm } from '../../lib/sound-effects';
+import { useFurigana } from '../../lib/use-furigana';
+
+// Series accent colors (detected from slug prefix)
+const SERIES_ACCENT: Record<string, { border: string; bg: string; text: string }> = {
+  science: { border: 'border-emerald-300', bg: 'bg-emerald-50', text: 'text-emerald-700' },
+  shakai: { border: 'border-blue-300', bg: 'bg-blue-50', text: 'text-blue-700' },
+  kokugo: { border: 'border-indigo-300', bg: 'bg-indigo-50', text: 'text-indigo-700' },
+  suiri: { border: 'border-orange-300', bg: 'bg-orange-50', text: 'text-orange-700' },
+  moral: { border: 'border-rose-300', bg: 'bg-rose-50', text: 'text-rose-700' },
+  literature: { border: 'border-teal-300', bg: 'bg-teal-50', text: 'text-teal-700' },
+  math: { border: 'border-violet-300', bg: 'bg-violet-50', text: 'text-violet-700' },
+  popculture: { border: 'border-pink-300', bg: 'bg-pink-50', text: 'text-pink-700' },
+  time: { border: 'border-cyan-300', bg: 'bg-cyan-50', text: 'text-cyan-700' },
+};
+
+function detectSeries(slug: string): string {
+  const prefix = slug.split('-')[0];
+  return SERIES_ACCENT[prefix] ? prefix : '';
+}
+
+// Phase background colors (subtle tint per phase)
+const PHASE_BG_COLOR: Record<string, string> = {
+  prep: 'transparent',
+  intro: 'rgba(238,242,255,0.7)',
+  explore: 'rgba(236,253,245,0.7)',
+  twist: 'rgba(255,247,237,0.7)',
+  discuss: 'rgba(239,246,255,0.7)',
+  vote: 'rgba(255,241,242,0.7)',
+  truth: 'rgba(255,251,235,0.7)',
+};
+
+// Rotating hints per phase (replaces static message)
+const PHASE_HINTS: Record<string, string[]> = {
+  prep: ['\u5148\u751F\u304C\u30BB\u30C3\u30B7\u30E7\u30F3\u3092\u6E96\u5099\u3057\u3066\u3044\u307E\u3059...'],
+  intro: ['\u7269\u8A9E\u306E\u4E16\u754C\u306B\u5165\u308D\u3046', '\u30AD\u30E3\u30E9\u30AF\u30BF\u30FC\u30B7\u30FC\u30C8\u3092\u78BA\u8A8D\u3057\u3066\u307F\u3088\u3046'],
+  explore: ['\u8A3C\u62E0\u30AB\u30FC\u30C9\u3092\u30BF\u30C3\u30D7\u3057\u3066\u4E2D\u8EAB\u3092\u78BA\u8A8D\u3057\u3088\u3046', '\u30AD\u30E3\u30E9\u30AF\u30BF\u30FC\u306E\u60C5\u5831\u3082\u898B\u76F4\u3057\u3066\u307F\u3088\u3046', '\u602A\u3057\u3044\u70B9\u3092\u30E1\u30E2\u3057\u3066\u304A\u3053\u3046'],
+  twist: ['\u65B0\u3057\u3044\u8A3C\u62E0\u304C\u51FA\u308B\u304B\u3082...\uFF01', '\u4ECA\u307E\u3067\u306E\u8A3C\u62E0\u3092\u632F\u308A\u8FD4\u3063\u3066\u307F\u3088\u3046'],
+  discuss: ['\u30B0\u30EB\u30FC\u30D7\u3067\u610F\u898B\u3092\u4EA4\u63DB\u3057\u3088\u3046', '\u8A3C\u62E0\u3092\u6839\u62E0\u306B\u63A8\u7406\u3057\u3088\u3046', '\u4ED6\u306E\u4EBA\u306E\u610F\u898B\u3082\u805E\u3044\u3066\u307F\u3088\u3046'],
+  vote: ['\u8A3C\u62E0\u3092\u3082\u3046\u4E00\u5EA6\u78BA\u8A8D\u3057\u3066\u304B\u3089\u6295\u7968\u3057\u3088\u3046', '\u81EA\u4FE1\u3092\u6301\u3063\u3066\u6C7A\u3081\u3088\u3046\uFF01'],
+  truth: ['\u5148\u751F\u306E\u753B\u9762\u3092\u898B\u3066\u304F\u3060\u3055\u3044', '\u3042\u306A\u305F\u306E\u63A8\u7406\u306F\u5F53\u305F\u3063\u305F\u304B\u306A\uFF1F'],
+};
 
 // ============================================================
 // Main Component
 // ============================================================
 
 export default function StudentSession() {
-  const fontSize = useFontSize();
+  const fontSize = useFontSize('session');
+  const { furigana, toggleFurigana } = useFurigana();
+  // Initialize SE from localStorage on mount
+  useEffect(() => { initSound(); }, []);
 
   // Join state
   const [screen, setScreen] = useState<Screen>('join');
@@ -44,6 +94,7 @@ export default function StudentSession() {
   const [participant, setParticipant] = useState<SessionParticipant | null>(null);
   const participantRef = useRef<SessionParticipant | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
+  const mountedRef = useRef(true); // Codex P2 fix: cancellation guard for async subscribe
 
   // Vote state
   const [votedFor, setVotedFor] = useState('');
@@ -63,6 +114,12 @@ export default function StudentSession() {
   const [studentHypothesis, setStudentHypothesis] = useState('');
   const [studentHypothesisSuspect, setStudentHypothesisSuspect] = useState('');
   const [studentConfetti, setStudentConfetti] = useState(false);
+
+  // Hint rotation state
+  const [hintIndex, setHintIndex] = useState(0);
+
+  // Truth countdown state
+  const [showTruthCountdown, setShowTruthCountdown] = useState(false);
 
   // Timer state
   const [timerSeconds, setTimerSeconds] = useState(0);
@@ -227,13 +284,25 @@ export default function StudentSession() {
               setHasVoted(true);
             }
             if (run.is_active) {
-              const channel = subscribeToSessionRun(
-                run.id,
-                (updated) => { setSessionRun(updated); refreshParticipant(); },
-                handleChannelStatus,
-              );
-              channelRef.current = channel;
-              setScreen('session');
+              // Phase 156: async subscription with connecting screen
+              // Codex P1 fix: no sync fallback — stay on connecting screen and let reconnect loop handle it
+              setScreen('connecting');
+              try {
+                const channel = await subscribeToSessionRunAsync(
+                  run.id,
+                  (updated) => { setSessionRun(updated); refreshParticipant(); },
+                  handleChannelStatus,
+                );
+                if (cancelled) {
+                  unsubscribeChannel(channel);
+                } else {
+                  channelRef.current = channel;
+                  setScreen('session');
+                }
+              } catch {
+                // Stay on connecting screen — user can tap retry
+                if (!cancelled) setError('接続に時間がかかっています。再接続ボタンを押してください');
+              }
             } else {
               clearSessionCache(run.id);
               setScreen('ended');
@@ -323,15 +392,32 @@ export default function StudentSession() {
     } catch { /* ignore */ }
   }, [sessionRun?.id, studentHypothesisSuspect, studentHypothesis]);
 
-  // Confetti on truth phase
+  const handleTruthCountdownComplete = useCallback(() => {
+    setShowTruthCountdown(false);
+    setStudentConfetti(true);
+    setTimeout(() => setStudentConfetti(false), 4000);
+  }, []);
+
+  // Phase transition effects: countdown, confetti, evidence auto-open
   const prevPhaseRef = useRef<string>('');
   useEffect(() => {
     const phase = sessionRun?.current_phase || '';
     if (phase === 'truth' && prevPhaseRef.current !== 'truth') {
-      setStudentConfetti(true);
-      setTimeout(() => setStudentConfetti(false), 4000);
+      setShowTruthCountdown(true);
+    }
+    if (phase === 'explore' && prevPhaseRef.current !== 'explore') {
+      setEvidenceOpen(true);
     }
     prevPhaseRef.current = phase;
+  }, [sessionRun?.current_phase]);
+
+  // Rotating phase hints
+  useEffect(() => {
+    setHintIndex(0);
+    const hints = PHASE_HINTS[sessionRun?.current_phase || 'prep'] || [];
+    if (hints.length <= 1) return;
+    const id = setInterval(() => setHintIndex(i => (i + 1) % hints.length), 5000);
+    return () => clearInterval(id);
   }, [sessionRun?.current_phase]);
 
   // Watch for session end
@@ -349,6 +435,7 @@ export default function StudentSession() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      mountedRef.current = false;
       if (channelRef.current) unsubscribeChannel(channelRef.current);
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
     };
@@ -403,13 +490,27 @@ export default function StudentSession() {
       setParticipant(p);
       participantRef.current = p;
       try { localStorage.setItem('nazotoki-player-name', playerName.trim()); } catch { /* ignore */ }
-      const channel = subscribeToSessionRun(
-        sessionRun.id,
-        (updated) => { setSessionRun(updated); refreshParticipant(); },
-        handleChannelStatus,
-      );
-      channelRef.current = channel;
-      setScreen('session');
+      // Phase 156: Show connecting screen, then async subscribe
+      // Codex P2 fix: guard against unmount during async subscribe
+      setScreen('connecting');
+      setJoining(false);
+      try {
+        const channel = await subscribeToSessionRunAsync(
+          sessionRun.id,
+          (updated) => { setSessionRun(updated); refreshParticipant(); },
+          handleChannelStatus,
+        );
+        if (!mountedRef.current) {
+          unsubscribeChannel(channel);
+          return;
+        }
+        channelRef.current = channel;
+        setScreen('session');
+      } catch {
+        if (!mountedRef.current) return;
+        setError('接続に時間がかかっています。再接続ボタンを押してください');
+      }
+      return;
     } catch {
       setError('通信エラーが発生しました。もう一度お試しください');
     }
@@ -435,6 +536,7 @@ export default function StudentSession() {
       if (ok) {
         setHasVoted(true);
         setVotePending(false);
+        playVoteConfirm();
       } else {
         pendingVoteRef.current = { votedFor: votedFor.trim(), voteReason: voteReason.trim() };
         setHasVoted(true);
@@ -487,6 +589,56 @@ export default function StudentSession() {
     );
   }
 
+  // Phase 156: Connecting screen with retry
+  if (screen === 'connecting') {
+    const handleRetryConnect = async () => {
+      if (!sessionRun) return;
+      setError(null);
+      if (channelRef.current) {
+        unsubscribeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+      try {
+        const channel = await subscribeToSessionRunAsync(
+          sessionRun.id,
+          (updated) => { setSessionRun(updated); refreshParticipant(); },
+          handleChannelStatus,
+        );
+        // Codex P2 fix: guard against unmount during retry
+        if (!mountedRef.current) {
+          unsubscribeChannel(channel);
+          return;
+        }
+        channelRef.current = channel;
+        setScreen('session');
+      } catch {
+        if (!mountedRef.current) return;
+        setError('接続に時間がかかっています。再接続ボタンを押してください');
+      }
+    };
+
+    return (
+      <div class="min-h-[80dvh] flex items-center justify-center px-4">
+        <div class="text-center space-y-4 max-w-sm">
+          <div class="text-5xl animate-pulse">{'\uD83D\uDD17'}</div>
+          <p class="text-gray-700 font-bold text-lg">セッションに接続中...</p>
+          <p class="text-gray-400 text-sm">リアルタイム通信を確立しています</p>
+          {error && (
+            <div class="space-y-3">
+              <p class="text-red-600 text-sm font-bold">{error}</p>
+              <button
+                onClick={handleRetryConnect}
+                class="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-md"
+              >
+                再接続
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   if (screen === 'join' || screen === 'lobby') {
     return (
       <JoinScreen
@@ -525,13 +677,32 @@ export default function StudentSession() {
   const phaseInfo = PHASE_DISPLAY[phase] || PHASE_DISPLAY.prep;
   const isVotePhase = phase === 'vote';
   const charNames = (sessionRun?.character_names as string[]) || [];
+  const series = detectSeries(sessionRun?.scenario_slug || '');
+  const seriesAccent = SERIES_ACCENT[series];
 
   const mm = Math.floor(Math.abs(timerSeconds) / 60).toString().padStart(2, '0');
   const ss = Math.abs(timerSeconds % 60).toString().padStart(2, '0');
   const isOvertime = timerSeconds < 0;
 
   return (
-    <div class="min-h-[80dvh] flex flex-col px-4 py-6 relative max-w-2xl mx-auto w-full">
+    <div
+      class="min-h-[80dvh] landscape:min-h-0 flex flex-col px-4 py-6 landscape:py-3 relative max-w-2xl mx-auto w-full"
+      style={{ backgroundColor: PHASE_BG_COLOR[phase] || 'transparent', transition: 'background-color 0.8s ease' }}
+    >
+      <style>{`
+        @keyframes phase-breathe {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.1); opacity: 0.85; }
+        }
+        @keyframes vote-entrance {
+          0% { opacity: 0; transform: translateY(16px) scale(0.97); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes hint-fade-in {
+          0% { opacity: 0; transform: translateY(4px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
       <ConnectionBanner
         connectionStatus={connectionStatus}
         retryCount={retryCountRef.current}
@@ -542,15 +713,34 @@ export default function StudentSession() {
 
       {studentConfetti && <Confetti count={60} />}
 
+      {/* Truth phase countdown overlay */}
+      {showTruthCountdown && (
+        <TruthCountdown onComplete={handleTruthCountdownComplete} />
+      )}
+
+      {/* Phase progress bar */}
+      {phase !== 'prep' && <StudentPhaseProgress currentPhase={phase} skipTwist={scenarioContent?.evidence5 === null} furigana={furigana} />}
+
       {/* Header: scenario + participant info */}
-      <div class="text-center mb-6 relative">
-        <button
-          onClick={fontSize.cycle}
-          class="absolute right-0 top-0 text-[10px] text-gray-400 hover:text-gray-600 transition-colors px-1.5 py-0.5 border border-gray-200 rounded"
-          title={`文字サイズ: ${fontSize.label}`}
-        >
-          Aa
-        </button>
+      <div class="text-center mb-6 landscape:mb-3 relative">
+        <div class="absolute right-0 top-0 flex gap-1">
+          <button
+            onClick={toggleFurigana}
+            class={`text-xs transition-colors px-2.5 py-1 border rounded min-h-[44px] min-w-[44px] flex items-center justify-center ${
+              furigana ? 'text-sky-600 border-sky-300 bg-sky-50' : 'text-gray-400 border-gray-200 hover:text-gray-600'
+            }`}
+            title={furigana ? 'ふりがな ON' : 'ふりがな OFF'}
+          >
+            <ruby class="text-[10px]">漢<rt class="text-[6px]">か</rt></ruby>
+          </button>
+          <button
+            onClick={fontSize.cycle}
+            class="text-xs text-gray-400 hover:text-gray-600 transition-colors px-2.5 py-1 border border-gray-200 rounded min-h-[44px] min-w-[44px] flex items-center justify-center"
+            title={`文字サイズ: ${fontSize.label}`}
+          >
+            Aa
+          </button>
+        </div>
         <p class="text-sm text-gray-400">{participant?.participant_name}</p>
         {participant?.assigned_character && (
           <div class="inline-block mt-1 px-3 py-1 bg-amber-100 border border-amber-300 rounded-full">
@@ -559,16 +749,22 @@ export default function StudentSession() {
             </span>
           </div>
         )}
-        <h1 class="text-lg font-black text-gray-900 mt-1">
+        <h1 class={`text-lg font-black mt-1 ${seriesAccent ? seriesAccent.text : 'text-gray-900'}`}>
           {sessionRun?.scenario_title}
         </h1>
       </div>
 
       {/* Phase indicator */}
-      <div class="bg-white rounded-2xl border-2 border-gray-200 p-6 text-center mb-6">
-        <div class="text-5xl mb-3">{phaseInfo.icon}</div>
+      <div class={`bg-white rounded-2xl border-2 p-6 landscape:p-4 text-center mb-6 landscape:mb-3 ${seriesAccent ? seriesAccent.border : 'border-gray-200'}`}>
+        <div class="text-5xl mb-3" style="animation: phase-breathe 3s ease-in-out infinite">{phaseInfo.icon}</div>
         <h2 class="text-2xl font-black text-gray-900">{phaseInfo.label}</h2>
-        <p class="text-gray-500 mt-2">{phaseInfo.message}</p>
+        <p
+          class="text-gray-500 mt-2"
+          key={`hint-${phase}-${hintIndex}`}
+          style="animation: hint-fade-in 0.5s ease-out"
+        >
+          {(PHASE_HINTS[phase] || [phaseInfo.message])[hintIndex % (PHASE_HINTS[phase]?.length || 1)]}
+        </p>
         {timerSeconds !== 0 && (
           <div class={`mt-4 font-mono font-black text-4xl tabular-nums ${
             isOvertime ? 'text-red-500 animate-pulse' : timerSeconds <= 60 ? 'text-red-500' : 'text-gray-800'
@@ -576,11 +772,18 @@ export default function StudentSession() {
             {isOvertime && '-'}{mm}:{ss}
           </div>
         )}
+        {phase === 'prep' && (sessionRun?.player_count ?? 0) > 0 && (
+          <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 border border-sky-200 rounded-full">
+            <span class="text-sky-600 text-sm font-bold">
+              {'\uD83D\uDC65'} {sessionRun?.player_count}{'\u4EBA\u304C\u53C2\u52A0\u4E2D'}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Intro phase */}
       {phase === 'intro' && (scenarioContent ? (
-        <div class="mb-4 bg-white rounded-xl border border-gray-200 p-4 max-h-[60vh] overflow-y-auto">
+        <div class="mb-4 bg-white rounded-xl border border-gray-200 p-4 max-h-[60vh] landscape:max-h-[80vh] overflow-y-auto">
           <div
             class="prose prose-sm max-w-none [&_ruby_rt]:text-[0.6em] [&_ruby_rt]:text-gray-400"
             dangerouslySetInnerHTML={{ __html: scenarioContent.common_html }}
@@ -611,23 +814,21 @@ export default function StudentSession() {
             {charPanelOpen && (
               <div class="mt-1 border border-green-200 rounded-xl bg-white p-4 space-y-3">
                 <div class="flex items-center gap-2 mb-2">
-                  <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-sm font-black text-green-700">
-                    {myChar.name.charAt(0)}
-                  </div>
+                  <CharacterAvatar name={myChar.name} size="md" imageUrl={myChar.imageUrl} />
                   <div>
                     <p class="font-black text-gray-900 text-sm">{myChar.name}</p>
-                    <p class="text-xs text-gray-500">{myChar.role}</p>
+                    <p class="text-sm text-gray-500">{myChar.role}</p>
                   </div>
                 </div>
                 {myChar.intro_html && (
                   <div class="prose prose-sm max-w-none text-gray-700 [&_ruby_rt]:text-[0.6em] [&_ruby_rt]:text-gray-400" dangerouslySetInnerHTML={{ __html: myChar.intro_html }} />
                 )}
                 <div class="bg-blue-50 rounded-lg p-3">
-                  <p class="text-xs font-bold text-blue-600 mb-1">{'\uD83D\uDDE3\uFE0F'} 公開情報</p>
+                  <p class="text-sm font-bold text-blue-600 mb-1">{'\uD83D\uDDE3\uFE0F'} 公開情報</p>
                   <div class="prose prose-sm max-w-none [&_ruby_rt]:text-[0.6em] [&_ruby_rt]:text-gray-400" dangerouslySetInnerHTML={{ __html: myChar.public_html }} />
                 </div>
                 <div class="bg-gray-100 rounded-lg p-3 text-center">
-                  <p class="text-xs text-gray-400 font-bold">{'\uD83D\uDD12'} 秘密の情報は先生から配られたシートで確認してね</p>
+                  <p class="text-sm text-gray-400 font-bold">{'\uD83D\uDD12'} 秘密の情報は先生から配られたシートで確認してね</p>
                 </div>
               </div>
             )}
@@ -648,7 +849,7 @@ export default function StudentSession() {
               onClick={() => setEvidenceOpen((v) => !v)}
               class="w-full flex items-center justify-between px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-sm font-bold text-amber-800 hover:bg-amber-100 transition-colors"
             >
-              <span>{'\uD83D\uDD0D'} 発見した証拠（{discoveredTitles.length}/{titles.length}）</span>
+              <span>{'\uD83D\uDD0D'} <Furi f="はっけん" on={furigana}>発見</Furi>した<Furi f="しょうこ" on={furigana}>証拠</Furi>（{discoveredTitles.length}/{titles.length}）</span>
               <span class={`transition-transform ${evidenceOpen ? 'rotate-180' : ''}`}>{'\u25BC'}</span>
             </button>
             {evidenceOpen && (
@@ -669,18 +870,18 @@ export default function StudentSession() {
                             return next;
                           });
                         }}
-                        class={`w-full flex items-center gap-2 px-4 py-2 text-sm text-left ${
+                        class={`w-full flex items-center gap-2 px-4 py-3 text-sm text-left min-h-[44px] ${
                           found ? 'text-gray-900' : 'text-gray-300'
                         } ${found && richCard ? 'hover:bg-amber-50 cursor-pointer' : 'cursor-default'}`}
                       >
-                        <span class={`w-5 h-5 shrink-0 rounded-full flex items-center justify-center text-[10px] font-black ${
+                        <span class={`w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-xs font-black ${
                           found ? 'bg-amber-500 text-white' : 'bg-gray-200 text-gray-400'
                         }`}>
                           {found ? '\u2713' : t.number}
                         </span>
                         <span class="font-bold flex-1">{found ? t.title : '???'}</span>
                         {found && richCard && (
-                          <span class={`text-amber-400 text-xs transition-transform ${isExpanded ? 'rotate-180' : ''}`}>{'\u25BC'}</span>
+                          <span class={`text-amber-400 text-sm transition-transform ${isExpanded ? 'rotate-180' : ''}`}>{'\u25BC'}</span>
                         )}
                       </button>
                       {found && richCard && isExpanded && (
@@ -730,19 +931,19 @@ export default function StudentSession() {
           <div class="space-y-4">
             <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
               <p class="text-blue-800 font-bold">{'\uD83D\uDCAC'} グループで話し合いましょう</p>
-              <p class="text-blue-600 text-sm mt-1">証拠をもとに、犯人は誰か議論してください</p>
+              <p class="text-blue-600 text-sm mt-1"><Furi f="しょうこ" on={furigana}>証拠</Furi>をもとに、<Furi f="はんにん" on={furigana}>犯人</Furi>は<Furi f="だれ" on={furigana}>誰</Furi>か<Furi f="ぎろん" on={furigana}>議論</Furi>してください</p>
             </div>
             <div class="bg-white rounded-xl border-2 border-blue-200 p-4 space-y-3">
               <h3 class="text-sm font-black text-blue-700 text-center">{'\u270D\uFE0F'} あなたの仮説</h3>
               {charNames.length > 0 && (
                 <div>
-                  <p class="text-xs font-bold text-gray-600 mb-2">怪しいと思う人</p>
+                  <p class="text-sm font-bold text-gray-600 mb-2">怪しいと思う人</p>
                   <div class="grid grid-cols-2 gap-2">
                     {charNames.map(name => (
                       <button
                         key={name}
                         onClick={() => setStudentHypothesisSuspect(name)}
-                        class={`py-2 px-3 rounded-lg text-sm font-bold transition-colors ${
+                        class={`py-3 px-3 rounded-lg text-sm font-bold transition-colors min-h-[44px] ${
                           studentHypothesisSuspect === name
                             ? 'bg-blue-500 text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -755,7 +956,7 @@ export default function StudentSession() {
                 </div>
               )}
               <div>
-                <p class="text-xs font-bold text-gray-600 mb-1">理由メモ（任意）</p>
+                <p class="text-sm font-bold text-gray-600 mb-1">理由メモ（任意）</p>
                 <textarea
                   value={studentHypothesis}
                   onInput={(e) => setStudentHypothesis((e.target as HTMLTextAreaElement).value)}
@@ -765,7 +966,7 @@ export default function StudentSession() {
                   placeholder="なぜそう思う？メモしておこう"
                 />
               </div>
-              <p class="text-[10px] text-gray-400 text-center">
+              <p class="text-xs text-gray-400 text-center">
                 このメモは自分だけが見れます（先生には送信されません）
               </p>
             </div>
@@ -774,22 +975,23 @@ export default function StudentSession() {
 
         {/* Vote phase: form */}
         {isVotePhase && !hasVoted && (
-          <div class="bg-white rounded-xl border-2 border-amber-300 p-6 space-y-4">
-            <h3 class="text-lg font-black text-gray-900 text-center">{'\uD83D\uDDF3\uFE0F'} あなたの投票</h3>
+          <div class="bg-white rounded-xl border-2 border-amber-300 p-6 space-y-4 shadow-lg shadow-amber-100" style="animation: vote-entrance 0.5s ease-out">
+            <h3 class="text-xl font-black text-gray-900 text-center">{'\uD83D\uDDF3\uFE0F'} あなたの<Furi f="とうひょう" on={furigana}>投票</Furi></h3>
             <div>
-              <label class="block text-sm font-bold text-gray-700 mb-2">犯人だと思う人</label>
+              <label class="block text-sm font-bold text-gray-700 mb-2"><Furi f="はんにん" on={furigana}>犯人</Furi>だと<Furi f="おも" on={furigana}>思</Furi>う<Furi f="ひと" on={furigana}>人</Furi></label>
               {charNames.length > 0 ? (
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-2 gap-3">
                   {charNames.map((name) => (
                     <button
                       key={name}
                       onClick={() => setVotedFor(name)}
-                      class={`px-4 py-3 rounded-xl text-base font-bold transition-all border-2 ${
+                      class={`px-4 py-4 rounded-xl text-lg font-black transition-all border-2 flex items-center gap-2 justify-center ${
                         votedFor === name
-                          ? 'border-amber-500 bg-amber-50 text-amber-900 ring-2 ring-amber-300'
+                          ? 'border-amber-500 bg-amber-50 text-amber-900 ring-2 ring-amber-300 scale-[1.02]'
                           : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                       }`}
                     >
+                      <CharacterAvatar name={name} size="sm" />
                       {name}
                     </button>
                   ))}
@@ -806,7 +1008,7 @@ export default function StudentSession() {
               )}
             </div>
             <div>
-              <label class="block text-sm font-bold text-gray-700 mb-1">理由（なぜそう思う？）</label>
+              <label class="block text-sm font-bold text-gray-700 mb-1"><Furi f="りゆう" on={furigana}>理由</Furi>（なぜそう<Furi f="おも" on={furigana}>思</Furi>う？）</label>
               <textarea
                 value={voteReason}
                 onInput={(e) => setVoteReason((e.target as HTMLTextAreaElement).value)}
@@ -826,7 +1028,7 @@ export default function StudentSession() {
                   : 'bg-amber-500 text-white hover:bg-amber-600 active:bg-amber-700'
               }`}
             >
-              {voting ? '送信中...' : '投票する'}
+              {voting ? '送信中...' : <><Furi f="とうひょう" on={furigana}>投票</Furi>する</>}
             </button>
           </div>
         )}
@@ -836,8 +1038,8 @@ export default function StudentSession() {
           <div class={`rounded-xl p-6 text-center space-y-2 ${
             votePending ? 'bg-yellow-50 border border-yellow-200' : 'bg-green-50 border border-green-200'
           }`}>
-            <div class="text-4xl">{votePending ? '\u23F3' : '\u2705'}</div>
-            <p class={`font-black text-lg ${votePending ? 'text-yellow-800' : 'text-green-800'}`}>
+            <div class={`text-5xl ${votePending ? 'animate-pulse' : ''}`} style={!votePending ? 'animation: vote-entrance 0.4s ease-out' : undefined}>{votePending ? '\u23F3' : '\u2705'}</div>
+            <p class={`font-black text-xl ${votePending ? 'text-yellow-800' : 'text-green-800'}`}>
               {votePending ? '送信待ち...' : '投票完了！'}
             </p>
             <p class={`text-sm ${votePending ? 'text-yellow-600' : 'text-green-600'}`}>
@@ -854,7 +1056,7 @@ export default function StudentSession() {
             <p class="text-sm"><span class="font-bold">怪しいと思った人:</span> {studentHypothesisSuspect}</p>
             {studentHypothesis && <p class="text-sm mt-1 text-gray-600">「{studentHypothesis}」</p>}
             {(votedFor || participant?.voted_for) && studentHypothesisSuspect !== (votedFor || participant?.voted_for) && (
-              <p class="text-xs text-purple-500 mt-2">
+              <p class="text-sm text-purple-500 mt-2">
                 {'\u2192'} 投票では「{votedFor || participant?.voted_for}」に変更しました
               </p>
             )}
@@ -873,7 +1075,7 @@ export default function StudentSession() {
               </div>
               <VoteResultsCard charNames={charNames} votes={allVotes} myVote={myVote} />
               {myVote && (
-                <p class="text-xs text-gray-400 text-center">
+                <p class="text-sm text-gray-400 text-center">
                   {'\u25B6'} あなたの投票: <span class="font-bold text-amber-700">{myVote}</span>
                 </p>
               )}
@@ -883,9 +1085,9 @@ export default function StudentSession() {
       </div>
 
       {/* Footer */}
-      <div class="mt-6 text-center space-y-1">
+      <div class="mt-6 landscape:mt-3 text-center space-y-1">
         {votePending && (
-          <p class="text-xs text-amber-500 font-bold animate-pulse">
+          <p class="text-sm text-amber-500 font-bold animate-pulse">
             {'\u26A0'} 投票は再接続時に送信されます
           </p>
         )}

@@ -464,6 +464,52 @@ export function subscribeToParticipants(
   return channel;
 }
 
+/** Subscribe to session run with Promise — resolves on SUBSCRIBED, rejects on error/timeout (Phase 156) */
+export function subscribeToSessionRunAsync(
+  runId: string,
+  onUpdate: (run: SessionRun) => void,
+  onStatus?: (status: string) => void,
+  timeoutMs = 10000,
+): Promise<RealtimeChannel> {
+  return new Promise((resolve, reject) => {
+    if (!supabase) { reject(new Error('No supabase')); return; }
+    let settled = false;
+    const cleanup = () => {
+      if (!settled && supabase) { supabase.removeChannel(channel); }
+    };
+    const timer = setTimeout(() => {
+      settled = true;
+      cleanup();
+      reject(new Error('SUBSCRIPTION_TIMEOUT'));
+    }, timeoutMs);
+    const channel = supabase
+      .channel(`session-run-${runId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'session_runs',
+          filter: `id=eq.${runId}`,
+        },
+        (payload) => { onUpdate(payload.new as SessionRun); },
+      )
+      .subscribe((status) => {
+        if (onStatus) onStatus(status);
+        if (status === 'SUBSCRIBED') {
+          settled = true;
+          clearTimeout(timer);
+          resolve(channel);
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          settled = true;
+          clearTimeout(timer);
+          cleanup();
+          reject(new Error(status));
+        }
+      });
+  });
+}
+
 /** Unsubscribe from a channel */
 export function unsubscribeChannel(channel: RealtimeChannel | null): void {
   if (channel && supabase) {

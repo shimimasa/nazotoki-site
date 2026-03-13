@@ -10,6 +10,7 @@ export interface CharacterData {
   role: string;
   url: string;
   qrDataUrl: string;
+  imageUrl?: string;  // Phase 157
 }
 
 export interface SessionScenarioData {

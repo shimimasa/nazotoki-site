@@ -5,6 +5,7 @@ import type { SessionParticipant } from '../../lib/session-realtime';
 import type { StudentRow } from '../../lib/supabase';
 import type { SessionFeedbackRow } from '../../lib/supabase-client';
 import FeedbackSummary from './FeedbackSummary';
+import { isSoundEnabled, toggleSound } from '../../lib/sound-effects';
 
 interface GmControlPanelProps {
   currentStep: number;
@@ -17,6 +18,8 @@ interface GmControlPanelProps {
   onTimerToggle: () => void;
   onTimerReset: (seconds: number) => void;
   timerDefaultSeconds: number;
+  autoAdvance: boolean;
+  onToggleAutoAdvance: () => void;
   isProjectorMode: boolean;
   onToggleProjector: () => void;
   onClose: () => void;
@@ -83,6 +86,8 @@ export default function GmControlPanel({
   onTimerToggle,
   onTimerReset,
   timerDefaultSeconds,
+  autoAdvance,
+  onToggleAutoAdvance,
   isProjectorMode,
   onToggleProjector,
   onClose,
@@ -115,6 +120,8 @@ export default function GmControlPanel({
   feedbackSummary,
 }: GmControlPanelProps) {
   const [tab, setTab] = useState<PanelTab>('control');
+  const [simpleMode, setSimpleMode] = useState(false);
+  const [seOn, setSeOn] = useState(isSoundEnabled());
 
   const phases = skipTwist
     ? PHASE_CONFIG.filter((p) => p.key !== 'twist')
@@ -152,12 +159,23 @@ export default function GmControlPanel({
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             <span class="font-black text-sm">GM {'\u30B3\u30F3\u30C8\u30ED\u30FC\u30EB'}</span>
           </div>
+          <div class="flex items-center gap-1">
+            <button
+              onClick={() => setSeOn(toggleSound())}
+              class={`w-8 h-8 rounded-full flex items-center justify-center transition-colors text-sm ${
+                seOn ? 'bg-indigo-500' : 'bg-indigo-700/50 opacity-60'
+              }`}
+              title={seOn ? '効果音 ON' : '効果音 OFF'}
+            >
+              {seOn ? '\uD83D\uDD0A' : '\uD83D\uDD07'}
+            </button>
           <button
             onClick={onClose}
             class="w-8 h-8 rounded-full hover:bg-indigo-500 flex items-center justify-center transition-colors"
           >
             {'\u2715'}
           </button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -202,12 +220,16 @@ export default function GmControlPanel({
               onTimerToggle={onTimerToggle}
               onTimerReset={onTimerReset}
               timerDefaultSeconds={timerDefaultSeconds}
+              autoAdvance={autoAdvance}
+              onToggleAutoAdvance={onToggleAutoAdvance}
               mm={mm}
               ss={ss}
               isOvertime={isOvertime}
               isUrgent={isUrgent}
               isProjectorMode={isProjectorMode}
               onToggleProjector={onToggleProjector}
+              simpleMode={simpleMode}
+              onToggleSimple={() => setSimpleMode(v => !v)}
             />
           ) : (
             <DashboardTab
@@ -268,12 +290,16 @@ interface ControlTabProps {
   onTimerToggle: () => void;
   onTimerReset: (seconds: number) => void;
   timerDefaultSeconds: number;
+  autoAdvance: boolean;
+  onToggleAutoAdvance: () => void;
   mm: string;
   ss: string;
   isOvertime: boolean;
   isUrgent: boolean;
   isProjectorMode: boolean;
   onToggleProjector: () => void;
+  simpleMode: boolean;
+  onToggleSimple: () => void;
 }
 
 function ControlTab({
@@ -291,25 +317,51 @@ function ControlTab({
   onTimerToggle,
   onTimerReset,
   timerDefaultSeconds,
+  autoAdvance,
+  onToggleAutoAdvance,
   mm,
   ss,
   isOvertime,
   isUrgent,
   isProjectorMode,
   onToggleProjector,
+  simpleMode,
+  onToggleSimple,
 }: ControlTabProps) {
+  const currentPhase = PHASE_CONFIG[currentStep];
+
   return (
     <div class="p-4 space-y-5">
-      {/* Phase navigation */}
+      {/* Simple/Full mode toggle */}
+      <button
+        onClick={onToggleSimple}
+        class="w-full py-1.5 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors"
+      >
+        {simpleMode ? '\u2699\uFE0F \u8A73\u7D30\u8868\u793A' : '\u26A1 \u30B7\u30F3\u30D7\u30EB\u8868\u793A'}
+      </button>
+
+      {/* Current phase indicator (simple mode) */}
+      {simpleMode && currentPhase && (
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+          <div class="text-3xl mb-1">{currentPhase.icon}</div>
+          <p class="text-lg font-black text-amber-900">{currentPhase.label}</p>
+        </div>
+      )}
+
+      {/* Phase navigation — always visible */}
       <section>
-        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-          {'\u30D5\u30A7\u30FC\u30BA\u64CD\u4F5C'}
-        </h4>
+        {!simpleMode && (
+          <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            {'\u30D5\u30A7\u30FC\u30BA\u64CD\u4F5C'}
+          </h4>
+        )}
         <div class="flex gap-2 mb-3">
           <button
             onClick={onPrev}
             disabled={isFirstPhase}
-            class={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-colors ${
+            class={`flex-1 py-3 rounded-lg font-bold transition-colors ${
+              simpleMode ? 'text-base' : 'text-sm'
+            } ${
               isFirstPhase
                 ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -321,7 +373,9 @@ function ControlTab({
             <button
               onClick={onComplete}
               disabled={saving}
-              class={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-colors ${
+              class={`flex-1 py-3 rounded-lg font-bold transition-colors ${
+                simpleMode ? 'text-base' : 'text-sm'
+              } ${
                 saving
                   ? 'bg-gray-300 text-gray-500 cursor-wait'
                   : 'bg-green-600 text-white hover:bg-green-700'
@@ -332,52 +386,58 @@ function ControlTab({
           ) : (
             <button
               onClick={onNext}
-              class="flex-1 py-2.5 bg-amber-500 text-white rounded-lg text-sm font-bold hover:bg-amber-600 transition-colors"
+              class={`flex-1 py-3 bg-amber-500 text-white rounded-lg font-bold hover:bg-amber-600 transition-colors ${
+                simpleMode ? 'text-base' : 'text-sm'
+              }`}
             >
               {'\u6B21\u3078 \u25B6'}
             </button>
           )}
         </div>
 
-        {/* Phase list */}
-        <div class="space-y-1">
-          {navigablePhases.map((phase) => {
-            const originalIndex = PHASE_CONFIG.findIndex(
-              (p) => p.key === phase.key,
-            );
-            const isActive = originalIndex === currentStep;
-            const isDone = originalIndex < currentStep;
-            return (
-              <button
-                key={phase.key}
-                onClick={() => onGoToStep(originalIndex)}
-                class={`w-full px-3 py-2 rounded-lg text-left text-sm font-bold flex items-center gap-2 transition-all ${
-                  isActive
-                    ? 'bg-amber-100 text-amber-900 ring-1 ring-amber-400'
-                    : isDone
-                      ? 'bg-green-50 text-green-700 hover:bg-green-100'
-                      : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600'
-                }`}
-              >
-                <span>{isDone ? '\u2713' : phase.icon}</span>
-                <span>{phase.label}</span>
-                {isActive && (
-                  <span class="ml-auto text-xs bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded">
-                    {'\u73FE\u5728'}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+        {/* Phase list — hidden in simple mode */}
+        {!simpleMode && (
+          <div class="space-y-1">
+            {navigablePhases.map((phase) => {
+              const originalIndex = PHASE_CONFIG.findIndex(
+                (p) => p.key === phase.key,
+              );
+              const isActive = originalIndex === currentStep;
+              const isDone = originalIndex < currentStep;
+              return (
+                <button
+                  key={phase.key}
+                  onClick={() => onGoToStep(originalIndex)}
+                  class={`w-full px-3 py-2 rounded-lg text-left text-sm font-bold flex items-center gap-2 transition-all ${
+                    isActive
+                      ? 'bg-amber-100 text-amber-900 ring-1 ring-amber-400'
+                      : isDone
+                        ? 'bg-green-50 text-green-700 hover:bg-green-100'
+                        : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+                  }`}
+                >
+                  <span>{isDone ? '\u2713' : phase.icon}</span>
+                  <span>{phase.label}</span>
+                  {isActive && (
+                    <span class="ml-auto text-xs bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded">
+                      {'\u73FE\u5728'}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </section>
 
-      {/* Timer controls */}
+      {/* Timer — display + start/stop only in simple mode */}
       {timerDefaultSeconds > 0 && (
         <section>
-          <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-            {'\u30BF\u30A4\u30DE\u30FC'}
-          </h4>
+          {!simpleMode && (
+            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+              {'\u30BF\u30A4\u30DE\u30FC'}
+            </h4>
+          )}
           <div
             class={`text-center py-3 rounded-lg mb-2 ${
               isOvertime
@@ -387,15 +447,15 @@ function ControlTab({
                   : 'bg-gray-50 text-gray-900'
             }`}
           >
-            <div class="font-mono font-black text-3xl tabular-nums">
+            <div class={`font-mono font-black tabular-nums ${simpleMode ? 'text-4xl' : 'text-3xl'}`}>
               {isOvertime && '-'}
               {mm}:{ss}
             </div>
           </div>
-          <div class="grid grid-cols-4 gap-1">
+          {simpleMode ? (
             <button
               onClick={onTimerToggle}
-              class={`col-span-2 py-2 rounded-lg text-sm font-bold transition-colors ${
+              class={`w-full py-3 rounded-lg text-base font-bold transition-colors ${
                 timerRunning
                   ? 'bg-red-100 text-red-700 hover:bg-red-200'
                   : 'bg-green-100 text-green-700 hover:bg-green-200'
@@ -405,61 +465,108 @@ function ControlTab({
                 ? '\u23F8 \u505C\u6B62'
                 : '\u25B6 \u958B\u59CB'}
             </button>
-            <button
-              onClick={() => onTimerReset(timerSeconds + 60)}
-              class="py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-200 transition-colors"
-            >
-              +1{'\u5206'}
-            </button>
-            <button
-              onClick={() => onTimerReset(timerSeconds + 180)}
-              class="py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-200 transition-colors"
-            >
-              +3{'\u5206'}
-            </button>
-          </div>
+          ) : (
+            <>
+              <div class="grid grid-cols-4 gap-1">
+                <button
+                  onClick={onTimerToggle}
+                  class={`col-span-2 py-2 rounded-lg text-sm font-bold transition-colors ${
+                    timerRunning
+                      ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                      : 'bg-green-100 text-green-700 hover:bg-green-200'
+                  }`}
+                >
+                  {timerRunning
+                    ? '\u23F8 \u505C\u6B62'
+                    : '\u25B6 \u958B\u59CB'}
+                </button>
+                <button
+                  onClick={() => onTimerReset(timerSeconds + 60)}
+                  class="py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-200 transition-colors"
+                >
+                  +1{'\u5206'}
+                </button>
+                <button
+                  onClick={() => onTimerReset(timerSeconds + 180)}
+                  class="py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-200 transition-colors"
+                >
+                  +3{'\u5206'}
+                </button>
+              </div>
+              <button
+                onClick={() => onTimerReset(timerDefaultSeconds)}
+                class="w-full mt-1 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
+              >
+                {'\u21BA \u30EA\u30BB\u30C3\u30C8'}
+              </button>
+            </>
+          )}
+          {/* Auto-advance toggle */}
           <button
-            onClick={() => onTimerReset(timerDefaultSeconds)}
-            class="w-full mt-1 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
+            onClick={onToggleAutoAdvance}
+            class={`w-full mt-2 px-3 py-2.5 rounded-lg text-sm font-bold flex items-center justify-between transition-all ${
+              autoAdvance
+                ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-300'
+                : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+            }`}
           >
-            {'\u21BA \u30EA\u30BB\u30C3\u30C8'}
+            <span class="flex items-center gap-2">
+              <span>{'\u23F1\uFE0F'}</span>
+              <span>{'\u81EA\u52D5\u30D5\u30A7\u30FC\u30BA\u9001\u308A'}</span>
+            </span>
+            <span
+              class={`px-2 py-0.5 rounded text-xs font-black ${
+                autoAdvance
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-gray-200 text-gray-500'
+              }`}
+            >
+              {autoAdvance ? 'ON' : 'OFF'}
+            </span>
           </button>
+          {autoAdvance && (
+            <p class="text-xs text-amber-600 mt-1 px-1">
+              {'\u30BF\u30A4\u30DE\u30FC\u7D42\u4E86\u6642\u306B3\u79D2\u30AB\u30A6\u30F3\u30C8\u5F8C\u3001\u81EA\u52D5\u3067\u6B21\u306E\u30D5\u30A7\u30FC\u30BA\u3078\u79FB\u884C\u3057\u307E\u3059'}
+            </p>
+          )}
         </section>
       )}
 
-      {/* Display settings */}
-      <section>
-        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-          {'\u8868\u793A\u8A2D\u5B9A'}
-        </h4>
-        <button
-          onClick={onToggleProjector}
-          class={`w-full px-3 py-3 rounded-lg text-sm font-bold flex items-center justify-between transition-all ${
-            isProjectorMode
-              ? 'bg-indigo-100 text-indigo-800 ring-1 ring-indigo-300'
-              : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-          }`}
-        >
-          <span class="flex items-center gap-2">
-            <span>{isProjectorMode ? '\uD83D\uDCFD\uFE0F' : '\uD83D\uDDA5\uFE0F'}</span>
-            <span>{'\u6295\u5F71\u30E2\u30FC\u30C9'}</span>
-          </span>
-          <span
-            class={`px-2 py-0.5 rounded text-xs font-black ${
+      {/* Display settings — hidden in simple mode */}
+      {!simpleMode && (
+        <section>
+          <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            {'\u8868\u793A\u8A2D\u5B9A'}
+          </h4>
+          <button
+            onClick={onToggleProjector}
+            class={`w-full px-3 py-3 rounded-lg text-sm font-bold flex items-center justify-between transition-all ${
               isProjectorMode
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-200 text-gray-500'
+                ? 'bg-indigo-100 text-indigo-800 ring-1 ring-indigo-300'
+                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
             }`}
           >
-            {isProjectorMode ? 'ON' : 'OFF'}
-          </span>
-        </button>
-        {isProjectorMode && (
-          <p class="text-xs text-indigo-600 mt-1.5 px-1">
-            {'\u6559\u5BA4\u30B9\u30AF\u30EA\u30FC\u30F3\u5411\u3051\u306B\u6587\u5B57\u3092\u5927\u304D\u304F\u8868\u793A\u3057\u307E\u3059'}
-          </p>
-        )}
-      </section>
+            <span class="flex items-center gap-2">
+              <span>{isProjectorMode ? '\uD83D\uDCFD\uFE0F' : '\uD83D\uDDA5\uFE0F'}</span>
+              <span>{'\u6295\u5F71\u30E2\u30FC\u30C9'}</span>
+            </span>
+            <span
+              class={`px-2 py-0.5 rounded text-xs font-black ${
+                isProjectorMode
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-200 text-gray-500'
+              }`}
+            >
+              {isProjectorMode ? 'ON' : 'OFF'}
+            </span>
+          </button>
+          {isProjectorMode && (
+            <p class="text-xs text-indigo-600 mt-1.5 px-1">
+              {'\u6559\u5BA4\u30B9\u30AF\u30EA\u30FC\u30F3\u5411\u3051\u306B\u6587\u5B57\u3092\u5927\u304D\u304F\u8868\u793A\u3057\u307E\u3059'}
+            </p>
+          )}
+        </section>
+      )}
     </div>
   );
 }

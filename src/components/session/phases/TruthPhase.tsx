@@ -3,6 +3,7 @@ import type { CharacterData } from '../types';
 import SteppedContent from '../SteppedContent';
 import GmNote from '../GmNote';
 import Confetti from '../Confetti';
+import CharacterAvatar from '../CharacterAvatar';
 
 interface TruthPhaseProps {
   solutionHtml: string;
@@ -122,12 +123,8 @@ export default function TruthPhase({
                   (v) => v === c.id,
                 ).length;
                 return (
-                  <div key={c.id} class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                      <span class="font-black text-red-700 text-sm">
-                        {c.name.charAt(0)}
-                      </span>
-                    </div>
+                  <div key={c.id} class="flex items-center gap-2">
+                    <CharacterAvatar name={c.name} size="lg" imageUrl={c.imageUrl} />
                     <span class="font-bold text-sm w-16 shrink-0">{c.name}</span>
                     <div class="flex-1 bg-gray-100 rounded-full h-7 overflow-hidden">
                       <div
@@ -246,7 +243,7 @@ export default function TruthPhase({
                               {suspect?.name}
                             </span>
                             <span class={`ml-2 text-xs font-bold ${correct ? 'text-green-600' : 'text-amber-600'}`}>
-                              {correct ? '\u6B63\u89E3\uFF01' : '\u60DC\u3057\u3044\uFF01'}
+                              {correct ? '\u2714 \u6B63\u89E3\uFF01' : '\u2716 \u60DC\u3057\u3044\uFF01'}
                             </span>
                           </span>
                         </div>

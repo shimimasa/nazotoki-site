@@ -40,6 +40,7 @@ import {
   type SessionParticipant,
 } from '../../lib/session-realtime';
 import type { RealtimeChannel } from '@supabase/supabase-js';
+import { initSound, playTimerExpired, playPhaseTransition } from '../../lib/sound-effects';
 
 interface SessionWizardProps {
   data: SessionScenarioData;
@@ -55,6 +56,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   const [environment, setEnvironment] = useState<
     'classroom' | 'dayservice' | 'home'
   >('classroom');
+  const [hasPreset, setHasPreset] = useState(false);
 
   // Session state
   const [currentStep, setCurrentStep] = useState(0);
@@ -76,8 +78,15 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   const [discoveredCards, setDiscoveredCards] = useState<Set<number>>(new Set());
   const [twistRevealed, setTwistRevealed] = useState(false);
   const [gmMemo, setGmMemo] = useState('');
+  const [autoAdvance, setAutoAdvance] = useState(() => {
+    try {
+      return localStorage.getItem('nazotoki-auto-advance') === 'true';
+    } catch { return false; }
+  });
+  const [autoAdvanceCountdown, setAutoAdvanceCountdown] = useState<number | null>(null);
   const memoSaveTimer = useRef<number | null>(null);
   const timerExpiredTimer = useRef<number | null>(null);
+  const autoAdvanceTimer = useRef<number | null>(null);
 
   // Realtime session state (Phase 56)
   const [sessionRunId, setSessionRunId] = useState<string | null>(null);
@@ -100,22 +109,39 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
 
   // Cleanup on unmount (Phase 56 + Phase 73: timers)
   useEffect(() => {
+    initSound();
     return () => {
       if (participantChannelRef.current) {
         unsubscribeChannel(participantChannelRef.current);
       }
       if (memoSaveTimer.current) clearTimeout(memoSaveTimer.current);
       if (timerExpiredTimer.current) clearTimeout(timerExpiredTimer.current);
+      if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
     };
   }, []);
 
-  // Load teacher profile and classes
+  // Load teacher profile and classes + restore last session settings
   useEffect(() => {
     getCurrentTeacher().then((t) => {
       setCurrentTeacher(t);
       if (t) {
         setTeacherName(t.display_name);
-        fetchClasses(t.id).then(setTeacherClasses);
+        fetchClasses(t.id).then((cls) => {
+          setTeacherClasses(cls);
+          // Restore last session settings from localStorage (teacher-scoped)
+          try {
+            const saved = localStorage.getItem(`nazotoki-session-preset-${t.id}`);
+            if (saved) {
+              const preset = JSON.parse(saved);
+              if (preset.playerCount) setPlayerCount(preset.playerCount);
+              if (preset.environment) setEnvironment(preset.environment);
+              if (preset.classId && cls.some((c: ClassRow) => c.id === preset.classId)) {
+                setSelectedClassId(preset.classId);
+              }
+              setHasPreset(true);
+            }
+          } catch { /* ignore */ }
+        });
       }
     });
   }, []);
@@ -163,6 +189,14 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
       saveGmMemo(data.slug, value, currentTeacher?.id);
     }, 2000);
   }, [data.slug, currentTeacher]);
+
+  // Sync participant count atomically — runs after all state updates settle,
+  // avoiding race conditions from concurrent joins writing stale counts.
+  useEffect(() => {
+    if (sessionRunId && participants.length > 0) {
+      updateSessionRun(sessionRunId, { player_count: participants.length });
+    }
+  }, [sessionRunId, participants.length]);
 
   const handleDiscoverCard = useCallback((num: number) => {
     setDiscoveredCards((prev) => {
@@ -220,6 +254,18 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
 
   const goToStep = useCallback(
     (step: number) => {
+      // P1 fix: Cancel any pending auto-advance / timer-expired overlay on manual navigation
+      if (autoAdvanceTimer.current) {
+        clearTimeout(autoAdvanceTimer.current);
+        autoAdvanceTimer.current = null;
+      }
+      if (timerExpiredTimer.current) {
+        clearTimeout(timerExpiredTimer.current);
+        timerExpiredTimer.current = null;
+      }
+      setAutoAdvanceCountdown(null);
+      setTimerExpiredOverlay(false);
+
       // Skip transition for prep phase
       if (step === 0) {
         applyStep(step);
@@ -234,6 +280,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   const handleTransitionComplete = useCallback(() => {
     if (transitionTarget !== null) {
       applyStep(transitionTarget);
+      playPhaseTransition();
     }
     setTransitioning(false);
     setTransitionTarget(null);
@@ -257,6 +304,17 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
       // Phase 72 H4 fix: block UI progression on failure
       setStartError('セッションの作成に失敗しました。通信状態を確認してもう一度お試しください。');
       return;
+    }
+
+    // Save session preset for quick-start next time (teacher-scoped)
+    if (currentTeacher) {
+      try {
+        localStorage.setItem(`nazotoki-session-preset-${currentTeacher.id}`, JSON.stringify({
+          playerCount,
+          environment,
+          classId: selectedClassId,
+        }));
+      } catch { /* ignore */ }
     }
 
     setStartedAt(new Date());
@@ -306,7 +364,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
     participantChannelRef.current = channel;
 
     goToStep(1); // Skip to intro
-  }, [goToStep, data.slug, data.title, currentTeacher, selectedClassId, playerCount]);
+  }, [goToStep, data.slug, data.title, currentTeacher, selectedClassId, playerCount, environment]);
 
   const handleNext = useCallback(() => {
     const effectiveSteps = getEffectiveSteps();
@@ -350,11 +408,52 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
     }
   }, [sessionRunId]);
 
+  const handleToggleAutoAdvance = useCallback(() => {
+    setAutoAdvance((prev) => {
+      const next = !prev;
+      try { localStorage.setItem('nazotoki-auto-advance', String(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
+
+  const cancelAutoAdvance = useCallback(() => {
+    if (autoAdvanceTimer.current) {
+      clearTimeout(autoAdvanceTimer.current);
+      autoAdvanceTimer.current = null;
+    }
+    setAutoAdvanceCountdown(null);
+    setTimerExpiredOverlay(false);
+  }, []);
+
   const handleTimerExpired = useCallback(() => {
     setTimerExpiredOverlay(true);
-    // Phase 73: store ref for cleanup
-    timerExpiredTimer.current = window.setTimeout(() => setTimerExpiredOverlay(false), 3000);
-  }, []);
+    playTimerExpired();
+
+    const effectiveSteps = getEffectiveSteps();
+    const currentIndex = effectiveSteps.indexOf(currentStep);
+    const canAdvance = autoAdvance && currentIndex < effectiveSteps.length - 1;
+
+    if (canAdvance) {
+      // Start 3-second countdown before auto-advance
+      setAutoAdvanceCountdown(3);
+      let count = 3;
+      const tick = () => {
+        count -= 1;
+        if (count <= 0) {
+          setAutoAdvanceCountdown(null);
+          setTimerExpiredOverlay(false);
+          handleNext();
+        } else {
+          setAutoAdvanceCountdown(count);
+          autoAdvanceTimer.current = window.setTimeout(tick, 1000);
+        }
+      };
+      autoAdvanceTimer.current = window.setTimeout(tick, 1000);
+    } else {
+      // Original behavior: hide overlay after 3 seconds
+      timerExpiredTimer.current = window.setTimeout(() => setTimerExpiredOverlay(false), 3000);
+    }
+  }, [autoAdvance, currentStep, getEffectiveSteps, handleNext]);
 
   const handleVote = useCallback((voterId: string, suspectId: string) => {
     setVotes((prev) => {
@@ -411,10 +510,14 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
     }
 
     // Determine correct players
-    const culpritText = data.truthHtml.replace(/<[^>]+>/g, '');
-    const culpritMatch = culpritText.match(/\u72AF\u4EBA[:：]\s*(.+?)(?:\*|（|$|\n)/);
+    // P2 fix: Strip ruby annotations and HTML tags before matching
+    const culpritText = data.truthHtml
+      .replace(/<rp>[^<]*<\/rp>/g, '')
+      .replace(/<rt>[^<]*<\/rt>/g, '')
+      .replace(/<[^>]+>/g, '');
+    const culpritMatch = culpritText.match(/犯人[:：は]\s*(.+?)(?:\s*[（(]|$|\n|。)/);
     const culpritName = culpritMatch
-      ? culpritMatch[1].replace(/\*+/g, '').trim() || null
+      ? culpritMatch[1].trim() || null
       : null;
 
     const correctPlayers = culpritName
@@ -598,6 +701,7 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
             classes={teacherClasses}
             selectedClassId={selectedClassId}
             onClassSelect={setSelectedClassId}
+            hasPreset={hasPreset}
           />
         );
       case 'intro':
@@ -816,6 +920,8 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
           onTimerToggle={handleTimerToggle}
           onTimerReset={handleTimerReset}
           timerDefaultSeconds={currentPhase?.defaultSeconds || 0}
+          autoAdvance={autoAdvance}
+          onToggleAutoAdvance={handleToggleAutoAdvance}
           isProjectorMode={isProjectorMode}
           onToggleProjector={() => setIsProjectorMode((v) => !v)}
           onClose={() => setGmPanelOpen(false)}
@@ -862,10 +968,22 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
 
       {/* Timer expired overlay */}
       {timerExpiredOverlay && (
-        <div class="fixed inset-0 z-40 flex items-center justify-center bg-black/60 animate-pulse">
+        <div class="fixed inset-0 z-40 flex items-center justify-center bg-black/60">
           <div class="text-center">
             <div class="text-7xl mb-4">{'\u23F0'}</div>
-            <div class="text-4xl font-black text-white">時間です！</div>
+            <div class="text-4xl font-black text-white animate-pulse">時間です！</div>
+            {autoAdvanceCountdown !== null && (
+              <div class="mt-6">
+                <div class="text-6xl font-black text-amber-400 mb-3">{autoAdvanceCountdown}</div>
+                <p class="text-lg text-white/80 mb-4">自動で次のフェーズへ…</p>
+                <button
+                  onClick={cancelAutoAdvance}
+                  class="px-6 py-3 bg-white/20 text-white rounded-xl font-bold hover:bg-white/30 transition-colors border border-white/40"
+                >
+                  キャンセル
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

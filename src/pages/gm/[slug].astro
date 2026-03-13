@@ -8,6 +8,7 @@ import { loadAllScenarios, type ScenarioData } from '../../lib/data';
 import { getSeriesConfig } from '../../lib/series';
 import { renderMarkdown } from '../../lib/markdown';
 import curriculumData from '../../data/meta/curriculum.json';
+import ClassroomBundleButton from '../../components/ClassroomBundleButton';
 
 export function getStaticPaths() {
   const scenarios = loadAllScenarios();
@@ -162,7 +163,7 @@ const sameGradeScenarios = cur?.grade
   <section id="gm-tools" class="bg-white rounded-xl border-2 border-gray-300 p-6 sm:p-8 mb-8 print:hidden">
     <h2 class="text-2xl font-black mb-2">GMツール</h2>
     <p class="text-sm text-gray-500 mb-5">実施前の準備と実施後の振り返りに使えるツールです。</p>
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {/* 実施前 */}
       <div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
         <h3 class="font-bold text-amber-900 mb-2">実施前</h3>
@@ -186,6 +187,16 @@ const sameGradeScenarios = cur?.grade
           </a>
         </div>
         <p class="text-xs text-green-800 mt-1">5分で記録。ブラウザに自動保存されます。</p>
+      </div>
+      {/* Phase 158: 授業資料 */}
+      <div class="rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <h3 class="font-bold text-blue-900 mb-2">授業資料</h3>
+        <ClassroomBundleButton
+          client:load
+          slug={scenario.slug}
+          title={scenario.title}
+          killerQuestions={scenario.killerQuestions || []}
+        />
       </div>
     </div>
   </section>

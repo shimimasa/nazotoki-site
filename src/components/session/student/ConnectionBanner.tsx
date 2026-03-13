@@ -30,7 +30,7 @@ export default function ConnectionBanner({ connectionStatus, retryCount, votePen
           <p class="text-red-700 text-sm font-bold">接続エラー</p>
           <button
             onClick={onManualReconnect}
-            class="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors"
+            class="px-4 py-2 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 transition-colors min-h-[44px]"
           >
             再接続
           </button>

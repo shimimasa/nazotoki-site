@@ -14,6 +14,7 @@ interface PrepPhaseProps {
   classes?: ClassRow[];
   selectedClassId?: string | null;
   onClassSelect?: (classId: string | null) => void;
+  hasPreset?: boolean;
 }
 
 export default function PrepPhase({
@@ -29,6 +30,7 @@ export default function PrepPhase({
   classes,
   selectedClassId,
   onClassSelect,
+  hasPreset,
 }: PrepPhaseProps) {
   const canStart = teacherName.trim().length > 0 && playerCount > 0;
 
@@ -51,6 +53,17 @@ export default function PrepPhase({
           dangerouslySetInnerHTML={{ __html: data.synopsisHtml }}
         />
       </div>
+
+      {/* クイックスタート（前回の設定がある場合） */}
+      {hasPreset && canStart && (
+        <button
+          onClick={onStart}
+          class="w-full py-4 rounded-xl text-lg font-black bg-green-500 text-white hover:bg-green-600 active:bg-green-700 shadow-lg transition-all flex items-center justify-center gap-2"
+        >
+          <span class="text-2xl">{'\u26A1'}</span>
+          前回の設定でクイックスタート
+        </button>
+      )}
 
       {/* セッション設定 */}
       <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">

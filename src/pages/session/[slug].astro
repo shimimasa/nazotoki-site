@@ -30,6 +30,7 @@ export async function getStaticPaths() {
         role: c.role,
         url,
         qrDataUrl,
+        imageUrl: c.imageUrl || undefined,  // Phase 157
       };
     });
 

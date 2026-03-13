@@ -104,12 +104,12 @@ export default function SoloTruthStep({
           {hypothesis && <p class="text-sm mt-1 text-gray-600">「{hypothesis}」</p>}
           {vote && hypothesisSuspect !== vote && (
             <p class="text-xs text-purple-500 mt-2">
-              {'\u2192'} 最終投票では「{vote}」に変更しました
+              {'\uD83D\uDD04'} 最終投票では「{vote}」に変更しました
             </p>
           )}
           {vote && hypothesisSuspect === vote && (
             <p class="text-xs text-green-600 mt-2">
-              {'\u2192'} 最後まで考えが変わりませんでした！
+              {'\u2714'} 最後まで考えが変わりませんでした！
             </p>
           )}
         </div>

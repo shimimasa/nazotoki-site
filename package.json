@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
-    "build": "node scripts/export-scenario-json.mjs && astro build",
+    "build": "node scripts/copy-classroom-materials.mjs && node scripts/export-scenario-json.mjs && astro build",
     "preview": "astro preview",
     "export": "node scripts/export-content.mjs",
     "export:images": "node scripts/export-images.mjs",
@@ -25,6 +25,7 @@
     "preact": "^10.28.4",
     "qrcode": "^1.5.4",
     "resend": "^6.9.3",
+    "sanitize-html": "^2.17.1",
     "sharp": "^0.34.5",
     "stripe": "^20.4.1",
     "tailwindcss": "^3.4.0"
@@ -32,7 +33,6 @@
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
     "@types/sanitize-html": "^2.16.1",
-    "sanitize-html": "^2.17.1",
     "satori": "^0.25.0"
   }
 }

@@ -3,6 +3,7 @@ import type { CharacterData, EvidenceCardData } from '../types';
 import { splitHtml } from '../splitHtml';
 import EvidenceViewer from '../EvidenceViewer';
 import Confetti from '../Confetti';
+import CharacterAvatar from '../CharacterAvatar';
 
 interface VotePhaseProps {
   characters: CharacterData[];
@@ -315,14 +316,7 @@ export default function VotePhase({
         {/* Sealed vote indicators */}
         <div class="flex justify-center gap-3">
           {characters.map((c) => (
-            <div
-              key={c.id}
-              class="w-12 h-12 rounded-full bg-red-100 border-2 border-red-300 flex items-center justify-center"
-            >
-              <span class="text-red-600 font-black text-sm">
-                {c.name.charAt(0)}
-              </span>
-            </div>
+            <CharacterAvatar key={c.id} name={c.name} size="lg" imageUrl={c.imageUrl} />
           ))}
         </div>
 
@@ -379,8 +373,9 @@ export default function VotePhase({
               (v) => v === c.id,
             ).length;
             return (
-              <div key={c.id} class="flex items-center gap-3">
-                <span class="font-bold text-sm w-20 shrink-0">{c.name}</span>
+              <div key={c.id} class="flex items-center gap-2">
+                <CharacterAvatar name={c.name} size="sm" imageUrl={c.imageUrl} />
+                <span class="font-bold text-sm w-16 shrink-0">{c.name}</span>
                 <div class="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
                   <div
                     class="h-full bg-red-500 rounded-full transition-all duration-1000 ease-out flex items-center justify-end pr-2"

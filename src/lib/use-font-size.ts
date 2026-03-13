@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
 
-const LS_KEY = 'nazotoki-font-size';
 const SIZES = ['small', 'medium', 'large'] as const;
 type FontSize = typeof SIZES[number];
 
@@ -26,17 +25,20 @@ function resetSize() {
   document.body.style.removeProperty('font-size');
 }
 
-// Student-only font size toggle. Each Astro page is a full page load,
-// so styles set here do not leak to teacher/admin pages. The cleanup
-// is defensive for any future SPA-like navigation.
-export function useFontSize() {
-  const [size, setSize] = useState<FontSize>('medium');
+// Scoped font size toggle. Each surface gets its own localStorage key and default.
+// Session defaults to 'large' (Chromebook distance 30-50cm), others default to 'medium'.
+export function useFontSize(scope: 'session' | 'solo' | 'general' = 'general') {
+  const lsKey = `nazotoki-font-size-${scope}`;
+  const defaultSize: FontSize = scope === 'session' ? 'large' : 'medium';
+  const [size, setSize] = useState<FontSize>(defaultSize);
 
   useEffect(() => {
-    const saved = localStorage.getItem(LS_KEY) as FontSize | null;
+    const saved = localStorage.getItem(lsKey) as FontSize | null;
     if (saved && SIZES.includes(saved)) {
       setSize(saved);
       applySize(saved);
+    } else {
+      applySize(defaultSize);
     }
     return () => resetSize();
   }, []);
@@ -46,7 +48,7 @@ export function useFontSize() {
     const next = SIZES[(idx + 1) % SIZES.length];
     setSize(next);
     applySize(next);
-    localStorage.setItem(LS_KEY, next);
+    localStorage.setItem(lsKey, next);
   };
 
   return { size, label: SIZE_LABELS[size], cycle };
