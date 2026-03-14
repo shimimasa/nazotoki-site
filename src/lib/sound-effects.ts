@@ -45,13 +45,26 @@ export function isSoundEnabled(): boolean {
   return enabled;
 }
 
-/** Initialize from localStorage */
+/** Initialize from localStorage. Defaults to ON if never set.
+ *  Also sets up a one-time user gesture listener to unlock AudioContext. */
 export function initSound(): void {
   try {
     const saved = localStorage.getItem('nazotoki-se-enabled');
-    enabled = saved === '1';
+    enabled = saved !== '0'; // ON by default; only OFF if explicitly disabled
   } catch {
-    enabled = false;
+    enabled = true;
+  }
+  // Unlock AudioContext on first user interaction (browser autoplay policy)
+  if (enabled && typeof document !== 'undefined') {
+    const unlock = () => {
+      getContext(); // Creates/resumes AudioContext
+      document.removeEventListener('click', unlock);
+      document.removeEventListener('touchstart', unlock);
+      document.removeEventListener('keydown', unlock);
+    };
+    document.addEventListener('click', unlock, { once: true });
+    document.addEventListener('touchstart', unlock, { once: true });
+    document.addEventListener('keydown', unlock, { once: true });
   }
 }
 
