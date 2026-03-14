@@ -4,6 +4,8 @@ import { isUnlocked, getUnlockThreshold } from '../../lib/unlock';
 import { useFontSize } from '../../lib/use-font-size';
 import CharacterSelect from './CharacterSelect';
 import SoloTruthStep from './SoloTruthStep';
+import { initSound, playCountdownTick, playCountdownReveal, playCorrectAnswer, playIncorrectAnswer, playEvidenceFound, playVoteConfirm } from '../../lib/sound-effects';
+import { shakeScreen, flashScreen } from '../../lib/screen-effects';
 
 // --- Types ---
 
@@ -173,6 +175,9 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
 
+  // Phase 162: Initialize sound on mount
+  useEffect(() => { initSound(); }, []);
+
   // Phase 94: Unlock check on mount
   // Note: SSG delivers full scenario HTML regardless of lock status. The unlock gate
   // is a motivational mechanism for elementary students, not cryptographic DRM.
@@ -252,9 +257,14 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
 
   // --- Evidence actions ---
   const openEvidence = useCallback((cardNumber: number) => {
+    const wasNew = !readEvidence.has(cardNumber);
     setReadEvidence(prev => new Set(prev).add(cardNumber));
     earnRP(`evidence-${cardNumber}`, RP_READ_EVIDENCE);
-  }, [earnRP]);
+    if (wasNew) {
+      playEvidenceFound();
+      shakeScreen(2, 200);
+    }
+  }, [earnRP, readEvidence]);
 
   const nextEvidence = useCallback(() => {
     if (currentEvidenceIdx < data.evidenceCards.length - 1) {
@@ -271,6 +281,7 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
   // --- Vote & Complete ---
   const handleComplete = useCallback(async () => {
     recordStepTime();
+    playVoteConfirm();
     if (vote) earnRP('vote', RP_VOTE);
     if (voteReason.trim().length >= 10) earnRP('vote-reason', RP_VOTE_REASON);
     earnRP('complete', RP_COMPLETE);
@@ -346,7 +357,15 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
     if (countdownValue <= 0) {
       setShowCountdown(false);
       const isCorrect = vote && feedbackData && feedbackData[vote]?.correct;
-      if (isCorrect) setShowConfetti(true);
+      if (isCorrect) {
+        setShowConfetti(true);
+        playCorrectAnswer();
+        flashScreen('rgba(250,204,21,0.3)', 400);
+      } else {
+        playIncorrectAnswer();
+      }
+      playCountdownReveal();
+      shakeScreen(5, 400);
       // Direct step change without recordStepTime (vote time already recorded)
       setStep(STEP_TRUTH);
       stepEnterRef.current = Date.now();
@@ -354,6 +373,8 @@ export default function SoloSession({ data, feedbackData = null, nextScenario = 
       contentRef.current?.scrollTo(0, 0);
       return;
     }
+    playCountdownTick();
+    shakeScreen(2 + (3 - countdownValue), 200);
     const t = setTimeout(() => setCountdownValue(v => v - 1), 1000);
     return () => clearTimeout(t);
   }, [showCountdown, countdownValue]);

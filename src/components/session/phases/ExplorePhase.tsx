@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'preact/hooks';
 import type { EvidenceCardData, CharacterData } from '../types';
 import EvidenceViewer from '../EvidenceViewer';
 import Confetti from '../Confetti';
+import { playAllEvidenceFound } from '../../../lib/sound-effects';
 
 interface ExplorePhaseProps {
   evidenceCards: EvidenceCardData[];
@@ -26,10 +27,11 @@ export default function ExplorePhase({
   const discoveredCount = discoveredCards.size;
   const allDiscovered = discoveredCount === totalCards;
 
-  // Trigger confetti when all evidence is discovered
+  // Trigger confetti + celebration SE when all evidence is discovered
   useEffect(() => {
     if (allDiscovered && prevDiscoveredRef.current < totalCards) {
       setShowConfetti(true);
+      playAllEvidenceFound();
     }
     prevDiscoveredRef.current = discoveredCount;
   }, [allDiscovered, discoveredCount, totalCards]);

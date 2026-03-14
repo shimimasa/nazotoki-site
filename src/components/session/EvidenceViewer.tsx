@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import type { EvidenceCardData } from './types';
+import { playEvidenceFound } from '../../lib/sound-effects';
+import { shakeScreen, flashScreen } from '../../lib/screen-effects';
 
 interface EvidenceViewerProps {
   card: EvidenceCardData;
@@ -25,6 +27,9 @@ export default function EvidenceViewer({
   useEffect(() => {
     if (!isNewDiscovery) return;
     setDiscoveryFlash(true);
+    playEvidenceFound();
+    shakeScreen(3, 300);
+    flashScreen('rgba(251,191,36,0.3)', 250);
     const t = setTimeout(() => setDiscoveryFlash(false), 800);
     return () => clearTimeout(t);
   }, [card.number, isNewDiscovery]);
@@ -38,16 +43,33 @@ export default function EvidenceViewer({
 
   return (
     <div
-      class={`relative bg-white rounded-2xl border-2 overflow-hidden transition-all duration-500 ${
-        entered
-          ? 'opacity-100 translate-y-0 scale-100'
-          : 'opacity-0 translate-y-6 scale-95'
-      } ${
+      class={`relative bg-white rounded-2xl border-2 overflow-hidden ${
         discoveryFlash
           ? 'border-amber-400 shadow-lg shadow-amber-200/50'
-          : 'border-emerald-300'
+          : entered
+            ? 'border-emerald-300'
+            : 'border-emerald-300 opacity-0'
       }`}
+      style={
+        discoveryFlash
+          ? { animation: 'evidence-slam 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)' }
+          : entered
+            ? { animation: 'evidence-fadein 0.4s ease-out' }
+            : undefined
+      }
     >
+      <style>{`
+        @keyframes evidence-slam {
+          0% { opacity: 0; transform: translateY(60px) scale(0.8); }
+          60% { opacity: 1; transform: translateY(-8px) scale(1.03); }
+          80% { transform: translateY(3px) scale(0.99); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes evidence-fadein {
+          0% { opacity: 0; transform: translateY(12px) scale(0.97); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
       {/* Discovery flash overlay */}
       {discoveryFlash && (
         <div class="absolute inset-0 bg-amber-100/40 animate-pulse pointer-events-none z-10" />

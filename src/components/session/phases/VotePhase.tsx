@@ -4,6 +4,8 @@ import { splitHtml } from '../splitHtml';
 import EvidenceViewer from '../EvidenceViewer';
 import Confetti from '../Confetti';
 import CharacterAvatar from '../CharacterAvatar';
+import { playVoteConfirm, playVoteSeal, playCountdownTick, playEvidenceSlam } from '../../../lib/sound-effects';
+import { shakeScreen, flashScreen } from '../../../lib/screen-effects';
 
 interface VotePhaseProps {
   characters: CharacterData[];
@@ -82,6 +84,7 @@ export default function VotePhase({
   const handleConfirmVote = () => {
     if (!currentVoter || !selectedSuspect) return;
     onVote(currentVoter.id, selectedSuspect);
+    playVoteConfirm();
     if (currentReason.trim()) {
       onVoteReason(currentVoter.id, currentReason.trim());
     }
@@ -91,6 +94,7 @@ export default function VotePhase({
     if (currentVoterIdx < characters.length - 1) {
       setCurrentVoterIdx((i) => i + 1);
     } else {
+      playVoteSeal();
       setStage('sealed');
     }
   };
@@ -105,9 +109,13 @@ export default function VotePhase({
     if (stage !== 'countdown') return;
     if (countdownNum <= 0) {
       setStage('results');
+      playEvidenceSlam();
+      shakeScreen(5, 400);
+      flashScreen('rgba(239,68,68,0.3)', 300);
       setTimeout(() => setRevealAnim(true), 100);
       return;
     }
+    playCountdownTick();
     const id = setTimeout(() => setCountdownNum((n) => n - 1), 1000);
     return () => clearTimeout(id);
   }, [stage, countdownNum]);
@@ -360,29 +368,56 @@ export default function VotePhase({
   }
 
   // ── Stage: Results ──
+  // Sort characters by vote count for dramatic reveal (most votes last)
+  const sortedForReveal = useMemo(() => {
+    return [...characters].sort((a, b) => {
+      const aCount = Object.values(votes).filter((v) => v === a.id).length;
+      const bCount = Object.values(votes).filter((v) => v === b.id).length;
+      return aCount - bCount; // ascending: least votes first, most votes last (dramatic)
+    });
+  }, [characters, votes]);
+
   return (
     <div class="space-y-5">
       <Confetti count={70} />
       <div class="bg-white rounded-xl border-2 border-red-300 p-6">
+        <style>{`
+          @keyframes vote-bar-enter {
+            0% { opacity: 0; transform: translateX(-20px); }
+            100% { opacity: 1; transform: translateX(0); }
+          }
+        `}</style>
         <h4 class="font-black text-lg mb-4 text-center">
           {'\uD83D\uDCCA'} {'\u6295\u7968\u7D50\u679C'}
         </h4>
         <div class="space-y-3">
-          {characters.map((c) => {
+          {sortedForReveal.map((c, idx) => {
             const voteCount = Object.values(votes).filter(
               (v) => v === c.id,
             ).length;
+            const isTopVoted = voteCount > 0 && voteCount === Math.max(
+              ...characters.map((ch) => Object.values(votes).filter((v) => v === ch.id).length),
+            );
             return (
-              <div key={c.id} class="flex items-center gap-2">
+              <div
+                key={c.id}
+                class="flex items-center gap-2"
+                style={revealAnim ? {
+                  animation: `vote-bar-enter 0.5s ease-out ${idx * 0.4}s both`,
+                } : { opacity: 0 }}
+              >
                 <CharacterAvatar name={c.name} size="sm" imageUrl={c.imageUrl} />
-                <span class="font-bold text-sm w-16 shrink-0">{c.name}</span>
+                <span class={`font-bold text-sm w-16 shrink-0 ${isTopVoted ? 'text-red-700' : ''}`}>{c.name}</span>
                 <div class="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
                   <div
-                    class="h-full bg-red-500 rounded-full transition-all duration-1000 ease-out flex items-center justify-end pr-2"
+                    class={`h-full rounded-full flex items-center justify-end pr-2 ${
+                      isTopVoted ? 'bg-red-600' : 'bg-red-400'
+                    }`}
                     style={{
                       width: revealAnim
                         ? `${Math.max((voteCount / characters.length) * 100, voteCount > 0 ? 15 : 0)}%`
                         : '0%',
+                      transition: `width 0.8s ease-out ${idx * 0.4 + 0.3}s`,
                     }}
                   >
                     {voteCount > 0 && (

@@ -1,4 +1,6 @@
 import { useEffect, useCallback, useRef } from 'preact/hooks';
+import { playHeartbeat } from '../../lib/sound-effects';
+import { pulseScreen } from '../../lib/screen-effects';
 
 interface TimerProps {
   seconds: number;
@@ -38,6 +40,30 @@ export default function Timer({
     const id = setInterval(onTick, 1000);
     return () => clearInterval(id);
   }, [running, seconds, onTick]);
+
+  // Heartbeat SE every 2 seconds when critical (≤10s)
+  useEffect(() => {
+    if (!running || seconds <= 0 || seconds > 10) return;
+    if (seconds % 2 === 0) playHeartbeat();
+  }, [running, seconds]);
+
+  // Red screen pulse when urgent (≤30s)
+  const pulseCleanupRef = useRef<(() => void) | null>(null);
+  const shouldPulse = running && seconds > 0 && seconds <= 30;
+  useEffect(() => {
+    if (shouldPulse && !pulseCleanupRef.current) {
+      pulseCleanupRef.current = pulseScreen();
+    } else if (!shouldPulse && pulseCleanupRef.current) {
+      pulseCleanupRef.current();
+      pulseCleanupRef.current = null;
+    }
+    return () => {
+      if (pulseCleanupRef.current) {
+        pulseCleanupRef.current();
+        pulseCleanupRef.current = null;
+      }
+    };
+  }, [shouldPulse]);
 
   const mm = Math.floor(Math.abs(seconds) / 60)
     .toString()

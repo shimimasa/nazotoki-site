@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
+import { playPhaseTransition, playTensionRise, playDramaticReveal, playEvidenceSlam } from '../../lib/sound-effects';
+import { flashScreen, shakeScreen } from '../../lib/screen-effects';
 
 interface PhaseTransitionProps {
   icon: string;
@@ -26,6 +28,14 @@ const PHASE_SUBTITLES: Record<string, string> = {
   truth: '\u4E8B\u4EF6\u306E\u771F\u76F8\u306F\u2026',
 };
 
+// Phase-specific timing: dramatic phases get longer display time
+const PHASE_TIMING: Record<string, { showAt: number; exitAt: number; doneAt: number }> = {
+  truth: { showAt: 50, exitAt: 2200, doneAt: 2600 },
+  twist: { showAt: 50, exitAt: 1800, doneAt: 2200 },
+  vote: { showAt: 50, exitAt: 1600, doneAt: 2000 },
+};
+const DEFAULT_TIMING = { showAt: 50, exitAt: 1500, doneAt: 1900 };
+
 export function getPhaseColor(key: string): string {
   return PHASE_COLORS[key] || 'from-gray-900 to-gray-800';
 }
@@ -40,17 +50,35 @@ export default function PhaseTransition({
   const [phase, setPhase] = useState<'enter' | 'show' | 'exit'>('enter');
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase('show'), 50);
-    const t2 = setTimeout(() => setPhase('exit'), 1500);
-    const t3 = setTimeout(() => onComplete(), 1900);
+    // Phase-specific SE + screen effects
+    if (phaseKey === 'truth') {
+      playDramaticReveal();
+      flashScreen('rgba(255,255,255,0.5)', 350);
+      setTimeout(() => shakeScreen(4, 300), 200);
+    } else if (phaseKey === 'twist') {
+      playTensionRise();
+      flashScreen('rgba(255,165,0,0.3)', 300);
+    } else if (phaseKey === 'vote') {
+      playEvidenceSlam();
+      flashScreen('rgba(239,68,68,0.25)', 250);
+    } else {
+      playPhaseTransition();
+      flashScreen('rgba(255,255,255,0.3)', 200);
+    }
+
+    const timing = (phaseKey && PHASE_TIMING[phaseKey]) || DEFAULT_TIMING;
+    const t1 = setTimeout(() => setPhase('show'), timing.showAt);
+    const t2 = setTimeout(() => setPhase('exit'), timing.exitAt);
+    const t3 = setTimeout(() => onComplete(), timing.doneAt);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
     };
-  }, [onComplete]);
+  }, [onComplete, phaseKey]);
 
   const subtitle = phaseKey ? PHASE_SUBTITLES[phaseKey] : undefined;
+  const isDramatic = phaseKey === 'truth' || phaseKey === 'twist';
 
   return (
     <div
@@ -64,6 +92,17 @@ export default function PhaseTransition({
           60% { transform: scale(1.15) rotate(3deg); opacity: 1; }
           100% { transform: scale(1) rotate(0deg); opacity: 1; }
         }
+        @keyframes phase-icon-dramatic {
+          0% { transform: scale(0.1) rotate(-20deg); opacity: 0; }
+          40% { transform: scale(1.3) rotate(5deg); opacity: 1; }
+          60% { transform: scale(0.95) rotate(-2deg); }
+          80% { transform: scale(1.05) rotate(1deg); }
+          100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes phase-label-slide {
+          0% { opacity: 0; transform: translateY(20px); letter-spacing: 0.3em; }
+          100% { opacity: 1; transform: translateY(0); letter-spacing: 0.15em; }
+        }
       `}</style>
       <div
         class={`transition-all duration-500 ${
@@ -74,11 +113,18 @@ export default function PhaseTransition({
       >
         <div
           class="text-7xl sm:text-9xl mb-4 text-center"
-          style={phase === 'show' ? 'animation: phase-icon-pop 0.6s ease-out' : undefined}
+          style={phase === 'show'
+            ? { animation: isDramatic ? 'phase-icon-dramatic 0.8s ease-out' : 'phase-icon-pop 0.6s ease-out' }
+            : undefined}
         >
           {icon}
         </div>
-        <div class="text-3xl sm:text-4xl font-black text-white text-center tracking-wider">
+        <div
+          class="text-3xl sm:text-4xl font-black text-white text-center"
+          style={phase === 'show' && isDramatic
+            ? { animation: 'phase-label-slide 0.6s ease-out 0.2s both' }
+            : { letterSpacing: '0.15em' }}
+        >
           {label}
         </div>
         {subtitle && (

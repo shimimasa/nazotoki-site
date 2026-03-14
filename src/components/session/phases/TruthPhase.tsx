@@ -4,6 +4,8 @@ import SteppedContent from '../SteppedContent';
 import GmNote from '../GmNote';
 import Confetti from '../Confetti';
 import CharacterAvatar from '../CharacterAvatar';
+import { playCorrectAnswer, playIncorrectAnswer } from '../../../lib/sound-effects';
+import { flashScreen } from '../../../lib/screen-effects';
 
 interface TruthPhaseProps {
   solutionHtml: string;
@@ -64,6 +66,18 @@ export default function TruthPhase({
       return () => clearTimeout(t);
     }
   }, [stage]);
+
+  // Play SE when solution reading completes and judgment is shown
+  useEffect(() => {
+    if (!solutionDone || !culpritName || !hasVotes || stage !== 'solution') return;
+    const correctCount = characters.filter((v) => isCorrectVote(v.id) === true).length;
+    if (correctCount > 0) {
+      playCorrectAnswer();
+      flashScreen('rgba(250,204,21,0.3)', 400);
+    } else {
+      playIncorrectAnswer();
+    }
+  }, [solutionDone]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const stageOrder: TruthStage[] = ['votes', 'solution', 'learning', 'reflection'];
   const stageIdx = stageOrder.indexOf(stage);
