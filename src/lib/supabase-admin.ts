@@ -157,7 +157,8 @@ export async function fetchSchoolTeachers(schoolId: string): Promise<SchoolTeach
     .eq('school_id', schoolId)
     .order('created_at', { ascending: true });
   if (error) { console.error('Failed to fetch school teachers:', error); return []; }
-  return (data || []).map((t: any) => ({
+  const teachers = (data || []) as Array<Omit<SchoolTeacher, 'role'> & { role: TeacherRole | null }>;
+  return teachers.map((t) => ({
     ...t,
     role: t.role || 'teacher',
   }));

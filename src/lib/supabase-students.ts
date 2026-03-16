@@ -155,9 +155,10 @@ export async function fetchStudentHistory(studentId: string): Promise<(StudentSe
     .eq('student_id', studentId)
     .order('created_at', { ascending: false });
   if (error) { console.error('Failed to fetch student history:', error); return []; }
-  return (data || []).map((row: any) => ({
+  const rows = (data || []) as Array<StudentSessionLogRow & { session_log: SessionLogRow }>;
+  return rows.map((row) => ({
     ...row,
-    session_log: row.session_log as SessionLogRow,
+    session_log: row.session_log,
   }));
 }
 
@@ -273,7 +274,13 @@ export async function fetchAllStudentsForTeacher(classIds: string[]): Promise<St
     .in('class_id', classIds)
     .order('student_name');
   if (error) { console.error('Failed to fetch all students:', error); return []; }
-  return (data || []).map((row: any) => ({
+  const rows = (data || []) as Array<{
+    id: string;
+    student_name: string;
+    class_id: string;
+    classes?: { class_name?: string | null } | null;
+  }>;
+  return rows.map((row) => ({
     id: row.id,
     student_name: row.student_name,
     class_id: row.class_id,

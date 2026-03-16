@@ -18,7 +18,7 @@ export interface RecommendedScenario {
   reason: string;
 }
 
-function detectSubject(slug: string): string {
+export function detectSubject(slug: string): string {
   if (slug.startsWith('science-file')) return '理科';
   if (slug.startsWith('shakai-file')) return '社会';
   if (slug.startsWith('kokugo-mystery')) return '国語';
@@ -27,7 +27,7 @@ function detectSubject(slug: string): string {
   return '総合';
 }
 
-function detectVolume(slug: string): number {
+export function detectVolume(slug: string): number {
   const m = slug.match(/vol(\d+)/);
   return m ? parseInt(m[1], 10) : 0;
 }

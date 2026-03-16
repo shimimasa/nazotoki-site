@@ -2,9 +2,10 @@
 import '../styles/global.css';
 import recommendationsData from '../data/meta/recommendations.json';
 import { loadAllScenarios } from '../lib/data';
+import type { RecommendationsData } from '../lib/data-types';
 import SearchBar from '../components/SearchBar';
 
-const siteUpdatedAt = (recommendationsData as any).siteUpdatedAt || '';
+const siteUpdatedAt = (recommendationsData as RecommendationsData).siteUpdatedAt || '';
 const searchItems = loadAllScenarios().map(s => ({ slug: s.slug, title: s.title, series: s.series }));
 
 interface BreadcrumbItem {

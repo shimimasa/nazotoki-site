@@ -8,13 +8,17 @@ import SoloSessionIsland from '../../components/solo/SoloSessionIsland';
 import { loadAllScenarios } from '../../lib/data';
 import { renderMarkdown } from '../../lib/markdown';
 
+type SoloFeedbackModule = {
+  default: Record<string, unknown>;
+};
+
 export async function getStaticPaths() {
   // Phase 105: Load all pre-generated feedback JSONs at build time
-  const feedbackFiles = import.meta.glob('../../data/solo-feedback/*.json', { eager: true }) as Record<string, { default: Record<string, unknown> }>;
+  const feedbackFiles = import.meta.glob('../../data/solo-feedback/*.json', { eager: true }) as Record<string, SoloFeedbackModule>;
   function loadFeedback(slug: string): Record<string, unknown> | null {
     const key = Object.keys(feedbackFiles).find(k => k.includes(`/${slug}.json`));
     if (!key) return null;
-    return (feedbackFiles[key] as any).default ?? feedbackFiles[key] ?? null;
+    return feedbackFiles[key]?.default ?? null;
   }
   function extractCharacterSections(fullContent: string) {
     const lines = fullContent.split('\n');

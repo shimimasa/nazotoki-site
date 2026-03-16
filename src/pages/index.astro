@@ -1,15 +1,16 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { loadAllScenarios } from '../lib/data';
+import type { CurriculumMap, RecommendationsData, UseCaseData } from '../lib/data-types';
 import { SERIES_CONFIG, getSeriesConfig } from '../lib/series';
 import curriculumData from '../data/meta/curriculum.json';
 import recommendationsData from '../data/meta/recommendations.json';
 import useCasesData from '../data/meta/use-cases.json';
 
 const scenarios = loadAllScenarios();
-const curriculum: Record<string, any> = curriculumData;
-const recommendations: any = recommendationsData;
-const useCases: any[] = useCasesData as any;
+const curriculum: CurriculumMap = curriculumData;
+const recommendations: RecommendationsData = recommendationsData;
+const useCases: UseCaseData[] = useCasesData;
 
 // シリーズ別にグループ化
 const seriesGroups = new Map<string, typeof scenarios>();
@@ -24,7 +25,7 @@ function getScenarioBySlug(slug: string) {
 }
 
 // ペルソナ別おすすめデータ
-const personas = recommendations.personas.map((p: any) => ({
+const personas = recommendations.personas.map((p) => ({
   ...p,
   scenarioData: p.scenarios.map((slug: string) => getScenarioBySlug(slug)).filter(Boolean),
 }));
@@ -274,7 +275,7 @@ const USE_CASE_COLORS: Record<string, string> = {
     <div class="max-w-5xl mx-auto px-4">
       <h2 class="text-2xl font-bold text-slate-800 mb-8">6つの教科シリーズ</h2>
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {seriesComparison.map((comp: any) => {
+        {seriesComparison.map((comp) => {
           const config = getSeriesConfig(comp.series);
           const count = seriesGroups.get(comp.series)?.length || 0;
           return (
@@ -317,7 +318,7 @@ const USE_CASE_COLORS: Record<string, string> = {
     <div class="max-w-5xl mx-auto px-4">
       <h2 class="text-2xl font-bold text-slate-800 mb-8">こんな方におすすめ</h2>
       <div class="grid gap-4 sm:grid-cols-3">
-        {personas.map((p: any) => {
+        {personas.map((p) => {
           const colors = PERSONA_COLORS[p.color] || PERSONA_COLORS.amber;
           return (
             <div class={`rounded-xl border ${colors.border} bg-white p-5 shadow-sm`}>
@@ -325,7 +326,7 @@ const USE_CASE_COLORS: Record<string, string> = {
               <h3 class={`text-lg font-bold ${colors.text}`}>{p.title}</h3>
               <p class="text-sm text-slate-600 mt-2 leading-relaxed">{p.description}</p>
               <div class="mt-4 space-y-2">
-                {p.scenarioData.slice(0, 3).map((s: any) => {
+                {p.scenarioData.slice(0, 3).map((s) => {
                   const sc = getSeriesConfig(s.series);
                   return (
                     <a href={`${import.meta.env.BASE_URL}play/${s.slug}/`}
@@ -426,7 +427,7 @@ const USE_CASE_COLORS: Record<string, string> = {
         <div id="filter-featured">
           <p class="text-sm text-slate-500 mb-3">おすすめシナリオ</p>
           <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" id="featured-grid">
-            {featuredScenarios.map((s: any) => {
+        {featuredScenarios.map((s) => {
               const sc = getSeriesConfig(s.series);
               const cur = curriculum[s.slug];
               const slugLabels = labels[s.slug] || [];
