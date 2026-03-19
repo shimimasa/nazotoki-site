@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="サーバーエラー" noIndex>
+  <div class="text-center py-16">
+    <div class="w-16 h-16 mx-auto mb-6 rounded-full bg-red-100 flex items-center justify-center">
+      <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+      </svg>
+    </div>
+    <h1 class="text-2xl font-black text-slate-800 mb-3">サーバーエラー</h1>
+    <p class="text-slate-600 mb-6">申し訳ありません。サーバー側で問題が発生しました。<br />しばらく待ってからもう一度お試しください。</p>
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <button onclick="location.reload()" class="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-3 rounded-lg shadow transition-all">
+        再読み込み
+      </button>
+      <a href="/" class="inline-flex items-center justify-center gap-2 bg-white border border-slate-300 text-slate-700 font-bold px-6 py-3 rounded-lg hover:bg-slate-50 transition-all no-underline">
+        トップに戻る
+      </a>
+    </div>
+  </div>
+</BaseLayout>

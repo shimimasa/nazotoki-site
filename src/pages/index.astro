@@ -39,6 +39,16 @@ const labels: Record<string, string[]> = recommendations.labels;
 // シリーズ比較データ
 const seriesComparison = recommendations.seriesComparison;
 
+// シリーズバッジ
+const SERIES_BADGES: Record<string, string[]> = {
+  'moral': ['テストプレイ済み', '初心者向け'],
+  'popculture': ['初心者向け'],
+  'time-travel': ['人気'],
+  'literature': ['人気'],
+  'health': ['初心者向け'],
+  'digital': ['初心者向け'],
+};
+
 // フィルタ用データ
 const filterData = scenarios.map(s => {
   const cur = curriculum[s.slug];
@@ -83,6 +93,9 @@ const PERSONA_COLORS: Record<string, { bg: string; border: string; text: string;
       </h1>
       <p class="mt-4 text-lg sm:text-xl text-slate-300">
         小学生から使える教育マーダーミステリー
+      </p>
+      <p class="mt-2 text-xs text-slate-500 max-w-xl mx-auto">
+        登場人物になりきり、教科の知識を使って謎を解くゲーム。暴力描写なし・教室でも家庭でも安心
       </p>
       <p class="mt-2 text-sm text-slate-400">
         全{scenarios.length}シナリオ、すべて無料
@@ -170,12 +183,20 @@ const PERSONA_COLORS: Record<string, { bg: string; border: string; text: string;
         {seriesComparison.slice(0, 6).map((comp) => {
           const config = getSeriesConfig(comp.series);
           const count = seriesGroups.get(comp.series)?.length || 0;
+          const badges = SERIES_BADGES[comp.series] || [];
           return (
             <a href={`${import.meta.env.BASE_URL}series/${comp.series}/`}
                class={`block rounded-xl border ${config.border} bg-white p-5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all no-underline group`}>
               <div class="flex items-center gap-2 mb-2">
                 <span class="text-2xl">{config.emoji}</span>
                 <h3 class={`text-lg font-bold ${config.text}`}>{config.name}</h3>
+                {badges.map(b => (
+                  <span class={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    b === '初心者向け' ? 'bg-green-100 text-green-700' :
+                    b === '人気' ? 'bg-amber-100 text-amber-700' :
+                    b === 'テストプレイ済み' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
+                  }`}>{b}</span>
+                ))}
               </div>
               <p class="text-sm text-slate-600 mb-2">{comp.highlight}</p>
               <div class="flex items-center justify-between">
