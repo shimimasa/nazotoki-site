@@ -1,8 +1,12 @@
-const CACHE_NAME = 'nazotoki-v1';
+const CACHE_VERSION = 2;
+const CACHE_NAME = `nazotoki-v${CACHE_VERSION}`;
+const OFFLINE_URL = '/offline/';
+
 const PRECACHE_URLS = [
   '/',
   '/favicon.svg',
-  '/manifest.webmanifest'
+  '/manifest.webmanifest',
+  '/offline/',
 ];
 
 self.addEventListener('install', (event) => {
@@ -28,7 +32,7 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
   if (url.origin !== self.location.origin) return;
 
-  // HTML: network-first (always get latest content)
+  // HTML: network-first with offline fallback
   if (request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
       fetch(request)
@@ -37,7 +41,24 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           return response;
         })
-        .catch(() => caches.match(request))
+        .catch(() =>
+          caches.match(request).then((cached) => cached || caches.match(OFFLINE_URL))
+        )
+    );
+    return;
+  }
+
+  // Fonts: cache-first (large, rarely change)
+  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          return response;
+        });
+      })
     );
     return;
   }
@@ -57,7 +78,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // JSON and everything else: network-first (allows content corrections to propagate)
+  // JSON and everything else: network-first
   event.respondWith(
     fetch(request)
       .then((response) => {

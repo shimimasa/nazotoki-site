@@ -48,7 +48,7 @@ for (const s of byGrade) {
   gradeGroups.get(label)!.push(s);
 }
 ---
-<BaseLayout title={config.name} description={`${config.subject}の知識で謎を解く教育マーダーミステリー「${config.name}」シリーズ。${scenarios.length}シナリオ、すべて無料。`} ogImage={`og/series-${series}.png`} breadcrumbs={[{ name: 'トップ', url: import.meta.env.BASE_URL }, { name: config.name }]}>
+<BaseLayout title={`${config.name} — ${config.subject}の謎解き授業ゲーム`} description={`${config.subject}の知識で謎を解く教育マーダーミステリー「${config.name}」。${scenarios.length}シナリオすべて無料。授業45分で完結、学習指導要領対応。小学生から中学生まで使えるブラウザ完結型の謎解きゲーム。`} ogImage={`og/series-${series}.png`} breadcrumbs={[{ name: 'トップ', url: import.meta.env.BASE_URL }, { name: config.name }]}>
   <nav class="text-sm text-gray-500 mb-6">
     <a href={import.meta.env.BASE_URL} class="hover:text-gray-700">トップ</a>
     <span class="mx-1">/</span>
