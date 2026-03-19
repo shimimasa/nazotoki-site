@@ -25,6 +25,18 @@ const SERIES_MAP = {
   'math':        { name: '数字の迷宮', subject: '算数', order: 4 },
   'science':     { name: 'サイエンス捜査班', subject: '理科', order: 5 },
   'moral':       { name: '答えのない法廷', subject: '道徳', order: 6 },
+  'digital':     { name: 'デジタル探偵団', subject: '情報', order: 7 },
+  'geography':   { name: '地理探偵団', subject: '社会', order: 8 },
+  'health':      { name: '保健探偵団', subject: '保健', order: 9 },
+  'english':     { name: '英語探偵団', subject: '英語', order: 10 },
+  'career':      { name: 'キャリア探偵団', subject: 'キャリア', order: 11 },
+  'esd':         { name: 'ESD探偵団', subject: '環境', order: 12 },
+  'civics':      { name: '公民探偵団', subject: '公民', order: 13 },
+  'disaster':    { name: '防災探偵団', subject: '防災', order: 14 },
+  'homeec':      { name: '家庭科探偵団', subject: '家庭科', order: 15 },
+  'math2':       { name: '数学深化探偵団', subject: '数学', order: 16 },
+  'money':       { name: 'お金の探偵団', subject: 'お金', order: 17 },
+  'programming': { name: 'プログラミング探偵団', subject: 'プログラミング', order: 18 },
 };
 
 // ── ユーティリティ ────────────────────────────
