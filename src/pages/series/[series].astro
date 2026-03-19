@@ -66,11 +66,11 @@ for (const s of byGrade) {
   </div>
 
   {/* ソート切り替え */}
-  <div class="flex gap-2 mb-6 print:hidden">
-    <button id="sort-volume" data-active="true" class={`px-4 py-2 rounded-lg text-sm font-bold border transition-all ${config.border} ${config.bgLight} ${config.text}`}>
+  <div class="flex gap-2 mb-6 print:hidden" role="tablist" aria-label="表示順の切り替え">
+    <button id="sort-volume" role="tab" aria-selected="true" data-active="true" class={`px-4 py-2 rounded-lg text-sm font-bold border transition-all ${config.border} ${config.bgLight} ${config.text}`}>
       Vol.順
     </button>
-    <button id="sort-grade" data-active="false" class={`px-4 py-2 rounded-lg text-sm font-bold border transition-all ${config.border} ${config.bgLight} ${config.text}`}>
+    <button id="sort-grade" role="tab" aria-selected="false" data-active="false" class={`px-4 py-2 rounded-lg text-sm font-bold border transition-all ${config.border} ${config.bgLight} ${config.text}`}>
       学年順
     </button>
   </div>
@@ -135,6 +135,8 @@ for (const s of byGrade) {
     listGrade.classList.toggle('hidden', showVol);
     btnVol.setAttribute('data-active', showVol ? 'true' : 'false');
     btnGrade.setAttribute('data-active', showVol ? 'false' : 'true');
+    btnVol.setAttribute('aria-selected', showVol ? 'true' : 'false');
+    btnGrade.setAttribute('aria-selected', showVol ? 'false' : 'true');
   }
 
   btnVol.addEventListener('click', () => toggle(true));

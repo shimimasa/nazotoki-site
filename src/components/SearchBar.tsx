@@ -90,9 +90,9 @@ export default function SearchBar({ items }: Props) {
         </button>
       </div>
       {query.trim().length >= 1 && (
-        <div class="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 w-72 max-h-80 overflow-y-auto py-1">
+        <div class="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 w-72 max-h-80 overflow-y-auto py-1" role="listbox" aria-live="polite" aria-label="検索結果">
           {results.length === 0 ? (
-            <p class="px-4 py-3 text-sm text-gray-400 text-center">見つかりませんでした</p>
+            <p class="px-4 py-3 text-sm text-gray-400 text-center" role="status">見つかりませんでした</p>
           ) : (
             results.map(r => (
               <a

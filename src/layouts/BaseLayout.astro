@@ -104,6 +104,7 @@ const jsonLdBreadcrumb = breadcrumbs && breadcrumbs.length > 0 ? {
   <title>{fullTitle}</title>
 </head>
 <body class="min-h-screen bg-gray-50 text-gray-900 font-sans antialiased">
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-white focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg focus:text-slate-800 focus:font-bold focus:text-sm">メインコンテンツへスキップ</a>
   <header class="bg-white border-b border-gray-200 print:hidden">
     <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
       <a href={import.meta.env.BASE_URL} class="flex items-center gap-2 text-slate-800 hover:text-slate-600 transition-colors no-underline flex-shrink-0">
@@ -396,7 +397,7 @@ const jsonLdBreadcrumb = breadcrumbs && breadcrumbs.length > 0 ? {
     }
   </script>
 
-  <main class={fullWidth ? '' : 'max-w-5xl mx-auto px-4 py-8'}>
+  <main id="main-content" class={fullWidth ? '' : 'max-w-5xl mx-auto px-4 py-8'}>
     <slot />
   </main>
 
@@ -460,9 +461,20 @@ const jsonLdBreadcrumb = breadcrumbs && breadcrumbs.length > 0 ? {
           </ul>
         </div>
       </div>
-      <div class="border-t border-gray-200 mt-8 pt-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
+      <div class="border-t border-gray-200 mt-8 pt-6 mb-4">
+        <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+          <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/></svg>
+          </div>
+          <div class="text-xs text-slate-500 leading-relaxed">
+            <p class="font-bold text-slate-700 text-sm">シミズ マサヒコ</p>
+            <p class="mt-0.5">現役小学校教員。「考える力を遊びから育てる」をテーマに、学習指導要領に対応した教育マーダーミステリーを設計・開発。全シナリオをAIと協働で制作し、教室での実践を通じて改善を続けています。</p>
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-gray-200 pt-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
         <p>ナゾトキ探偵団 &mdash; 現役教員が設計した教育マーダーミステリー</p>
-        <p>制作: シミズ マサヒコ</p>
+        <p>&copy; シミズ マサヒコ</p>
       </div>
       {siteUpdatedAt && <p class="text-center text-xs text-slate-400 mt-2">最終更新: {siteUpdatedAt}</p>}
     </div>

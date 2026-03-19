@@ -106,7 +106,7 @@ const recommended = [
              class={`flex gap-3 items-center rounded-xl border ${sc.border} bg-white p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all no-underline`}>
             {s.thumbnailUrl && (
               <img src={`${import.meta.env.BASE_URL}${s.thumbnailUrl.replace(/^\//, '')}`}
-                   alt="" width="56" height="56"
+                   alt={`${s.title} サムネイル`} width="56" height="56"
                    class="rounded-lg object-cover w-14 h-14 flex-shrink-0" loading="lazy" />
             )}
             <div class="min-w-0 flex-1">

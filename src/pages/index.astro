@@ -413,7 +413,7 @@ const USE_CASE_COLORS: Record<string, string> = {
             ))}
           </select>
           <select id="filter-grade" class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
-            <option value="">すべての学年</option>
+            <option value="">先に教科を選択</option>
           </select>
           <input
             type="text"
@@ -436,7 +436,7 @@ const USE_CASE_COLORS: Record<string, string> = {
                    class="flex gap-2.5 items-center rounded-lg border border-slate-200 px-3 py-2.5 hover:shadow-md hover:border-slate-300 transition-all no-underline bg-white">
                   {s.thumbnailUrl && (
                     <img src={`${import.meta.env.BASE_URL}${s.thumbnailUrl.replace(/^\//, '')}`}
-                         alt="" width="48" height="48"
+                         alt={`${s.title} サムネイル`} width="48" height="48"
                          class="rounded object-cover w-12 h-12 flex-shrink-0" loading="lazy" />
                   )}
                   <div class="min-w-0 flex-1">
@@ -684,7 +684,8 @@ const USE_CASE_COLORS: Record<string, string> = {
     }
     const grades = [...gradeSet].sort((a, b) => gradeNum(a) - gradeNum(b));
     const prev = elGrade.value;
-    elGrade.innerHTML = '<option value="">すべての学年</option>';
+    const gradeLabel = series ? 'すべての学年' : '先に教科を選択';
+    elGrade.innerHTML = `<option value="">${gradeLabel}</option>`;
     for (const g of grades) {
       const opt = document.createElement('option');
       opt.value = g;
