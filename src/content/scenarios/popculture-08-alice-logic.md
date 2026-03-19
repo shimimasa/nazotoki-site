@@ -1,5 +1,5 @@
 ---
-title: 不思議の国のアリスとずれた時計
+title: "{不思議"
 series: popculture
 seriesName: マンガ教養ミステリー
 volume: 8

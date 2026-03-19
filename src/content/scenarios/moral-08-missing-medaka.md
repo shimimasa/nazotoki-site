@@ -1,5 +1,5 @@
 ---
-title: "いなくなったメダカと4つのいのちの{話|はなし}"
+title: いなくなったメダカと4つのいのちの話
 series: moral
 seriesName: 答えのない法廷
 volume: 8

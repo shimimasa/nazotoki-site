@@ -1,5 +1,5 @@
 ---
-title: つながる
+title: 「つながる」こと
 series: disaster
 seriesName: 防災探偵団
 volume: 10

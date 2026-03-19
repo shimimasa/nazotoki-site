@@ -1,5 +1,5 @@
 ---
-title: 新幹線のアリバイと消えた記念金貨
+title: "{新幹線"
 series: time-travel
 seriesName: タイムトラベル探偵団
 volume: 10

@@ -1,5 +1,5 @@
 ---
-title: 工場のキズ — シナリオ概要
+title: 工場のキズ
 series: career
 seriesName: キャリア探偵団
 volume: 5

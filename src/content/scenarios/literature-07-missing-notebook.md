@@ -1,5 +1,5 @@
 ---
-title: 吾輩は猫である × 消えたノート
+title: "{吾輩"
 series: literature
 seriesName: 名作文学ミステリー
 volume: 7

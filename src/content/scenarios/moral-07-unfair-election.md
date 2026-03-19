@@ -1,5 +1,5 @@
 ---
-title: "書きかえられた{点数|てんすう}と4つのものさし"
+title: 書きかえられた点数と4つのものさし
 series: moral
 seriesName: 答えのない法廷
 volume: 7

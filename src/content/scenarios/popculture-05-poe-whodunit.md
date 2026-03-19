@@ -1,5 +1,5 @@
 ---
-title: ポーの書斎と消えた推理の女王
+title: "ポーの{書斎"
 series: popculture
 seriesName: マンガ教養ミステリー
 volume: 5

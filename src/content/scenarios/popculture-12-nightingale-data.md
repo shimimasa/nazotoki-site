@@ -1,5 +1,5 @@
 ---
-title: ナイチンゲールの改ざんされた記録
+title: "ナイチンゲールの{改"
 series: popculture
 seriesName: マンガ教養ミステリー
 volume: 12

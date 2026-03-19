@@ -1,5 +1,5 @@
 ---
-title: 後ろめたさ
+title: 選挙の不正
 series: civics
 seriesName: 公民探偵団
 volume: 5

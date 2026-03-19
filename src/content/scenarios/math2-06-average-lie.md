@@ -1,5 +1,5 @@
 ---
-title: 靴が落ちる
+title: 平均のうそ
 series: math2
 seriesName: 数学深化探偵団
 volume: 6

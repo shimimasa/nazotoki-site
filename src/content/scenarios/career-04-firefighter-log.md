@@ -1,5 +1,5 @@
 ---
-title: 消防士の記録 — GM向け概要
+title: 消防士の記録
 series: career
 seriesName: キャリア探偵団
 volume: 4

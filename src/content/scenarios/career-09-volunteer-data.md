@@ -1,5 +1,5 @@
 ---
-title: ボランティアのデータ — シナリオ概要
+title: ボランティアのデータ
 series: career
 seriesName: キャリア探偵団
 volume: 9

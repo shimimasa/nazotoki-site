@@ -1,5 +1,5 @@
 ---
-title: どちらがお得? 単位量の罠
+title: "どちらがお得? {単位"
 series: math
 seriesName: 数字の迷宮
 volume: 14

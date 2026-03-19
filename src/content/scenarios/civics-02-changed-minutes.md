@@ -1,5 +1,5 @@
 ---
-title: 後ろめたさ
+title: 書き換えられた議事録
 series: civics
 seriesName: 公民探偵団
 volume: 2

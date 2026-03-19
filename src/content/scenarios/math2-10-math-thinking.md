@@ -1,5 +1,5 @@
 ---
-title: 遅咲きクレシェンド
+title: 算数の考え方
 series: math2
 seriesName: 数学深化探偵団
 volume: 10

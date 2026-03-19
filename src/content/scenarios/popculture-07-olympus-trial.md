@@ -1,5 +1,5 @@
 ---
-title: オリンポスの審判と消えた黄金のリンゴ
+title: "オリンポスの{審判"
 series: popculture
 seriesName: マンガ教養ミステリー
 volume: 7

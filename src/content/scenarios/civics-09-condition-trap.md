@@ -1,5 +1,5 @@
 ---
-title: 後ろめたさ
+title: 条件のわな
 series: civics
 seriesName: 公民探偵団
 volume: 9

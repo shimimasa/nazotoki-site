@@ -1,5 +1,5 @@
 ---
-title: 千夜一夜のランプとすり替えの謎
+title: "{千"
 series: popculture
 seriesName: マンガ教養ミステリー
 volume: 10

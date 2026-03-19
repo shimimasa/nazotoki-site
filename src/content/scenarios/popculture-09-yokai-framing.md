@@ -1,5 +1,5 @@
 ---
-title: 妖怪絵巻と仕組まれた証拠
+title: "{妖怪"
 series: popculture
 seriesName: マンガ教養ミステリー
 volume: 9

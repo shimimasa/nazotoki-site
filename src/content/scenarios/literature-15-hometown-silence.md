@@ -1,5 +1,5 @@
 ---
-title: 故郷の記憶と閏土の沈黙
+title: "{故郷"
 series: literature
 seriesName: 名作文学ミステリー
 volume: 15

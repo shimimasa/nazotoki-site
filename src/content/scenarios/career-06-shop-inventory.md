@@ -1,5 +1,5 @@
 ---
-title: お店の在庫 — シナリオ概要
+title: お店の在庫
 series: career
 seriesName: キャリア探偵団
 volume: 6

@@ -1,5 +1,5 @@
 ---
-title: 面積トリックと密室の窓
+title: "{面積"
 series: math
 seriesName: 数字の迷宮
 volume: 12

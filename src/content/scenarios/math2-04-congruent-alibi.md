@@ -1,5 +1,5 @@
 ---
-title: 靴が落ちる
+title: 合同のアリバイ
 series: math2
 seriesName: 数学深化探偵団
 volume: 4

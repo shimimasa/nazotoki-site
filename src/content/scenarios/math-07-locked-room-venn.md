@@ -1,5 +1,5 @@
 ---
-title: 消えたトロフィーと3つのカギ — ベン図の密室
+title: "消えたトロフィーと3つのカギ — ベン図の{密室"
 series: math
 seriesName: 数字の迷宮
 volume: 7

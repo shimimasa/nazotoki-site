@@ -1,5 +1,5 @@
 ---
-title: "当番が来なかった日と4つの{言|い}訳"
+title: "当番が来なかった日と4つの{言"
 series: moral
 seriesName: 答えのない法廷
 volume: 11

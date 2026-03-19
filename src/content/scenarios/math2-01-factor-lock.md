@@ -1,5 +1,5 @@
 ---
-title: 後ろめたさ
+title: 約数のカギ
 series: math2
 seriesName: 数学深化探偵団
 volume: 1

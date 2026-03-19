@@ -1,5 +1,5 @@
 ---
-title: まちがえた注文 — GM向け概要
+title: まちがえた注文
 series: career
 seriesName: キャリア探偵団
 volume: 1

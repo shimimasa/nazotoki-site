@@ -1,5 +1,5 @@
 ---
-title: 健康
+title: 「健康」って何だろう
 series: health
 seriesName: 保健探偵団
 volume: 10

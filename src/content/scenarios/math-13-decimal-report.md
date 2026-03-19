@@ -1,5 +1,5 @@
 ---
-title: 小数点のずれた成績表
+title: "小数点のずれた{成績"
 series: math
 seriesName: 数字の迷宮
 volume: 13

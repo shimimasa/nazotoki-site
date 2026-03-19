@@ -1,5 +1,5 @@
 ---
-title: トム・ソーヤーと洞窟の宝
+title: "トム・ソーヤーと{洞窟"
 series: popculture
 seriesName: マンガ教養ミステリー
 volume: 16

@@ -1,5 +1,5 @@
 ---
-title: 銀河鉄道と消えた星の地図
+title: "{銀河"
 series: literature
 seriesName: 名作文学ミステリー
 volume: 5

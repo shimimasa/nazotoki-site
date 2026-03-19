@@ -1,5 +1,5 @@
 ---
-title: 届かない荷物 — GM向け概要
+title: 届かない荷物
 series: career
 seriesName: キャリア探偵団
 volume: 2

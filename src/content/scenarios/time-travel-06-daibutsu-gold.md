@@ -1,5 +1,5 @@
 ---
-title: 奈良の大仏と消えた砂金
+title: "{奈良"
 series: time-travel
 seriesName: タイムトラベル探偵団
 volume: 6

@@ -1,5 +1,5 @@
 ---
-title: 落語『時そば
+title: 落語「時そば」の一文銭
 series: popculture
 seriesName: マンガ教養ミステリー
 volume: 17

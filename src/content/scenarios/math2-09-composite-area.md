@@ -1,5 +1,5 @@
 ---
-title: ヘッドライン
+title: 複合図形の謎
 series: math2
 seriesName: 数学深化探偵団
 volume: 9

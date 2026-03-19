@@ -1,5 +1,5 @@
 ---
-title: 働くとはなにか — シナリオ概要（GM専用）
+title: 働くとはなにか
 series: career
 seriesName: キャリア探偵団
 volume: 10

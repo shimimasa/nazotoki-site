@@ -1,5 +1,5 @@
 ---
-title: 消えた草薙の剣と壇ノ浦の秘密
+title: "消えた{草薙の剣"
 series: time-travel
 seriesName: タイムトラベル探偵団
 volume: 3

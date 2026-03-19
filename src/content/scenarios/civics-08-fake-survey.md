@@ -1,5 +1,5 @@
 ---
-title: 後ろめたさ
+title: 偽りのアンケート
 series: civics
 seriesName: 公民探偵団
 volume: 8

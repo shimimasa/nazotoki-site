@@ -1,5 +1,5 @@
 ---
-title: 速さ×時間×距離と4つの証言
+title: "速さ×時間×{距離"
 series: math
 seriesName: 数字の迷宮
 volume: 8

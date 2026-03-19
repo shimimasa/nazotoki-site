@@ -1,5 +1,5 @@
 ---
-title: 靴が落ちる
+title: 変わり方の落とし穴
 series: math2
 seriesName: 数学深化探偵団
 volume: 8

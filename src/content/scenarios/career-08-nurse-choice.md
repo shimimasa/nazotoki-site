@@ -1,5 +1,5 @@
 ---
-title: 看護師の判断 — シナリオ概要
+title: 看護師の判断
 series: career
 seriesName: キャリア探偵団
 volume: 8

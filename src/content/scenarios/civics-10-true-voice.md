@@ -1,5 +1,5 @@
 ---
-title: シナリオ概要 — 本当の声とは（civics-10-true-voice）
+title: 本当の声とは
 series: civics
 seriesName: 公民探偵団
 volume: 10

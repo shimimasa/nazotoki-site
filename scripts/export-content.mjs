@@ -59,6 +59,10 @@ function yamlStr(s) {
 
 // ── overview.md パーサ ────────────────────────
 function parseTitle(md) {
+  // テーブルの「タイトル」行を最優先
+  const tableMatch = md.match(/\|\s*タイトル\s*\|\s*(.+?)\s*\|/);
+  if (tableMatch) return tableMatch[1].trim();
+
   // H1 から「タイトル」を抽出
   const m = md.match(/^#\s+(.+)/m);
   if (!m) return '';

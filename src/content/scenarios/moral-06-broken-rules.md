@@ -1,5 +1,5 @@
 ---
-title: "{消|き}えた{学級|がっきゅう}メダルと4つの{言|い}わけ"
+title: "消えた学級メダルと4つの{言"
 series: moral
 seriesName: 答えのない法廷
 volume: 6

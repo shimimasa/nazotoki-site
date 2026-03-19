@@ -1,5 +1,5 @@
 ---
-title: 後ろめたさ
+title: 消えた賛成票
 series: civics
 seriesName: 公民探偵団
 volume: 1

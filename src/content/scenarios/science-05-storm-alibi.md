@@ -1,5 +1,5 @@
 ---
-title: 嵐の観測所と消えた気象データ
+title: "嵐の観測{所"
 series: science
 seriesName: サイエンス捜査班
 volume: 5

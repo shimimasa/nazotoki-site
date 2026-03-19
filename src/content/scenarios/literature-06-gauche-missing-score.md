@@ -1,5 +1,5 @@
 ---
-title: セロ弾きのゴーシュと消えた楽譜
+title: "セロ{弾"
 series: literature
 seriesName: 名作文学ミステリー
 volume: 6

@@ -1,5 +1,5 @@
 ---
-title: 後ろめたさ
+title: 予算のすり替え
 series: civics
 seriesName: 公民探偵団
 volume: 3

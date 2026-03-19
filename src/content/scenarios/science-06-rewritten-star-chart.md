@@ -1,5 +1,5 @@
 ---
-title: 書きかえられた星座早見盤
+title: "書きかえられた{星座"
 series: science
 seriesName: サイエンス捜査班
 volume: 6

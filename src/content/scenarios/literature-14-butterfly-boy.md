@@ -1,5 +1,5 @@
 ---
-title: 少年の蝶と砕かれた標本
+title: "少年の{蝶"
 series: literature
 seriesName: 名作文学ミステリー
 volume: 14

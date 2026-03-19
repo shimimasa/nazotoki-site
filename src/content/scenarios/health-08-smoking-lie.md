@@ -1,5 +1,5 @@
 ---
-title: 体にいい
+title: 「体にいい」の嘘
 series: health
 seriesName: 保健探偵団
 volume: 8

@@ -1,5 +1,5 @@
 ---
-title: 記者の情報源 — シナリオ概要
+title: 記者の情報源
 series: career
 seriesName: キャリア探偵団
 volume: 7

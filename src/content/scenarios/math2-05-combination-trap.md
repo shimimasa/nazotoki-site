@@ -1,5 +1,5 @@
 ---
-title: ヘッドライン
+title: 組み合わせのわな
 series: math2
 seriesName: 数学深化探偵団
 volume: 5

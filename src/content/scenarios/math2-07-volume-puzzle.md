@@ -1,5 +1,5 @@
 ---
-title: 遅咲きクレシェンド
+title: 体積パズル
 series: math2
 seriesName: 数学深化探偵団
 volume: 7
