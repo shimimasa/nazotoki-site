@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://nazotoki.gamanavi.com/sitemap-index.xml
