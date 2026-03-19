@@ -87,6 +87,90 @@
       "scene": "道徳の授業、学級活動",
       "difficultyRange": "★〜★★",
       "highlight": "犯人なし。正解のない問いに向き合う"
+    },
+    {
+      "series": "digital",
+      "audience": "ネットリテラシーを身につけたい子に",
+      "scene": "情報モラル授業、総合学習",
+      "difficultyRange": "★〜★★",
+      "highlight": "SNSトラブルを推理で学ぶ"
+    },
+    {
+      "series": "geography",
+      "audience": "地図・地理が好きな子に",
+      "scene": "社会科（地理）のまとめ、地域学習",
+      "difficultyRange": "★〜★★★",
+      "highlight": "地図と地形が事件解決のカギ"
+    },
+    {
+      "series": "health",
+      "audience": "からだの仕組みに興味がある子に",
+      "scene": "保健の授業、健康教育週間",
+      "difficultyRange": "★〜★★",
+      "highlight": "健康知識で謎の症状を解明"
+    },
+    {
+      "series": "english",
+      "audience": "英語に触れはじめた子に",
+      "scene": "英語の授業、外国語活動",
+      "difficultyRange": "★〜★★",
+      "highlight": "英語の手がかりで事件を追う"
+    },
+    {
+      "series": "career",
+      "audience": "将来の夢を考えはじめた子に",
+      "scene": "キャリア教育、職業体験の事前学習",
+      "difficultyRange": "★〜★★",
+      "highlight": "仕事の現場で起きた謎を解決"
+    },
+    {
+      "series": "esd",
+      "audience": "環境問題に関心がある子に",
+      "scene": "総合学習（環境）、SDGs学習",
+      "difficultyRange": "★〜★★★",
+      "highlight": "環境データの矛盾から真実を暴く"
+    },
+    {
+      "series": "civics",
+      "audience": "社会の仕組みに興味がある子に",
+      "scene": "公民の授業、主権者教育",
+      "difficultyRange": "★★〜★★★",
+      "highlight": "民主主義の仕組みに潜む不正を追う"
+    },
+    {
+      "series": "disaster",
+      "audience": "防災意識を高めたい子に",
+      "scene": "防災訓練、避難所運営学習",
+      "difficultyRange": "★〜★★",
+      "highlight": "災害時の判断力を推理で鍛える"
+    },
+    {
+      "series": "homeec",
+      "audience": "料理・手芸・生活に興味がある子に",
+      "scene": "家庭科の授業、調理実習の導入",
+      "difficultyRange": "★〜★★",
+      "highlight": "生活の知恵が事件解決の武器に"
+    },
+    {
+      "series": "money",
+      "audience": "お金の仕組みを学びたい子に",
+      "scene": "金融教育、社会科（経済）",
+      "difficultyRange": "★〜★★★",
+      "highlight": "お金の流れから不正を見抜く"
+    },
+    {
+      "series": "programming",
+      "audience": "プログラミングに興味がある子に",
+      "scene": "プログラミング教育、総合学習",
+      "difficultyRange": "★★〜★★★",
+      "highlight": "コードのバグが事件のカギ"
+    },
+    {
+      "series": "math2",
+      "audience": "数学の深い思考力を鍛えたい子に",
+      "scene": "数学の発展学習、中学校の授業",
+      "difficultyRange": "★★★",
+      "highlight": "中学数学の概念で難事件に挑む"
     }
   ]
 }

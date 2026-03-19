@@ -273,7 +273,7 @@ const USE_CASE_COLORS: Record<string, string> = {
      ============================================ */}
   <section class="bg-slate-50 py-14">
     <div class="max-w-5xl mx-auto px-4">
-      <h2 class="text-2xl font-bold text-slate-800 mb-8">6つの教科シリーズ</h2>
+      <h2 class="text-2xl font-bold text-slate-800 mb-8">18の教科シリーズ</h2>
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {seriesComparison.map((comp) => {
           const config = getSeriesConfig(comp.series);
@@ -493,7 +493,7 @@ const USE_CASE_COLORS: Record<string, string> = {
           <div class="text-sm text-slate-400 mt-1">テストプレイ参加</div>
         </div>
         <div>
-          <div class="text-4xl font-black">5教科</div>
+          <div class="text-4xl font-black">18教科</div>
           <div class="text-sm text-slate-400 mt-1">カリキュラム対応</div>
         </div>
         <div>
@@ -641,6 +641,18 @@ const USE_CASE_COLORS: Record<string, string> = {
     'math': { emoji: '🔢', color: '#065f46' },
     'science': { emoji: '🔬', color: '#1e40af' },
     'moral': { emoji: '⚖️', color: '#9a3412' },
+    'digital': { emoji: '💻', color: '#0e7490' },
+    'geography': { emoji: '🗺️', color: '#0d9488' },
+    'health': { emoji: '🏥', color: '#e11d48' },
+    'english': { emoji: '🔤', color: '#0284c7' },
+    'career': { emoji: '💼', color: '#65a30d' },
+    'esd': { emoji: '🌍', color: '#16a34a' },
+    'civics': { emoji: '🏛️', color: '#475569' },
+    'disaster': { emoji: '🚨', color: '#dc2626' },
+    'homeec': { emoji: '🧵', color: '#db2777' },
+    'money': { emoji: '💰', color: '#ca8a04' },
+    'programming': { emoji: '🖥️', color: '#7c3aed' },
+    'math2': { emoji: '📐', color: '#047857' },
   };
 
   const elSeries = document.getElementById('filter-series');
