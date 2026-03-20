@@ -13,19 +13,19 @@ synopsis: "古代ギリシャの都市シラクサ。暴君ディオニス王に
 characters:
   - id: alexios
     name: アレクシオス
-    role: "アレクシオスディオニス王の{側近|そっきん}。30歳さい。"
+    role: 王の右腕。書記も兼ねる冷静な男
     isNPC: false
   - id: helene
     name: ヘレネー
-    role: "ヘレネー{宮殿|きゅうでん}の{見習|みならい}{兵士|へいし}。14歳さい。"
+    role: 宮殿の若い見習い兵士。正義感が強い少女
     isNPC: false
   - id: philomela
     name: フィロメラ
-    role: "フィロメラメロスの{妹|いもうと}。16歳さい。"
+    role: メロスの妹。結婚式を終えて宮殿に駆けつけた
     isNPC: false
   - id: selinuntius
     name: セリヌンティウス
-    role: "セリヌンティウス石工いしく（石を{彫|ほ}って{像|ぞう}をつくる{職人|しょくにん}）。"
+    role: メロスの親友。石工。人質として囚われ中
     isNPC: false
   - id: npc-4
     name: "{ディオニス王"

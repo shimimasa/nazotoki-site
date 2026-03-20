@@ -13,19 +13,19 @@ synopsis: "ワクワク遊園地の「探偵フェスティバル」開催中。
 characters:
   - id: hayaashi
     name: ハヤアシ
-    role: ハヤアシワクワク遊園地のパークガイド。25歳さい。
+    role: 100m/分
     isNPC: false
   - id: kakedashi
     name: カケダシ
-    role: カケダシ遊園地のアルバイト。15歳さい。
+    role: 100m/分
     isNPC: false
   - id: mamoru
     name: マモル
-    role: "マモル遊園地の{警備員|けいびいん}。22歳さい。"
+    role: 100m/分
     isNPC: false
   - id: nonbiri
     name: ノンビリおばちゃん
-    role: ノンビリおばちゃんチケット売り場のベテランスタッフ。58歳さい。
+    role: 50m/分
     isNPC: false
   - id: npc-4
     name: "{ワンダー園長"

@@ -13,7 +13,7 @@ synopsis: "学校の理科フェスティバル当日。理科室に特別展示
 characters:
   - id: ame
     name: アメちゃん
-    role: "アメちゃん{甘|あま}いもの大好きな元気な生徒。"
+    role: 砂糖
     isNPC: false
   - id: awako
     name: アワコ
@@ -25,7 +25,7 @@ characters:
     isNPC: false
   - id: toromi
     name: トロミ
-    role: "トロミ{料理部|りょうりぶ}と理科が大好きな生徒。"
+    role: 片栗粉
     isNPC: false
   - id: npc-4
     name: ハカセ先生

@@ -29,3 +29,14 @@ export function captureException(error: unknown, context?: Record<string, unknow
   if (!initialized) return;
   Sentry.captureException(error, { extra: context });
 }
+
+/** Set session context for all subsequent Sentry events */
+export function setSessionContext(context: {
+  sessionRunId?: string;
+  scenarioSlug?: string;
+  role?: 'teacher' | 'student';
+  participantId?: string;
+}) {
+  if (!initialized) return;
+  Sentry.setContext('session', context);
+}

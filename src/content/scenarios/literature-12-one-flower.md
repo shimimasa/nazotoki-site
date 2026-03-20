@@ -13,18 +13,18 @@ synopsis: 4年生のクラスで「一つの花」を学習中。先生が「ゆ
 characters:
   - id: aoi
     name: アオイ
-    role: "{役割|やくわり}タイプ: {情報型|じょうほうがた}"
+    role: ""
     isNPC: false
   - id: miyu
     name: ミユ
-    role: "{役割|やくわり}タイプ: {観察型|かんさつがた}"
+    role: ""
     isNPC: false
   - id: rin
     name: リン
-    role: "{役割|やくわり}タイプ: {行動型|こうどうがた}（{犯人|はんにん}）"
+    role: ""
     isNPC: false
   - id: takuya
     name: タクヤ
-    role: "{役割|やくわり}タイプ: {感情型|かんじょうがた}（初期{容疑者|ようぎしゃ}でも{無実|むじつ"
+    role: ""
     isNPC: false
 ---

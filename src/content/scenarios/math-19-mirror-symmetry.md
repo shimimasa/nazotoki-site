@@ -13,15 +13,15 @@ synopsis: "学校の算数フェスティバルで「鏡の部屋」と呼ばれ
 characters:
   - id: aoi
     name: アオイ
-    role: "{役割|やくわり}タイプ: {観察型|かんさつがた}"
+    role: ""
     isNPC: false
   - id: natsu
     name: ナツ
-    role: "{役割|やくわり}タイプ: {感情型|かんじょうがた}"
+    role: ""
     isNPC: false
   - id: rin
     name: リン
-    role: "{役割|やくわり}タイプ: {行動型|こうどうがた}（{犯人|はんにん}）"
+    role: ""
     isNPC: false
   - id: yuuki
     name: ユウキ

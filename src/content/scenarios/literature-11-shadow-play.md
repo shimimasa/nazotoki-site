@@ -13,7 +13,7 @@ synopsis: 3年生のクラスで「読書発表会」の準備中。「ちいち
 characters:
   - id: kotone
     name: コトネ
-    role: "{役割|やくわり}タイプ: {観察型|かんさつがた}"
+    role: ""
     isNPC: false
   - id: ryou
     name: リョウ
@@ -21,10 +21,10 @@ characters:
     isNPC: false
   - id: souta
     name: ソウタ
-    role: "{役割|やくわり}タイプ: {情報型|じょうほうがた}"
+    role: ""
     isNPC: false
   - id: yuna
     name: ユナ
-    role: "{役割|やくわり}タイプ: {行動型|こうどうがた}（{犯人|はんにん}）"
+    role: ""
     isNPC: false
 ---

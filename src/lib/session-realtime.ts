@@ -14,6 +14,7 @@
  *           findSessionByCodeをRPC化（直接SELECT廃止）。
  */
 import { supabase } from './supabase';
+import { captureException } from './sentry';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 // ============================================================
@@ -83,7 +84,9 @@ export async function createSessionRun(params: {
   });
 
   if (error || !data?.ok) {
-    console.error('createSessionRun error:', error || data?.error);
+    captureException(error || new Error(data?.error || 'createSessionRun failed'), {
+      rpc: 'rpc_create_session_run', scenarioSlug: params.scenarioSlug,
+    });
     return null;
   }
 
@@ -114,7 +117,7 @@ export async function updateSessionRun(
     .eq('id', runId);
 
   if (error) {
-    console.error('updateSessionRun error:', error);
+    captureException(error, { rpc: 'updateSessionRun', runId });
     return false;
   }
   return true;
@@ -136,7 +139,7 @@ export async function fetchSessionParticipants(
     .eq('session_run_id', runId)
     .order('joined_at', { ascending: true });
   if (error) {
-    console.error('fetchSessionParticipants error:', error);
+    captureException(error, { rpc: 'fetchSessionParticipants', runId });
     return [];
   }
   return (data || []) as SessionParticipant[];
@@ -184,7 +187,9 @@ export async function joinSession(params: {
   });
 
   if (error || !data?.ok) {
-    console.error('joinSession error:', error || data?.error);
+    captureException(error || new Error(data?.error || 'joinSession failed'), {
+      rpc: 'rpc_join_session', joinCode: params.joinCode,
+    });
     return null;
   }
 
@@ -216,7 +221,9 @@ export async function voteAsParticipant(
   });
 
   if (error || !data?.ok) {
-    console.error('voteAsParticipant error:', error || data?.error);
+    captureException(error || new Error(data?.error || 'voteAsParticipant failed'), {
+      rpc: 'rpc_submit_vote', participantId,
+    });
     return false;
   }
   return true;
@@ -235,7 +242,7 @@ export async function linkParticipantStudent(
     .eq('id', participantId);
 
   if (error) {
-    console.error('linkParticipantStudent error:', error);
+    captureException(error, { rpc: 'linkParticipantStudent', participantId });
     return false;
   }
   return true;
@@ -254,7 +261,7 @@ export async function assignCharacter(
     .eq('id', participantId);
 
   if (error) {
-    console.error('assignCharacter error:', error);
+    captureException(error, { rpc: 'assignCharacter', participantId });
     return false;
   }
   return true;
@@ -277,7 +284,9 @@ export async function reconnectSession(
   });
 
   if (error || !data?.ok) {
-    console.error('reconnectSession error:', error || data?.error);
+    captureException(error || new Error(data?.error || 'reconnectSession failed'), {
+      rpc: 'rpc_reconnect_session', sessionRunId,
+    });
     return null;
   }
 
@@ -299,7 +308,10 @@ export async function fetchMyParticipant(
     p_session_token: sessionToken,
   });
 
-  if (error || !data?.ok) return null;
+  if (error || !data?.ok) {
+    if (error) captureException(error, { rpc: 'rpc_get_my_participant', participantId });
+    return null;
+  }
   return data.participant as SessionParticipant;
 }
 
@@ -331,7 +343,12 @@ export async function submitFeedback(
     p_difficulty: difficultyRating,
     p_comment: comment,
   });
-  if (error || !data?.ok) return false;
+  if (error || !data?.ok) {
+    captureException(error || new Error('submitFeedback failed'), {
+      rpc: 'rpc_submit_feedback', participantId,
+    });
+    return false;
+  }
   return true;
 }
 
@@ -349,7 +366,11 @@ export async function sendHeartbeat(
     p_participant_id: participantId,
     p_session_token: sessionToken,
   });
-  if (error || !data?.ok) return false;
+  if (error || !data?.ok) {
+    // Heartbeat failures are noisy; only capture actual errors, not timeouts
+    if (error) captureException(error, { rpc: 'rpc_heartbeat', participantId });
+    return false;
+  }
   return true;
 }
 

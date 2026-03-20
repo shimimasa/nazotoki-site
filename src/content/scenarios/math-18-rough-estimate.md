@@ -17,11 +17,11 @@ characters:
     isNPC: false
   - id: kotone
     name: コトネ
-    role: "{役割|やくわり}タイプ: {観察型|かんさつがた}"
+    role: ""
     isNPC: false
   - id: misaki
     name: ミサキ
-    role: "{役割|やくわり}タイプ: {行動型|こうどうがた}（{犯人|はんにん}）"
+    role: ""
     isNPC: false
   - id: sora
     name: ソラ
