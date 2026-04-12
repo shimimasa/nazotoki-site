@@ -27,6 +27,10 @@ import {
   type StudentRow,
   fetchSessionFeedback,
   type SessionFeedbackRow,
+  fetchSessionTemplates,
+  createSessionTemplate,
+  deleteSessionTemplate,
+  type SessionTemplateRow,
 } from '../../lib/supabase';
 import {
   createSessionRun,
@@ -107,6 +111,12 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
   const [classStudents, setClassStudents] = useState<StudentRow[]>([]);
   const classStudentsRef = useRef<StudentRow[]>([]);
 
+  // Phase 164 (D1): Session templates for the current scenario
+  const [templates, setTemplates] = useState<SessionTemplateRow[]>([]);
+  const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [templateSaving, setTemplateSaving] = useState(false);
+
   // Cleanup on unmount (Phase 56 + Phase 73: timers)
   useEffect(() => {
     initSound();
@@ -142,9 +152,13 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
             }
           } catch { /* ignore */ }
         });
+        // Phase 164 (D1): Load saved templates for this scenario
+        fetchSessionTemplates(t.id).then((rows) => {
+          setTemplates(rows.filter((r) => r.scenario_slug === data.slug));
+        });
       }
     });
-  }, []);
+  }, [data.slug]);
 
   // Load students when class is selected
   useEffect(() => {
@@ -285,6 +299,44 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
     setTransitioning(false);
     setTransitionTarget(null);
   }, [transitionTarget, applyStep]);
+
+  // Phase 164 (D1): Apply a saved template to the form. Does not auto-start;
+  // the teacher confirms by tapping "セッションを開始する".
+  const handleApplyTemplate = useCallback((template: SessionTemplateRow) => {
+    setPlayerCount(template.player_count);
+    setEnvironment(template.environment);
+    setSelectedClassId(template.class_id);
+  }, []);
+
+  const handleSaveTemplate = useCallback(async () => {
+    if (!currentTeacher) return;
+    const name = templateName.trim();
+    if (!name) return;
+    setTemplateSaving(true);
+    const created = await createSessionTemplate({
+      teacher_id: currentTeacher.id,
+      template_name: name,
+      scenario_slug: data.slug,
+      scenario_title: data.title,
+      class_id: selectedClassId,
+      player_count: playerCount,
+      environment,
+    });
+    if (created) {
+      setTemplates((prev) => [created, ...prev]);
+      setTemplateName('');
+      setShowSaveTemplateDialog(false);
+    }
+    setTemplateSaving(false);
+  }, [currentTeacher, templateName, data.slug, data.title, selectedClassId, playerCount, environment]);
+
+  const handleDeleteTemplate = useCallback(async (templateId: string) => {
+    if (!confirm('このテンプレートを削除しますか？')) return;
+    const ok = await deleteSessionTemplate(templateId);
+    if (ok) {
+      setTemplates((prev) => prev.filter((t) => t.id !== templateId));
+    }
+  }, []);
 
   const handleStart = useCallback(async () => {
     setStartError(null);
@@ -702,6 +754,16 @@ export default function SessionWizard({ data, siteUrl }: SessionWizardProps) {
             selectedClassId={selectedClassId}
             onClassSelect={setSelectedClassId}
             hasPreset={hasPreset}
+            templates={templates}
+            onApplyTemplate={handleApplyTemplate}
+            onDeleteTemplate={handleDeleteTemplate}
+            showSaveTemplateDialog={showSaveTemplateDialog}
+            onShowSaveTemplateDialog={setShowSaveTemplateDialog}
+            templateName={templateName}
+            onTemplateName={setTemplateName}
+            onSaveTemplate={handleSaveTemplate}
+            templateSaving={templateSaving}
+            canSaveTemplate={!!currentTeacher}
           />
         );
       case 'intro':

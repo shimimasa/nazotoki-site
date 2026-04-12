@@ -388,6 +388,45 @@ export interface LessonPlanInsert {
   notes?: string;
 }
 
+// --- Session Templates (Phase 164 / D1) ---
+
+export type SessionEnvironment = 'classroom' | 'dayservice' | 'home';
+
+export interface SessionTemplateRow {
+  id: string;
+  teacher_id: string;
+  template_name: string;
+  scenario_slug: string;
+  scenario_title: string;
+  class_id: string | null;
+  player_count: number;
+  environment: SessionEnvironment;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SessionTemplateInsert {
+  teacher_id: string;
+  template_name: string;
+  scenario_slug: string;
+  scenario_title: string;
+  class_id?: string | null;
+  player_count?: number;
+  environment?: SessionEnvironment;
+  is_default?: boolean;
+}
+
+export interface SessionTemplateUpdate {
+  template_name?: string;
+  scenario_slug?: string;
+  scenario_title?: string;
+  class_id?: string | null;
+  player_count?: number;
+  environment?: SessionEnvironment;
+  is_default?: boolean;
+}
+
 // --- AI Analysis Cache ---
 
 export interface AiAnalysisCacheRow {

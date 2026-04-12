@@ -9,7 +9,7 @@ players: 2〜4人 + GM
 age: 小学3年生〜中学1年生
 time: 30〜45分
 difficulty: ★★☆☆☆（推理は易しいが、議論が深い）
-synopsis: ""
+synopsis: "**従来のマダミスとの最大の違い:**\r"
 characters:
   - id: hayato
     name: ハヤト

@@ -249,8 +249,10 @@ export default function StudentSession() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      let autoSearchCode: string | null = null;
+      let savedToken: string | null = null;
       try {
-        const savedToken = localStorage.getItem('nazotoki-session-token');
+        savedToken = localStorage.getItem('nazotoki-session-token');
         const savedRunId = localStorage.getItem('nazotoki-session-run-id');
         const savedName = localStorage.getItem('nazotoki-player-name');
         if (savedName) setPlayerName(savedName);
@@ -259,7 +261,10 @@ export default function StudentSession() {
         const codeParam = params.get('code');
         if (codeParam) {
           const normalized = codeParam.toUpperCase().trim();
-          if (/^[A-Z2-9]{6}$/.test(normalized)) setJoinCode(normalized);
+          if (/^[A-Z2-9]{6}$/.test(normalized)) {
+            setJoinCode(normalized);
+            autoSearchCode = normalized;
+          }
         }
 
         if (savedToken && savedRunId) {
@@ -319,7 +324,21 @@ export default function StudentSession() {
           if (cached) clearSessionCache(savedRunId);
         }
       } catch { /* ignore */ }
-      if (!cancelled) setReconnecting(false);
+      if (!cancelled) {
+        setReconnecting(false);
+        // Auto-search session from QR code URL parameter
+        if (autoSearchCode && !savedToken) {
+          try {
+            setJoining(true);
+            const run = await findSessionByCode(autoSearchCode);
+            if (!cancelled && run) {
+              setSessionRun(run);
+              setScreen('lobby');
+            }
+          } catch { /* ignore */ }
+          if (!cancelled) setJoining(false);
+        }
+      }
     })();
     return () => { cancelled = true; };
   }, []);

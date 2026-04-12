@@ -6,46 +6,96 @@ interface Props {
   sessionToken: string;
 }
 
+const FUN_LABELS: Record<number, string> = {
+  1: 'いまいち',
+  2: 'まあまあ',
+  3: 'ふつう',
+  4: 'たのしい',
+  5: 'さいこう！',
+};
+
+const DIFFICULTY_LABELS: Record<number, string> = {
+  1: 'かんたん',
+  2: 'ちょっとかんたん',
+  3: 'ちょうどよい',
+  4: 'むずかしい',
+  5: 'すごくむずかしい',
+};
+
 export default function FeedbackForm({ participantId, sessionToken }: Props) {
   const [funRating, setFunRating] = useState(0);
   const [difficultyRating, setDifficultyRating] = useState(0);
   const [comment, setComment] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!participantId || !sessionToken) return null;
 
   if (submitted) {
     return (
-      <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-        <p class="text-green-700 font-bold text-sm">ありがとう！</p>
+      <div class="bg-green-50 border-2 border-green-300 rounded-xl p-4 text-center">
+        <p class="text-3xl mb-1">{'\uD83D\uDE4C'}</p>
+        <p class="text-green-700 font-black text-base">ありがとう！</p>
+        <p class="text-green-600 text-xs mt-1">感想をおくってくれてありがとう</p>
       </div>
     );
   }
 
   const handleSubmit = async () => {
     if (funRating === 0 || difficultyRating === 0) return;
+    setError(null);
     setSubmitting(true);
     const ok = await submitFeedback(participantId, sessionToken, funRating, difficultyRating, comment);
     setSubmitting(false);
-    if (ok) setSubmitted(true);
+    if (ok) {
+      setSubmitted(true);
+    } else {
+      setError('送信できませんでした。もう一度試してください。');
+    }
   };
 
-  const StarRow = ({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) => (
+  const StarRow = ({
+    label,
+    value,
+    onChange,
+    labelMap,
+    ariaLabel,
+  }: {
+    label: string;
+    value: number;
+    onChange: (v: number) => void;
+    labelMap: Record<number, string>;
+    ariaLabel: string;
+  }) => (
     <div class="space-y-1">
-      <p class="text-xs font-bold text-gray-600">{label}</p>
-      <div class="flex gap-1">
-        {[1, 2, 3, 4, 5].map(n => (
-          <button
-            key={n}
-            onClick={() => onChange(n)}
-            class={`w-10 h-10 rounded-lg text-lg transition-colors ${
-              n <= value ? 'bg-amber-400 text-white' : 'bg-gray-100 text-gray-400'
-            }`}
-          >
-            {'\u2B50'}
-          </button>
-        ))}
+      <div class="flex items-baseline justify-between">
+        <p class="text-xs font-bold text-gray-600">{label}</p>
+        {value > 0 && (
+          <p class="text-xs font-black text-amber-600">{labelMap[value]}</p>
+        )}
+      </div>
+      <div class="flex gap-1" role="radiogroup" aria-label={ariaLabel}>
+        {[1, 2, 3, 4, 5].map((n) => {
+          const active = n <= value;
+          return (
+            <button
+              key={n}
+              type="button"
+              role="radio"
+              aria-checked={value === n}
+              aria-label={`${labelMap[n]} (${n}/5)`}
+              onClick={() => onChange(n)}
+              class={`w-11 h-11 rounded-lg text-xl transition-all flex items-center justify-center ${
+                active
+                  ? 'bg-amber-400 text-white shadow-sm scale-100'
+                  : 'bg-gray-100 text-gray-300 hover:bg-amber-100'
+              }`}
+            >
+              {'\u2605'}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -53,10 +103,27 @@ export default function FeedbackForm({ participantId, sessionToken }: Props) {
   return (
     <div class="bg-white rounded-xl border-2 border-blue-200 p-4 space-y-3">
       <h3 class="text-sm font-black text-blue-700 text-center">感想を教えてね</h3>
-      <StarRow label="楽しさ" value={funRating} onChange={setFunRating} />
-      <StarRow label="難しさ" value={difficultyRating} onChange={setDifficultyRating} />
+
+      <StarRow
+        label="楽しかった？"
+        value={funRating}
+        onChange={setFunRating}
+        labelMap={FUN_LABELS}
+        ariaLabel="楽しさの評価"
+      />
+      <StarRow
+        label="むずかしかった？"
+        value={difficultyRating}
+        onChange={setDifficultyRating}
+        labelMap={DIFFICULTY_LABELS}
+        ariaLabel="難しさの評価"
+      />
+
       <div>
-        <p class="text-xs font-bold text-gray-600 mb-1">一言（任意）</p>
+        <div class="flex items-baseline justify-between mb-1">
+          <p class="text-xs font-bold text-gray-600">一言（任意）</p>
+          <p class="text-xs text-gray-400">{comment.length}/50</p>
+        </div>
         <input
           type="text"
           value={comment}
@@ -64,12 +131,19 @@ export default function FeedbackForm({ participantId, sessionToken }: Props) {
           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 outline-none"
           placeholder="ひとこと感想..."
           maxLength={50}
+          aria-label="一言感想（50文字以内）"
         />
       </div>
+
+      {error && (
+        <p class="text-red-600 text-xs text-center" role="alert">{error}</p>
+      )}
+
       <button
+        type="button"
         onClick={handleSubmit}
         disabled={funRating === 0 || difficultyRating === 0 || submitting}
-        class="w-full py-2.5 bg-blue-500 text-white rounded-xl font-bold text-sm hover:bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500 transition-colors"
+        class="w-full py-3 bg-blue-500 text-white rounded-xl font-black text-sm hover:bg-blue-600 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
       >
         {submitting ? '送信中...' : '送信する'}
       </button>

@@ -1,5 +1,5 @@
 import type { SessionScenarioData } from '../types';
-import type { ClassRow } from '../../../lib/supabase';
+import type { ClassRow, SessionTemplateRow } from '../../../lib/supabase';
 
 interface PrepPhaseProps {
   data: SessionScenarioData;
@@ -15,6 +15,17 @@ interface PrepPhaseProps {
   selectedClassId?: string | null;
   onClassSelect?: (classId: string | null) => void;
   hasPreset?: boolean;
+  // Phase 164 (D1): Session templates
+  templates?: SessionTemplateRow[];
+  onApplyTemplate?: (template: SessionTemplateRow) => void;
+  onDeleteTemplate?: (templateId: string) => void;
+  showSaveTemplateDialog?: boolean;
+  onShowSaveTemplateDialog?: (show: boolean) => void;
+  templateName?: string;
+  onTemplateName?: (v: string) => void;
+  onSaveTemplate?: () => void;
+  templateSaving?: boolean;
+  canSaveTemplate?: boolean;
 }
 
 export default function PrepPhase({
@@ -31,8 +42,30 @@ export default function PrepPhase({
   selectedClassId,
   onClassSelect,
   hasPreset,
+  templates = [],
+  onApplyTemplate,
+  onDeleteTemplate,
+  showSaveTemplateDialog = false,
+  onShowSaveTemplateDialog,
+  templateName = '',
+  onTemplateName,
+  onSaveTemplate,
+  templateSaving = false,
+  canSaveTemplate = false,
 }: PrepPhaseProps) {
   const canStart = teacherName.trim().length > 0 && playerCount > 0;
+  const canSave = canSaveTemplate && templateName.trim().length > 0 && !templateSaving;
+
+  const findClassName = (classId: string | null) => {
+    if (!classId || !classes) return null;
+    return classes.find((c) => c.id === classId)?.class_name || null;
+  };
+
+  const environmentLabel = (env: string) => {
+    if (env === 'dayservice') return '放デイ';
+    if (env === 'home') return '家庭';
+    return '教室';
+  };
 
   return (
     <div class="space-y-6">
@@ -53,6 +86,48 @@ export default function PrepPhase({
           dangerouslySetInnerHTML={{ __html: data.synopsisHtml }}
         />
       </div>
+
+      {/* テンプレート一覧（保存済みプリセット） */}
+      {templates.length > 0 && onApplyTemplate && (
+        <div class="bg-white rounded-xl border border-gray-200 p-4">
+          <h3 class="text-sm font-bold text-gray-700 mb-2">保存済みテンプレート</h3>
+          <ul class="space-y-2">
+            {templates.map((t) => {
+              const className = findClassName(t.class_id);
+              return (
+                <li
+                  key={t.id}
+                  class="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:border-amber-400 hover:bg-amber-50 transition-colors"
+                >
+                  <button
+                    onClick={() => onApplyTemplate(t)}
+                    class="flex-1 text-left"
+                  >
+                    <div class="font-bold text-gray-800">{t.template_name}</div>
+                    <div class="text-xs text-gray-500">
+                      {t.player_count}人 · {environmentLabel(t.environment)}
+                      {className ? ` · ${className}` : ''}
+                    </div>
+                  </button>
+                  {onDeleteTemplate && (
+                    <button
+                      onClick={() => onDeleteTemplate(t.id)}
+                      class="text-xs text-gray-400 hover:text-red-500 px-2 py-1"
+                      aria-label={`${t.template_name}を削除`}
+                      title="削除"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          <p class="text-xs text-gray-400 mt-2">
+            タップで設定が自動入力されます
+          </p>
+        </div>
+      )}
 
       {/* クイックスタート（前回の設定がある場合） */}
       {hasPreset && canStart && (
@@ -159,6 +234,53 @@ export default function PrepPhase({
             ))}
           </div>
         </div>
+
+        {/* テンプレートとして保存 */}
+        {canSaveTemplate && onShowSaveTemplateDialog && onTemplateName && onSaveTemplate && (
+          <div class="pt-2 border-t border-gray-100">
+            {!showSaveTemplateDialog ? (
+              <button
+                onClick={() => onShowSaveTemplateDialog(true)}
+                class="text-sm text-gray-500 hover:text-amber-600 underline"
+              >
+                ＋ この設定をテンプレートとして保存
+              </button>
+            ) : (
+              <div class="space-y-2">
+                <input
+                  type="text"
+                  value={templateName}
+                  onInput={(e) => onTemplateName((e.target as HTMLInputElement).value)}
+                  placeholder="例: 5年1組 国語"
+                  maxLength={40}
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-amber-400 text-sm"
+                />
+                <div class="flex gap-2">
+                  <button
+                    onClick={onSaveTemplate}
+                    disabled={!canSave}
+                    class={`px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${
+                      canSave
+                        ? 'bg-amber-500 text-white hover:bg-amber-600'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {templateSaving ? '保存中…' : '保存'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      onShowSaveTemplateDialog(false);
+                      onTemplateName('');
+                    }}
+                    class="px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-gray-100"
+                  >
+                    キャンセル
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 開始ボタン */}

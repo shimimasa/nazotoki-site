@@ -7,6 +7,7 @@
  *   src/data/{slug}.json              — 全コンテンツ（個別ページ用）
  */
 import fs from 'fs/promises';
+import { readFileSync } from 'node:fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -17,27 +18,15 @@ const CONTENT_OUT = path.resolve(ROOT, 'src', 'content', 'scenarios');
 const DATA_OUT = path.resolve(ROOT, 'src', 'data');
 const IMAGES_DIR = path.resolve(ROOT, 'public', 'images');
 
-// ── シリーズ定義 ──────────────────────────────
-const SERIES_MAP = {
-  'time-travel': { name: 'タイムトラベル探偵団', subject: '歴史（社会科）', order: 1 },
-  'literature':  { name: '名作文学ミステリー', subject: '国語', order: 2 },
-  'popculture':  { name: 'マンガ教養ミステリー', subject: 'ポップカルチャー', order: 3 },
-  'math':        { name: '数字の迷宮', subject: '算数', order: 4 },
-  'science':     { name: 'サイエンス捜査班', subject: '理科', order: 5 },
-  'moral':       { name: '答えのない法廷', subject: '道徳', order: 6 },
-  'digital':     { name: 'デジタル探偵団', subject: '情報', order: 7 },
-  'geography':   { name: '地理探偵団', subject: '社会', order: 8 },
-  'health':      { name: '保健探偵団', subject: '保健', order: 9 },
-  'english':     { name: '英語探偵団', subject: '英語', order: 10 },
-  'career':      { name: 'キャリア探偵団', subject: 'キャリア', order: 11 },
-  'esd':         { name: 'ESD探偵団', subject: '環境', order: 12 },
-  'civics':      { name: '公民探偵団', subject: '公民', order: 13 },
-  'disaster':    { name: '防災探偵団', subject: '防災', order: 14 },
-  'homeec':      { name: '家庭科探偵団', subject: '家庭科', order: 15 },
-  'math2':       { name: '数学深化探偵団', subject: '数学', order: 16 },
-  'money':       { name: 'お金の探偵団', subject: 'お金', order: 17 },
-  'programming': { name: 'プログラミング探偵団', subject: 'プログラミング', order: 18 },
-};
+// ── シリーズ定義（series-registry.json から読み込み）──────────
+// 新シリーズ追加時は series-registry.json に1行追加するだけ
+const REGISTRY_PATH = path.resolve(ROOT, '..', 'series-registry.json');
+const SERIES_MAP = Object.fromEntries(
+  JSON.parse(readFileSync(REGISTRY_PATH, 'utf8')).map((s) => [
+    s.key,
+    { name: s.name, subject: s.subject, order: s.order },
+  ]),
+);
 
 // ── ユーティリティ ────────────────────────────
 async function readFile(dir, filename) {
@@ -100,12 +89,40 @@ function parseSection(md, headerPattern, nextHeaderLevel = 3) {
   return content.trim();
 }
 
+function getHeadingSections(md, level = 3) {
+  const regex = new RegExp(`^#{${level}}\\s+(.+)$`, 'gm');
+  const matches = [...md.matchAll(regex)];
+  return matches.map((match, index) => {
+    const heading = (match[1] || '').trim();
+    const headerLine = match[0];
+    const start = (match.index ?? 0) + headerLine.length;
+    const end = index + 1 < matches.length ? (matches[index + 1].index ?? md.length) : md.length;
+    return {
+      heading,
+      content: md.slice(start, end).trim(),
+    };
+  });
+}
+
 function parseSynopsis(md) {
   // 「あらすじ」「ストーリー概要」「事件の概要」セクションの内容を取得
   // ふりがな混在対応: 事件じけんの概要 etc.
   for (const pattern of ['あらすじ', 'ストーリー概要', '事件[^\\n]*概要']) {
     const section = parseSection(md, pattern);
     if (section) return section.replace(/\n+/g, '\n').trim();
+  }
+
+  // Fallback for overview variants that place the lead-in under a custom heading.
+  // We take the first prose-heavy H3 section before truth/learning/GM-oriented blocks.
+  const sections = getHeadingSections(md, 3);
+  for (const section of sections) {
+    const content = section.content
+      .replace(/^\|.+\|$/gm, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    if (!content || content.length < 40) continue;
+    if (/4人|真相|動機|学習|GM|メモ/.test(section.heading)) continue;
+    return content;
   }
   return '';
 }
@@ -203,30 +220,89 @@ function parseEvidenceCards(md) {
   if (!md) return { cards: [], card5: null };
 
   const cards = [];
-  // Split by card headers
-  const parts = md.split(/^(##\s*証拠[しょうこ]*カード)/m);
+  const circledMap = {
+    '①': 1, '②': 2, '③': 3, '④': 4, '⑤': 5,
+    '⑥': 6, '⑦': 7, '⑧': 8, '⑨': 9, '⑩': 10,
+  };
+  const toAsciiDigits = (value) => value.replace(/[０-９]/g, (ch) =>
+    String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
+  const parseCardNumber = (raw) => {
+    if (!raw) return 0;
+    const token = raw.trim();
+    if (circledMap[token]) return circledMap[token];
+    const normalized = toAsciiDigits(token);
+    return /^\d+$/.test(normalized) ? parseInt(normalized, 10) : 0;
+  };
 
-  let currentCard = null;
-  for (let i = 0; i < parts.length; i++) {
-    const part = parts[i];
-    if (/^##\s*証拠/.test(part) && i + 1 < parts.length) {
-      // This is a header marker, combine with next part
-      const fullSection = part + parts[i + 1];
-      i++; // skip next part
+  // Support multiple evidence header styles:
+  // - ## Card 1
+  // - ## Card 1: title
+  // - ## Card① title
+  // - ## 証拠カード 1
+  const headerRegex =
+    /^##\s*(?:Card|カード|証拠(?:\[.*?\]|[^\n]{0,20})?カード)\s*([0-9０-９①②③④⑤⑥⑦⑧⑨⑩]*)\s*[:：\-—–]?\s*(.*)$/gm;
 
-      // Extract card number
-      const numMatch = fullSection.match(/カード\s*(\d+)/);
-      const num = numMatch ? parseInt(numMatch[1]) : 0;
+  const matches = [...md.matchAll(headerRegex)];
+  for (let i = 0; i < matches.length; i++) {
+    const match = matches[i];
+    const headerLine = match[0];
+    const headerStart = match.index ?? 0;
+    const sectionStart = headerStart + headerLine.length;
+    const sectionEnd = i + 1 < matches.length ? (matches[i + 1].index ?? md.length) : md.length;
 
-      // Extract title (first line after ##)
-      const titleMatch = fullSection.match(/^##\s*(.+)/m);
-      const title = titleMatch ? titleMatch[1].trim() : `証拠カード${num}`;
+    const num = parseCardNumber(match[1] || '');
+    let title = (match[2] || '').trim();
+    let content = md.slice(sectionStart, sectionEnd).trim();
 
-      // Content is everything after the first line
-      const firstNewline = fullSection.indexOf('\n');
-      const content = firstNewline >= 0 ? fullSection.slice(firstNewline).trim() : '';
+    // Some files put the human-readable card title on the first H3 line.
+    if (!title) {
+      const h3Title = content.match(/^###\s+(.+)$/m);
+      if (h3Title) title = h3Title[1].trim();
+    }
 
-      cards.push({ number: num, title, content });
+    if (!title) title = num ? `証拠カード${num}` : headerLine.replace(/^##\s*/, '').trim();
+
+    cards.push({ number: num, title, content });
+  }
+
+  // Fallback for files that structure evidence as a sequence of H2 sections
+  // but do not use a parsable "Card 1" style marker in the heading text.
+  if (cards.length === 0) {
+    const h2Regex = /^##\s+(.+)$/gm;
+    const h2Matches = [...md.matchAll(h2Regex)];
+    if (h2Matches.length >= 4) {
+      for (let i = 0; i < h2Matches.length; i++) {
+        const match = h2Matches[i];
+        const title = (match[1] || '').trim();
+        const headerLine = match[0];
+        const headerStart = match.index ?? 0;
+        const sectionStart = headerStart + headerLine.length;
+        const sectionEnd = i + 1 < h2Matches.length ? (h2Matches[i + 1].index ?? md.length) : md.length;
+        const content = md.slice(sectionStart, sectionEnd).trim();
+        cards.push({ number: i + 1, title, content });
+      }
+    }
+  }
+
+  // Final fallback for hint-style evidence files that present the actual
+  // revealable units as a sequence of H3 sections.
+  if (cards.length === 0) {
+    const h3Regex = /^###\s+(.+)$/gm;
+    const h3Matches = [...md.matchAll(h3Regex)].filter((match) => {
+      const title = (match[1] || '').trim();
+      return !/[★☆]/.test(title) && !/順番/.test(title);
+    });
+    if (h3Matches.length >= 4) {
+      for (let i = 0; i < h3Matches.length; i++) {
+        const match = h3Matches[i];
+        const title = (match[1] || '').trim();
+        const headerLine = match[0];
+        const headerStart = match.index ?? 0;
+        const sectionStart = headerStart + headerLine.length;
+        const sectionEnd = i + 1 < h3Matches.length ? (h3Matches[i + 1].index ?? md.length) : md.length;
+        const content = md.slice(sectionStart, sectionEnd).trim();
+        cards.push({ number: i + 1, title, content });
+      }
     }
   }
 
@@ -537,11 +613,12 @@ function getImageSlugCandidates(slug) {
 
 // ── slug パーサ ───────────────────────────────
 function parseSlug(slug) {
-  for (const key of Object.keys(SERIES_MAP)) {
-    if (slug.startsWith(key + '-')) {
+  const keys = Object.keys(SERIES_MAP).sort((a, b) => b.length - a.length);
+  for (const key of keys) {
+    if (slug.startsWith(`${key}-`)) {
       const rest = slug.slice(key.length + 1);
       const volMatch = rest.match(/^(\d+)/);
-      const volume = volMatch ? parseInt(volMatch[1]) : 0;
+      const volume = volMatch ? parseInt(volMatch[1], 10) : 0;
       return { series: key, volume };
     }
   }
@@ -621,11 +698,14 @@ async function processScenario(slug) {
 
   // キャラクター
   const files = await fs.readdir(srcDir);
-  const charFiles = files.filter(f => f.startsWith('character-') && f.endsWith('.md'));
+  let charFiles = files.filter(f => f.startsWith('character-') && f.endsWith('.md'));
+  if (charFiles.length === 0) {
+    charFiles = files.filter(f => f.startsWith('player-') && f.endsWith('.md'));
+  }
 
   const characters = [];
   for (const cf of charFiles) {
-    const charId = cf.replace('character-', '').replace('.md', '');
+    const charId = cf.replace(/^character-/, '').replace(/^player-/, '').replace('.md', '');
     const charRaw = await readFile(srcDir, cf);
     const char = parseCharacter(charId, charRaw);
     characters.push(char);
@@ -732,12 +812,28 @@ async function main() {
 
   // シナリオディレクトリ一覧
   const entries = await fs.readdir(SOURCE, { withFileTypes: true });
-  const dirs = entries
+  const candidateDirs = entries
     .filter(e => e.isDirectory() && !e.name.startsWith('.'))
     .map(e => e.name)
     .sort();
 
-  console.log(`Found ${dirs.length} scenario directories`);
+  const dirs = [];
+  const skipped = [];
+  for (const slug of candidateDirs) {
+    const overviewPath = path.join(SOURCE, slug, 'overview.md');
+    try {
+      await fs.access(overviewPath);
+      dirs.push(slug);
+    } catch {
+      skipped.push(slug);
+    }
+  }
+
+  console.log(`Found ${candidateDirs.length} scenario directories`);
+  console.log(`Processing ${dirs.length} directories with overview.md`);
+  if (skipped.length > 0) {
+    console.log(`Skipping ${skipped.length} orphan directories without overview.md`);
+  }
 
   const results = { success: 0, errors: [] };
   const seriesCount = {};
@@ -756,6 +852,9 @@ async function main() {
 
   console.log('\n--- Summary ---');
   console.log(`Total: ${results.success} exported, ${results.errors.length} errors`);
+  if (skipped.length > 0) {
+    console.log(`Skipped: ${skipped.length} orphan directories`);
+  }
   for (const [series, count] of Object.entries(seriesCount).sort()) {
     console.log(`  ${SERIES_MAP[series]?.name || series}: ${count}`);
   }

@@ -6,6 +6,7 @@ import { supabase } from './supabase-client';
 import type {
   ClassRow, ClassWithStats, SessionLogRecord, SessionLogRow,
   SessionFeedbackRow, AssignmentRow, AssignmentInsert,
+  SessionTemplateRow, SessionTemplateInsert, SessionTemplateUpdate,
 } from './supabase-client';
 
 // --- Class CRUD ---
@@ -281,5 +282,64 @@ export async function deleteAssignment(assignmentId: string): Promise<boolean> {
   if (!supabase) return false;
   const { error } = await supabase.from('assignments').delete().eq('id', assignmentId);
   if (error) { console.error('Failed to delete assignment:', error); return false; }
+  return true;
+}
+
+// --- Session Templates (Phase 164 / D1) ---
+
+/**
+ * Fetch all session templates for a teacher, newest first.
+ * RLS ensures only the teacher's own templates are returned.
+ */
+export async function fetchSessionTemplates(teacherId: string): Promise<SessionTemplateRow[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('session_templates')
+    .select('*')
+    .eq('teacher_id', teacherId)
+    .order('updated_at', { ascending: false });
+  if (error) { console.error('Failed to fetch session templates:', error); return []; }
+  return (data || []) as SessionTemplateRow[];
+}
+
+export async function createSessionTemplate(template: SessionTemplateInsert): Promise<SessionTemplateRow | null> {
+  if (!supabase) return null;
+  // Normalize: empty string class_id → null (FK)
+  const row: SessionTemplateInsert = {
+    ...template,
+    class_id: template.class_id || null,
+  };
+  const { data, error } = await supabase
+    .from('session_templates')
+    .insert(row)
+    .select()
+    .single();
+  if (error) { console.error('Failed to create session template:', error); return null; }
+  return data as SessionTemplateRow;
+}
+
+export async function updateSessionTemplate(
+  templateId: string,
+  updates: SessionTemplateUpdate,
+): Promise<boolean> {
+  if (!supabase) return false;
+  const patch: SessionTemplateUpdate = { ...updates };
+  if (patch.class_id === undefined) delete patch.class_id;
+  else if (!patch.class_id) patch.class_id = null;
+  const { error } = await supabase
+    .from('session_templates')
+    .update(patch)
+    .eq('id', templateId);
+  if (error) { console.error('Failed to update session template:', error); return false; }
+  return true;
+}
+
+export async function deleteSessionTemplate(templateId: string): Promise<boolean> {
+  if (!supabase) return false;
+  const { error } = await supabase
+    .from('session_templates')
+    .delete()
+    .eq('id', templateId);
+  if (error) { console.error('Failed to delete session template:', error); return false; }
   return true;
 }
